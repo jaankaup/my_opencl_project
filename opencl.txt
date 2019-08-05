@@ -1,0 +1,2 @@
+https://github.khronos.org/OpenCL-CLHPP/
+https://www.khronos.org/registry/OpenCL/specs/opencl-cplusplus-1.2.pdf

@@ -1,0 +1,12 @@
+DISTRIB_RELEASE=18.04                                                                                 │# Autojump.
+DISTRIB_CODENAME=bionic                                                                               │sudo apt install autojump
+DISTRIB_DESCRIPTION="Ubuntu 18.04.2 LTS"                                                              │
+NAME="Ubuntu"                                                                                         │## Lisätään rivi ~/.bashrc -> . /usr/share/autojump/autojump.sh
+VERSION="18.04.2 LTS (Bionic Beaver)"                                                                 │
+ID=ubuntu                                                                                             │# Asennetaan nvidia. (Geforce 840M)
+ID_LIKE=debian                                                                                        │lspci -k |grep -A 2 -i "VGA"
+PRETTY_NAME="Ubuntu 18.04.2 LTS"                                                                      │
+VERSION_ID="18.04"                                                                                    │sudo ubuntu-drivers devices
+UBUNTU_CODENAME=bionic  
+
+sudo dpkg -i cuda-repo-ubuntu1804- 
