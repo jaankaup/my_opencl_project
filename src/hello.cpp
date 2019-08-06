@@ -277,9 +277,25 @@ int main(int argc, char* argv[])
 
   bool running = true;
   //const std::function<void(const InputCache*)>* id1 = eh->register_keyboardMouse([&](const InputCache* c) { running = !c->isKeyUp('a'); });
-  auto id1 = eh->register_function(EventType::KEYBOARD_MOUSE,[&](const InputCache* c) { running = !c->isKeyUp('a'); });
-  auto id3 = eh->register_function(EventType::KEYBOARD_MOUSE,&yhyy);
-  Log::getDebug().log("Hello::main: %", id1);
+  auto id1 = eh->register_lambda_function(EventType::KEYBOARD_MOUSE,[&](const InputCache* c) { running = !c->isKeyUp('a'); });
+  Log::getError().log("id1 == %",id1);
+  //(*id1)(eh);
+  //void (&eki)(const InputCache*);
+  //eki = &yhyy;
+  //auto* f_ptr (yhyy);
+  //(*f_ptr)(eh);
+  //auto f123 = [&](const InputCache* c) { running = !c->isKeyUp('a'); };
+  //std::cout << type_name<decltype(eki)>() << std::endl; 
+  //std::cout << type_name<decltype(f123)>() << std::endl; 
+  auto id3 = eh->register_function_pointer(EventType::KEYBOARD_MOUSE,&yhyy);
+  Log::getError().log("id3 == %",id3);
+//  (*id3)(eh);
+  //auto id3 = eh->register_function(EventType::KEYBOARD_MOUSE,eki);
+//  //Log::getDebug().log("Hello::main: %", id1);
+//  Log::getDebug().log("Hello::main: PAH");
+//  //Log::getDebug().log("Hello::main: %", id3);
+  eh->unregister(id1);
+  //Log::getError().log("id1 == %",id1);
   //eh->unregister(id1);
   //auto id1 = eh->register_keyboardMouse([&](const InputCache* c) { running = !c->isKeyUp('a'); });
   int id2 = eh->register_quit([&](const InputCache* c) { running = false; });

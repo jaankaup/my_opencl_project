@@ -4,6 +4,7 @@
 #include <vector>
 #include <functional>
 #include <optional>
+#include <variant>
 #include <unordered_map>
 #include <SDL2/SDL.h>
 #include <glm/glm.hpp>
@@ -14,13 +15,76 @@ enum class EventType { UNKNOW, KEYBOARD_MOUSE };
 // Forward declaration.
 class InputCache;
 
-// A struct for registered functions.
-struct IC_Function {
+typedef std::function<void(const InputCache*)> ICF;
+typedef std::variant<ICF, void (*)(const InputCache*) > InputCache_Function;
 
-  std::optional<std::function<void(const InputCache*)>> f = std::nullopt; 
-  std::optional<std::function<void(const InputCache*)>*> f_ptr = std::nullopt; 
-  //EventType e_type = EventType::UNKNOW;
+class RegisteredFunction
+{
+  public:
 
+    // Constructor.
+    RegisteredFunction() { pId = nextId++; }// getNextId(); }
+
+    // This object can't be copied.
+    RegisteredFunction(const RegisteredFunction&) = delete;
+    RegisteredFunction& operator=(const RegisteredFunction&) = delete;
+
+    // Only moving is allowed.
+    RegisteredFunction(RegisteredFunction&&) = default;
+    RegisteredFunction& operator=(RegisteredFunction&&) = default;
+
+    // Add a lambda function. This moves the given function.
+    // After calling this funktion it's not possible to add any other functin.
+    void add_lambda_function(ICF&& function)
+    {
+      Log::getDebug().log("InputCache::add_lambda_function");
+      if (initialized) return; // TODO: assert
+   
+      InputCache_Function icf;
+      icf = function;
+      pIcf = std::move(icf);
+
+      initialized = true;
+    }
+
+    // Add a function-pointer. One can only register one funktion.
+    void add_function_pointer(void (*function_pointer)(const InputCache*))
+    {
+      Log::getDebug().log("RegisteredFunction::add_function_pointer.");
+      if (initialized) return; // TODO: assert
+
+      InputCache_Function icf;
+      icf = function_pointer;
+
+      pIcf = std::move(icf);
+      initialized = true;
+    }
+
+    // Get the id.
+    uint32_t getId() { return pId; } 
+
+    // Call the function.
+    void callFunction(InputCache* ic)
+    { 
+      if (auto f (std::get_if<ICF>(&pIcf)); f)
+      {
+        Log::getDebug().log("InputCache::pollEvents: calling lambda %", f);
+        (*f)(ic);
+      }
+      else if (auto f (std::get_if<void (*)(const InputCache*)> (&pIcf)); f)
+      {
+        Log::getDebug().log("InputCache::pollEvents: calling pointer to function");
+        (*(*f))(ic);
+      }
+    }
+
+  private:
+    InputCache_Function pIcf;
+    uint32_t pId = 0;
+
+    bool initialized = false;
+    inline static uint32_t nextId = 0; 
+    //uint32_t getNextId() { return nextId++; }
 };
 
 class InputCache
@@ -41,18 +105,20 @@ class InputCache
     // Test function.
     bool whatsUpMan() const;
 
-    std::function<void(const InputCache*)>* register_function(const EventType et, std::function<void(const InputCache*)>* function); // -> decltype(&function)
-
-    std::function<void(const InputCache*)>* register_function(const EventType et, std::function<void(const InputCache*)>&& function); // -> decltype(function);
+//    ICF* register_function(const EventType et, ICF* function); // -> decltype(&function)
+//    ICF* register_function(const EventType et, ICF* function); // -> decltype(&function)
+    uint32_t register_lambda_function(const EventType et, ICF&& lambda_f); // -> decltype(function);
+    uint32_t register_function_pointer(const EventType et, void (*function_pointer)(const InputCache*)); // -> decltype(function);
+    //ICF* register_function(const EventType et, ICF&& function); // -> decltype(function);
 
     // Register function for quit event.
-    uint32_t register_quit(const std::function<void(const InputCache*)>& function);
+    uint32_t register_quit(const ICF& function);
 
     // Register function for window resize.
-    uint32_t register_resize(const std::function<void(const InputCache*)>& function);
+    uint32_t register_resize(const ICF& function);
 
     // Remove an event listener function.
-    bool unregister(std::function<void(const InputCache*)>* ptr);
+    bool unregister(const uint32_t id);
 
     bool isKeyDown(const uint32_t key) const;
     bool isKeyUp(const uint32_t key) const;
@@ -69,7 +135,8 @@ class InputCache
 
   private:
 
-    InputCache() {};
+    InputCache() {pJoo.reserve(1000); };
+    static uint32_t nextId;
 
     // Prepare a new state for input. not implemented.
     void cacheInput();
@@ -77,15 +144,17 @@ class InputCache
     void updateTick();
 
     // Registered functions for KeyboardMouse event.
-///    std::vector<std::function<void(const InputCache*)>&& > pKeyMouse_ptrs;
-    //std::vector<std::function<void(const InputCache*)>> pKeyMouse;
-    std::vector<std::function<void(const InputCache*)>*> pKeyMouse_ptr;
+///    std::vector<ICF&& > pKeyMouse_ptrs;
+    //std::vector<ICF> pKeyMouse;
+    std::vector<ICF*> pKeyMouse_ptr;
+    //std::vector<InputCache_Function> pJoo;
+    std::vector<RegisteredFunction> pJoo;
+   
+//    std::vector<InputCache_Function> pKeyMouse;
 
-    std::vector<IC_Function> pKeyMouse;
-
-    //std::unordered_map<const std::function<void(const InputCache*)>*,std::function<void(const InputCache*)>> pKeyMouse;
-    std::unordered_map<int,std::function<void(const InputCache*)>> pQuit;
-    std::unordered_map<int,std::function<void(const InputCache*)>> pResize;
+    //std::unordered_map<const ICF*,ICF> pKeyMouse;
+    std::unordered_map<int,ICF> pQuit;
+    std::unordered_map<int,ICF> pResize;
 
     // Next id.
     uint32_t pNext_Id = 0;

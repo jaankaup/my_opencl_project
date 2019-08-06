@@ -2,6 +2,8 @@
 #include "../Utils/Helper.h"
 #include "../Utils/static_string.h"
 
+//uint32_t RegisteredFunction::nextId = 0;
+
 /////////////////////////////////////////////////////////////////////////////////////
 
 bool InputCache::init()
@@ -54,12 +56,31 @@ void InputCache::pollEvents()
 
     if (pMouseMotionEvents.size() > 0 || pMouseButtonDown.size() > 0 || pMouseButtonUp.size() > 0 || pKeyDownEvents.size() > 0 || pKeyUpEvents.size()  > 0)
     {
-      // Awake registered functions for mouse/keyboard.
-      for (auto ic : pKeyMouse)
+
+      //for (const auto& icf : pJoo)
+      for (int i=0; i<pJoo.size() ; i++)
       {
-        if (auto val = ic.f; val) { (*val)(this); } 
-        else if (auto val = ic.f_ptr; val) { (*(*val))(this); } 
+        pJoo[i].callFunction(this);
+        //std::invoke(f,this);
+//        if (auto f (std::get_if<ICF>(&pJoo[i])); f)
+//        {
+//          Log::getDebug().log("InputCache::pollEvents: calling lambda %", f);
+//        //  //(*f)(this);
+//          (*f)(this);
+//        }
+//        else if (auto f (std::get_if<void (*)(const InputCache*)> (&pJoo[i])); f)
+//        {
+//          Log::getDebug().log("InputCache::pollEvents: calling pointer to function");
+//          (*(*f))(this);
+//        }
       }
+
+      // Awake registered functions for mouse/keyboard.
+      //for (auto ic : pKeyMouse)
+      //{
+      //  if (auto val = ic.f; val) { (*val)(this); } 
+      //  else if (auto val = ic.f_ptr; val) { (*(*val))(this); } 
+      //}
     }
 
     if (pQuitEvent.size() > 0)
@@ -71,46 +92,117 @@ void InputCache::pollEvents()
 
 /////////////////////////////////////////////////////////////////////////////////////
 
-std::function<void(const InputCache*)>* InputCache::register_function(const EventType et, std::function<void(const InputCache*)>&& function) // -> decltype(&function)
+//ICF* InputCache::register_function(const EventType et, const ICF function)
+//{
+//   Log::getDebug().log("InputCache::register_kyboardMouse by ICF function");
+//   return nullptr;
+//}
+
+/////////////////////////////////////////////////////////////////////////////////////
+
+uint32_t InputCache::register_lambda_function(const EventType et, ICF&& lambda_function) // -> decltype(&function)
 {
+   Log::getDebug().log("InputCache::register_kyboardMouse by ICF&& function");
+
+   RegisteredFunction rf;
+   rf.add_lambda_function(std::move(lambda_function));
+
+   auto id = rf.getId();
    
-  IC_Function ic;
-  ic.f = std::make_optional(std::move(function));
-  //ic.e_type = EventType::KEYBOARD_MOUSE;
-  //pRegisteredFunctions.push_back(std::move(ic));
-  switch (et) {
-    case EventType::KEYBOARD_MOUSE: pKeyMouse.push_back(std::move(ic));
-  };
+   pJoo.push_back(std::move(rf));
+
+   return id;
+   
+//  InputCache_Function icf;
+//  icf = std::move(lambda_function);
+//  switch (et) {
+//    case EventType::KEYBOARD_MOUSE: pJoo.push_back(std::move(icf));
+//    //case EventType::KEYBOARD_MOUSE: pKeyMouse.push_back(std::move(icf));
+//  };
+//
+//        if (auto f (std::get_if<ICF>(&pJoo[pJoo.size()-1])); f)
+//        {
+//          Log::getDebug().log("InputCache::pollEvents: calling lambda now!!! %", f);
+//        //  //(*f)(this);
+//          (*f)(this);
+//        }
+//
+//  if (auto f (std::get_if<ICF>(&pJoo[pJoo.size()-1])); f) { Log::getError().log("iiiiiiiiiiiiiiiiiiik"); return f; }
+//  else{Log::getError().log("AAAAAAAAAAAAAAAAAAAAARRRRGGGHHHH");} 
+//  //return &pJoo.back(); //return nullptr; // This should never happen! 
+//  //return nullptr;
   
-  if (auto val = ic.f; val) { return &(*val); } 
-  else return nullptr; // This should never happen! 
-
-  ////pRegisteredFunctions.push_back(std::move(ic));
-//  pKeyMouse.push_back(std::move(function));
-//  auto ptr = &pKeyMouse.back();
-//  pKeyMouse_ptr.push_back(ptr);
-//  return ptr;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////
 
-std::function<void(const InputCache*)>* InputCache::register_function(const EventType et, std::function<void(const InputCache*)>* function) // -> decltype(&function)
+uint32_t InputCache::register_function_pointer(const EventType et, void (*function_pointer)(const InputCache*) )
 {
-   Log::getDebug().log("InputCache::register_kyboardMouse: %", function);
-   //assert(et == EventType::UNKNOW);
-   //std::cout << type_name<decltype(function)>() << std::endl;
-   //pKeyMouse.push_back(std::move(function));
-   IC_Function ic;
-   ic.f_ptr = std::make_optional(function);
-   switch (et) {
-     case EventType::KEYBOARD_MOUSE: pKeyMouse.push_back(std::move(ic));
-   };
-   return function;
+   Log::getDebug().log("InputCache::register_function_pointer");
+
+   RegisteredFunction rf;
+   rf.add_function_pointer(function_pointer);
+
+   auto id = rf.getId();
+   
+   pJoo.push_back(std::move(rf));
+
+   return id;
+//  Log::getDebug().log("InputCache::register_function_pointer: before.");
+//
+//      for (int i=0; i<pJoo.size() ; i++)
+//      {
+//        if (auto f (std::get_if<ICF>(&pJoo[i])); f)
+//        {
+//          Log::getDebug().log("pJoo[%] == %",i, f);
+//        }
+//        else if (auto f (std::get_if<void (*)(const InputCache*)> (&pJoo[i])); f)
+//        {
+//          Log::getDebug().log("pJoo[%] == %",i, f);
+//        }
+//      }
+//  Log::getDebug().log("InputCache::register_kyboardMouse by ICF function pointer");
+//  InputCache_Function icf;
+//  icf = function_pointer;
+//  //std::cout << type_name<decltype(function)>() << std::endl; 
+//  switch (et) {
+//    case EventType::KEYBOARD_MOUSE: pJoo.push_back(std::move(icf));
+//    //case EventType::KEYBOARD_MOUSE: pJoo.push_back(std::move(icf));
+//    //case EventType::KEYBOARD_MOUSE: pKeyMouse.push_back(std::move(icf));
+//  };
+//
+//  Log::getDebug().log("InputCache::register_function_pointer: after.");
+//      for (int i=0; i<pJoo.size() ; i++)
+//      {
+//        if (auto f (std::get_if<ICF>(&pJoo[i])); f)
+//        {
+//          Log::getDebug().log("pJoo[%] == %",i, f);
+//        }
+//        else if (auto f (std::get_if<void (*)(const InputCache*)> (&pJoo[i])); f)
+//        {
+//          Log::getDebug().log("pJoo[%] == %",i, f);
+//        }
+//      }
+//  if (auto f (std::get_if<void (*)(const InputCache*)> (&pJoo.back())); f) return *f;
+//  else return nullptr; // This should never happen.
 }
 
 /////////////////////////////////////////////////////////////////////////////////////
 
-uint32_t InputCache::register_quit(const std::function<void(const InputCache*)>& function)
+//ICF* InputCache::register_function(const EventType et, ICF* function) // -> decltype(&function)
+//{
+//   Log::getDebug().log("InputCache::register_kyboardMouse by ICF* function: %", function);
+//    InputCache_Function icf;
+//    icf = function;
+//    switch (et) {
+//      case EventType::KEYBOARD_MOUSE: pKeyMouse.push_back(std::move(icf));
+//    };
+//   return function;
+//}
+
+/////////////////////////////////////////////////////////////////////////////////////
+
+uint32_t InputCache::register_quit(const ICF& function)
 {
   Log::getDebug().log("InputCache::register_quit: %", &function);
   pQuit.insert({pNext_Id, function});
@@ -119,29 +211,50 @@ uint32_t InputCache::register_quit(const std::function<void(const InputCache*)>&
 
 /////////////////////////////////////////////////////////////////////////////////////
 
-uint32_t InputCache::register_resize(const std::function<void(const InputCache*)>& function)
+uint32_t InputCache::register_resize(const ICF& function)
 {
   Log::getDebug().log("InputCache::register_resize: %", &function);
   pResize.insert({pNext_Id, function});
   return pNext_Id++;
 }
 
-bool InputCache::unregister(std::function<void(const InputCache*)>* ptr)
-{
-  for (int i=0; i<pKeyMouse.size() ; i++)
-  {
-    if (pKeyMouse_ptr[i] == ptr)
-    {
-      pKeyMouse_ptr.erase(pKeyMouse_ptr.begin() + i);
-      for (auto x : pKeyMouse)
-      {
-        
-      }
-      return true;
-    }
-  }
-  return false;
+/////////////////////////////////////////////////////////////////////////////////////
 
+bool InputCache::unregister(const uint32_t id)
+{
+  Log::getDebug().log("InputCache::unregister %",id);
+  for (int i=0; i<pJoo.size() ; i++)
+  {
+     if (pJoo[i].getId() == id)
+     {
+       Log::getDebug().log("InputCache::unregister: removed function.");
+       pJoo.erase(pJoo.begin() + i); 
+       return true;
+     }
+    
+      //Log::getDebug().log("InputCache::unregister: removed lambda.");
+      //pJoo.erase(pJoo.begin() + i);
+      //return true;
+//      if (auto f (std::get_if<ICF>(&pJoo[i])); f)
+//      {
+//        Log::getError().log("öhömöhhöm.");
+//        Log::getDebug().log("i == % : f (%) == ptr (%) .",i, f, ptr);
+//        if ( f == ptr ) {
+//          pJoo.erase(pJoo.begin() + i);
+//          Log::getDebug().log("InputCache::unregister: removed lambda.");
+//          return true;
+//        }
+//      }
+//      else if (auto f (std::get_if<void (*)(const InputCache*)>(&pJoo[i])); f)
+//      {
+//        //Log::getDebug().log("InputCache::unregister: removed pointer to function.");
+//        //if ( (*f) == ptr ) pKeyMouse.erase(pKeyMouse.begin() + i);
+//        return true;
+//      }
+    
+  }
+  Log::getDebug().log("InputCache::unregister: unregister failed.");
+  return false;
 }
 /////////////////////////////////////////////////////////////////////////////////////
 
