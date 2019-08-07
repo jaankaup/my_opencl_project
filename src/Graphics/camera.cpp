@@ -1,4 +1,5 @@
 #include "camera.h"
+#include "../Program/InputCache.h"
 
 // Konstruktori
 Camera::Camera(const glm::vec3& cameraPosition, const glm::vec3& cameraTarget, const glm::vec3& upVector)
@@ -10,6 +11,42 @@ Camera::Camera(const glm::vec3& cameraPosition, const glm::vec3& cameraTarget, c
     up_ = upVector;
 
     rotateCamera(0,0);
+    auto ic = InputCache::getInstance();
+    ic->register_lambda_function(EventType::KEYBOARD_MOUSE,
+              [&](const InputCache* c) {  
+              auto deltaTime = ProgramState::getInstance().getTimeDelta();
+
+              /* Pyydetään SDL:n näppäintila */
+              //const Uint8* keystate = ic->get_keyboardState() ;
+
+              /* Shift hidastaa liikkumisnopeutta */
+              float speedMultiplier = this->camSpeed;
+              if (c->isKeyDown(SDL_SCANCODE_LSHIFT) || c->isKeyDown(SDL_SCANCODE_RSHIFT) )
+              {
+                  speedMultiplier *= 0.3f;
+              }
+
+              /* WASD-näppäimet */
+              if(c->isKeyDown(SDL_SCANCODE_UP) || c->isKeyDown(SDL_SCANCODE_W))
+                  this->position_ += this->front_ * speedMultiplier * deltaTime;
+
+              if(c->isKeyDown(SDL_SCANCODE_DOWN) || c->isKeyDown(SDL_SCANCODE_S))
+                  this->position_ -= this->front_ * speedMultiplier * deltaTime;
+
+              if(c->isKeyDown(SDL_SCANCODE_LEFT) || c->isKeyDown(SDL_SCANCODE_A))
+                  this->position_ -= glm::normalize(glm::cross(this->front_, this->up_)) * speedMultiplier * deltaTime;
+
+              if(c->isKeyDown(SDL_SCANCODE_RIGHT) || c->isKeyDown(SDL_SCANCODE_D))
+                  this->position_ += glm::normalize(glm::cross(this->front_, this->up_)) * speedMultiplier * deltaTime;
+
+              /* Ylös ja alas liikkuminen */
+              if(c->isKeyDown(SDL_SCANCODE_V))
+                  this->position_ += glm::normalize(this->up_) * speedMultiplier * deltaTime;
+
+              if(c->isKeyDown(SDL_SCANCODE_C))
+                  this->position_ -= glm::normalize(this->up_) * speedMultiplier * deltaTime;
+              this->update(deltaTime);
+              });
 }
 
 // Destruktori

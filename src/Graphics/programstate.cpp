@@ -211,6 +211,7 @@ bool ProgramState::getShowWind() const
 
 void ProgramState::toggleLumi()
 {
+  Log::getDebug().log("ProgramState::toggleLumi()");
   pLumi = !pLumi;
 }
 

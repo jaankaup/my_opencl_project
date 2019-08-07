@@ -3,7 +3,6 @@
 #include "window.h"
 #include "../Utils/log.h"
 #include "../Utils/Helper.h"
-#include "../Program/InputCache.h"
 
 Window& Window::getInstance()
 {
@@ -32,19 +31,7 @@ bool Window::init(int width, int height)
 {
   bool result = Helper::initSDL();
   if (!result) return false;
-//  Log::getDebug().log("%","Window::Window. Creating window.");
-//  SDL_Init(SDL_INIT_VIDEO);
-////  Log::getDebug().log("%",std::to_string(sdl));
-//  if (!SDL_WasInit(SDL_INIT_VIDEO))
-//  {
-//    //Log::getDebug().log("%","Window::Window. initializing SDL.");
-//    if (SDL_Init(SDL_INIT_VIDEO) != 0)
-//    {
-//      Log::getError().log("%","Window::Window. Failed to initialize SDL.");
-//      Log::getError().log("Reason: %",SDL_GetError());
-//      return false;
-//    }
-//  }
+
   Log::getDebug().log("%","Window::Window. window created.");
     int x = SDL_WINDOWPOS_UNDEFINED;
     int y = SDL_WINDOWPOS_UNDEFINED;
@@ -65,20 +52,13 @@ bool Window::init(int width, int height)
     SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
     //SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
 
-    #ifdef EMSCRIPTEN
-      SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
-      SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-      SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
-    #endif
-
-    #ifndef EMSCRIPTEN
-      SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
-      SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
-    #endif
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
 
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
     SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
+
 
     /* Luodaan opengl conteksti ikkunalle. */
     pContext = SDL_GL_CreateContext(pWindow);
@@ -86,7 +66,7 @@ bool Window::init(int width, int height)
     {
         std::string error = SDL_GetError();
         Log::getError().log("%.%","Window::init. Failed to create SDL_GLContext.",error);
-        Log::getError().log("Perhaps your hardware doesn't support opengl 4.3.");
+        Log::getError().log("Perhaps your hardware doesn't support this opengl version.");
     }
 
     glewExperimental = GL_TRUE;
@@ -98,41 +78,23 @@ bool Window::init(int width, int height)
         return false;
      }
 
+    set_vsync(true);
+
     Log::getInfo().log("GL_Version: %", glGetString(GL_VERSION));
     Log::getInfo().log("Vendor: %", glGetString(GL_VENDOR));
     Log::getInfo().log("Renderer: %", glGetString(GL_RENDERER));
     SDL_GL_SetSwapInterval(true);
 
-    // Initialize the first resize event for this window.
-    int wi;
-    int he;
-    SDL_GetWindowSize(pWindow, &wi, &he);
-    SDL_Event ev;
-    ev.type = SDL_WINDOWEVENT;
-    ev.window.event = SDL_WINDOWEVENT_RESIZED;
-    ev.window.windowID = SDL_GetWindowID(pWindow);
-    ev.window.data1 = wi;
-    ev.window.data2 = he;
-    SDL_PushEvent(&ev);
-
     // Register the resize event function.
     InputCache* ic = InputCache::getInstance();
-
-    // TODO: save id1 for unregistering.
-    int id1 = ic->register_resize([&](const InputCache* c) {
-          int w = c->get_screenWidth(); 
-          int h = c->get_screenHeight();
-          SDL_SetWindowSize(pWindow, w, h);
-          glViewport(0, 0, w, h);
-          SDL_Event e;
-          e.type = SDL_WINDOWEVENT;
-          e.window.event = SDL_WINDOWEVENT_RESIZED;
-          e.window.windowID = SDL_GetWindowID(pWindow);
-          e.window.data1 = w;
-          e.window.data2 = h;
-          SDL_PushEvent(&e);
-        });
-
+    glViewport(0, 0, ic->get_screenWidth(), ic->get_screenHeight());
+    ic->register_lambda_function(EventType::RESIZE_EVENT,
+                                 [&](const InputCache* c) {  
+                                 int w = ic->get_screenWidth(); 
+                                 int h = ic->get_screenHeight();
+                                 Log::getDebug().log("Resizing (%,%).",w,h);
+                                 glViewport(0, 0, w, h);
+                                 });
     return true;
 }
 
@@ -141,11 +103,24 @@ void Window::swapBuffers()
   SDL_GL_SwapWindow(pWindow);
 }
 
-//void Window::resize(int w, int h)
-//{
-//    SDL_SetWindowSize(pWindow, w, h);
-//    glViewport(0, 0, w, h);
-//
+void Window::set_vsync(const bool enabled) const
+{
+  if (SDL_GL_SetSwapInterval(enabled ? 1 : 0) < 0) Log::getWarning().log("Window::set_vsync failed: %", SDL_GetError());
+}
+
+void Window::setTitle(const std::string& title) const 
+{
+  if (pWindow != nullptr) SDL_SetWindowTitle(pWindow, title.c_str());
+}
+
+//void Window::resize(InputCache* ic)
+void Window::resize(int w, int h)
+{
+//    int w = ic->get_screenWidth(); 
+//    int h = ic->get_screenHeight()  
+    SDL_SetWindowSize(pWindow, w, h);
+    glViewport(0, 0, w, h);
+
 //    SDL_Event e;
 //    e.type = SDL_WINDOWEVENT;
 //    e.window.event = SDL_WINDOWEVENT_RESIZED;
@@ -153,4 +128,4 @@ void Window::swapBuffers()
 //    e.window.data1 = w;
 //    e.window.data2 = h;
 //    SDL_PushEvent(&e);
-//}
+}

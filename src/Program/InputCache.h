@@ -3,14 +3,14 @@
 
 #include <vector>
 #include <functional>
-#include <optional>
+//#include <optional>
 #include <variant>
 #include <unordered_map>
 #include <SDL2/SDL.h>
 #include <glm/glm.hpp>
 #include "../Utils/log.h"
 
-enum class EventType { UNKNOW, KEYBOARD_MOUSE };
+enum class EventType { UNKNOW, KEYBOARD_MOUSE, RESIZE_EVENT, QUIT};
 
 // Forward declaration.
 class InputCache;
@@ -23,7 +23,7 @@ class RegisteredFunction
   public:
 
     // Constructor.
-    RegisteredFunction() { pId = nextId++; }// getNextId(); }
+    RegisteredFunction() { pId = nextId++; }
 
     // This object can't be copied.
     RegisteredFunction(const RegisteredFunction&) = delete;
@@ -33,50 +33,19 @@ class RegisteredFunction
     RegisteredFunction(RegisteredFunction&&) = default;
     RegisteredFunction& operator=(RegisteredFunction&&) = default;
 
+
     // Add a lambda function. This moves the given function.
     // After calling this funktion it's not possible to add any other functin.
-    void add_lambda_function(ICF&& function)
-    {
-      Log::getDebug().log("InputCache::add_lambda_function");
-      if (initialized) return; // TODO: assert
-   
-      InputCache_Function icf;
-      icf = function;
-      pIcf = std::move(icf);
-
-      initialized = true;
-    }
+    void add_lambda_function(ICF&& function);
 
     // Add a function-pointer. One can only register one funktion.
-    void add_function_pointer(void (*function_pointer)(const InputCache*))
-    {
-      Log::getDebug().log("RegisteredFunction::add_function_pointer.");
-      if (initialized) return; // TODO: assert
-
-      InputCache_Function icf;
-      icf = function_pointer;
-
-      pIcf = std::move(icf);
-      initialized = true;
-    }
+    void add_function_pointer(void (*function_pointer)(const InputCache*));
 
     // Get the id.
     uint32_t getId() { return pId; } 
 
     // Call the function.
-    void callFunction(InputCache* ic)
-    { 
-      if (auto f (std::get_if<ICF>(&pIcf)); f)
-      {
-        Log::getDebug().log("InputCache::pollEvents: calling lambda %", f);
-        (*f)(ic);
-      }
-      else if (auto f (std::get_if<void (*)(const InputCache*)> (&pIcf)); f)
-      {
-        Log::getDebug().log("InputCache::pollEvents: calling pointer to function");
-        (*(*f))(ic);
-      }
-    }
+    void callFunction(InputCache* ic);
 
   private:
     InputCache_Function pIcf;
@@ -84,7 +53,6 @@ class RegisteredFunction
 
     bool initialized = false;
     inline static uint32_t nextId = 0; 
-    //uint32_t getNextId() { return nextId++; }
 };
 
 class InputCache
@@ -105,17 +73,11 @@ class InputCache
     // Test function.
     bool whatsUpMan() const;
 
-//    ICF* register_function(const EventType et, ICF* function); // -> decltype(&function)
-//    ICF* register_function(const EventType et, ICF* function); // -> decltype(&function)
-    uint32_t register_lambda_function(const EventType et, ICF&& lambda_f); // -> decltype(function);
-    uint32_t register_function_pointer(const EventType et, void (*function_pointer)(const InputCache*)); // -> decltype(function);
-    //ICF* register_function(const EventType et, ICF&& function); // -> decltype(function);
+    uint32_t register_lambda_function(const EventType et, ICF&& lambda_f);
+    uint32_t register_function_pointer(const EventType et, void (*function_pointer)(const InputCache*));
 
-    // Register function for quit event.
-    uint32_t register_quit(const ICF& function);
-
-    // Register function for window resize.
-    uint32_t register_resize(const ICF& function);
+    void handle_keyboad_mouse();
+    void handle_window_events();
 
     // Remove an event listener function.
     bool unregister(const uint32_t id);
@@ -135,7 +97,18 @@ class InputCache
 
   private:
 
-    InputCache() {pJoo.reserve(1000); };
+    InputCache() {
+      pKeyboardMouse.reserve(100);
+      pResize.reserve(100);
+      pQuit.reserve(100);
+      pKeyDownEvents.reserve(5);
+      pKeyUpEvents.reserve(5);
+      pMouseMotionEvents.reserve(5);
+      pMouseButtonDown.reserve(5);
+      pMouseButtonUp.reserve(5);
+      pWindowEvents.reserve(5);
+      pQuitEvent.reserve(5);
+    };
     static uint32_t nextId;
 
     // Prepare a new state for input. not implemented.
@@ -143,18 +116,16 @@ class InputCache
 
     void updateTick();
 
-    // Registered functions for KeyboardMouse event.
-///    std::vector<ICF&& > pKeyMouse_ptrs;
-    //std::vector<ICF> pKeyMouse;
-    std::vector<ICF*> pKeyMouse_ptr;
-    //std::vector<InputCache_Function> pJoo;
-    std::vector<RegisteredFunction> pJoo;
+    //std::vector<ICF*> pKeyMouse_ptr;
+    std::vector<RegisteredFunction> pKeyboardMouse;
+    std::vector<RegisteredFunction> pResize;
+    std::vector<RegisteredFunction> pQuit;
    
 //    std::vector<InputCache_Function> pKeyMouse;
 
     //std::unordered_map<const ICF*,ICF> pKeyMouse;
-    std::unordered_map<int,ICF> pQuit;
-    std::unordered_map<int,ICF> pResize;
+//    std::unordered_map<int,ICF> pQuit;
+//    std::unordered_map<int,ICF> pResize;
 
     // Next id.
     uint32_t pNext_Id = 0;

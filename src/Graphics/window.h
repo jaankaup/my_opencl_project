@@ -5,6 +5,7 @@
 //#include <memory>
 #include <SDL2/SDL.h>
 #include <GL/glew.h>
+#include "../Program/InputCache.h"
 
 struct SDL_Window;
 using SDL_GLContext = void*;
@@ -21,8 +22,13 @@ class Window
     void swapBuffers();
 
     // Resize method for window.
-    //void resize(int width, int height);
+   // void resize(InputCache* ic);
+    void resize(int w, int h);
 
+    void set_vsync(const bool enabled) const;
+     
+    void setTitle(const std::string& title) const;
+   
     // Doesn't destroy the SDL2 and window. Call dispose to do this.
     ~Window();
 
