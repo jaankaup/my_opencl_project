@@ -509,11 +509,6 @@ void InputCache::updateTick()
 
 uint64_t InputCache::get_timeDelta() const
 {
-  
-//  Log::getDebug().log("now == %", pTicks_now);
-//  Log::getDebug().log("prev == %", pTicks_prev);
-//  Log::getDebug().log("delta == %", pTicks_now - pTicks_prev);
-  //auto delta = pTicks_now - pTicks_prev; 
   return std::chrono::duration_cast<std::chrono::microseconds>(pTicks_now - pTicks_prev).count();
 }
 

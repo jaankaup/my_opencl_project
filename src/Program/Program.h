@@ -1,13 +1,16 @@
 #ifndef PROGRAM_H
 #define PROGRAM_H
 
+#include <glm/glm.hpp>
+#include <SDL2/SDL.h>
+
 namespace Program {
 
 class MainProgram
 {
   public:
 
-    void initialize();
+    bool initialize();
     void start();
 
   private:
@@ -15,7 +18,7 @@ class MainProgram
     void createGlobalProperties();
     void createTextures();
     void createShaders();
-    void createWindow();
+    bool createWindow();
     void createOpencl();
     void registerHandlers();
 

@@ -58,7 +58,6 @@ Camera::Camera(const glm::vec3& cameraPosition, const glm::vec3& cameraTarget, c
               [&](const InputCache* c) {  
                 if (c->isMousePressed(SDL_BUTTON_LEFT))
                 {
-                  Log::getWarning().log("no höhhh!!! kilkattu on");
                   auto pos = c->getCurrent_mousePosition();
                   this->lastMouseX = pos.x;
                   this->lastMouseY = pos.y;
@@ -66,7 +65,6 @@ Camera::Camera(const glm::vec3& cameraPosition, const glm::vec3& cameraTarget, c
 
                 if (c->isMouseMoving() && c->isMouseDown(SDL_BUTTON_LEFT))
                 {
-                  Log::getWarning().log("no höhhh!!! nyt liikkuuu!!!");
                   auto pos = c->getCurrent_mousePosition();
                   this->rotateCamera((pos.x - this->lastMouseX) * this->camSensitivity * this->deltaTime,
                                     (this->lastMouseY - pos.y) * this->camSensitivity * this->deltaTime);
@@ -205,7 +203,6 @@ void Camera::adjustSensitivity(const float &adjust)
  */
 void Camera::update(const float time)
 {
-  Log::getDebug().log("Nyt updeittailee : %", time);
         // WASD-kamera
         translate(position_);
         setView(position_ + front_);
@@ -220,7 +217,6 @@ void Camera::handleKeyInput()
   auto deltaTime2 = ic->get_timeDelta();
 
   double deltaTime3 = 1.0 + deltaTime2 / 1000000.0;
-  Log::getWarning().log("Deleta double on %",deltaTime3);
   this->deltaTime = float(deltaTime3);
 
   /* Shift hidastaa liikkumisnopeutta */

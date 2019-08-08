@@ -32,6 +32,8 @@
 #include "Utils/Helper.h"
 #include "Utils/static_string.h"
 #include "Program/InputCache.h"
+#include "Program/Program.h"
+#include "Program/ResourceManager.h"
 
 //#include <boost/asio.hpp>
 //#include "boost/bind.hpp"
@@ -258,7 +260,7 @@ void loop_handler2(void *arg)
     //    }
     //}
     c->camera.handleKeyInput();
-    Window::getInstance().swapBuffers();
+    Window::getInstance()->swapBuffers();
     c->renderer.render(c->camera);
     // Kasvatetaan h laskuria.
     ProgramState::getInstance().increase_h_sum(ProgramState::getInstance().getTimeStep());
@@ -270,53 +272,24 @@ void yhyy(const InputCache* ic) {
 
 int main(int argc, char* argv[])
 {
-  ProgramState::getInstance().setTimeStep(0.0012f);
+//  ProgramState::getInstance().setTimeStep(0.0012f);
+//
+//  Window window = Window::getInstance();
+//  Window::getInstance().setTitle("Juupajooo");
+//
+//  auto eh = InputCache::getInstance();
+//  eh->init();
 
-  Window window = Window::getInstance();
-  Window::getInstance().setTitle("Juupajooo");
+  Program::MainProgram prog;
+  prog.initialize();
+  prog.start();
+//  bool running = true;
+//  auto id1 = eh->register_lambda_function(EventType::KEYBOARD_MOUSE,[&](const InputCache* c) { running = !c->isKeyReleased('q'); });
+////  auto id3 = eh->register_function_pointer(EventType::KEYBOARD_MOUSE,&yhyy);
+//  auto id4 = eh->register_function_pointer(EventType::KEYBOARD_MOUSE,[](const InputCache* c) {if (c->isKeyPressed('1')) {Log::getDebug().log("1"); ProgramState::getInstance().toggleLumi();}});
+//  auto id5 = eh->register_function_pointer(EventType::KEYBOARD_MOUSE,[](const InputCache* c) {if (c->isKeyPressed('2')) {Log::getDebug().log("2"); ProgramState::getInstance().toggleVerho();}});
+//  auto id6 = eh->register_function_pointer(EventType::KEYBOARD_MOUSE,[](const InputCache* c) {if (c->isKeyPressed('3')) {Log::getDebug().log("3"); ProgramState::getInstance().toggleRuohikko();}});
 
-  auto eh = InputCache::getInstance();
-  eh->init();
-
-  bool running = true;
-  auto id1 = eh->register_lambda_function(EventType::KEYBOARD_MOUSE,[&](const InputCache* c) { running = !c->isKeyReleased('q'); });
-//  auto id3 = eh->register_function_pointer(EventType::KEYBOARD_MOUSE,&yhyy);
-  auto id4 = eh->register_function_pointer(EventType::KEYBOARD_MOUSE,[](const InputCache* c) {if (c->isKeyPressed('1')) {Log::getDebug().log("1"); ProgramState::getInstance().toggleLumi();}});
-  auto id5 = eh->register_function_pointer(EventType::KEYBOARD_MOUSE,[](const InputCache* c) {if (c->isKeyPressed('2')) {Log::getDebug().log("2"); ProgramState::getInstance().toggleVerho();}});
-  auto id6 = eh->register_function_pointer(EventType::KEYBOARD_MOUSE,[](const InputCache* c) {if (c->isKeyPressed('3')) {Log::getDebug().log("3"); ProgramState::getInstance().toggleRuohikko();}});
-
-//    ic->register_lambda_function(EventType::KEYBOARD_MOUSE,
-//              [](const InputCache* c) {  
-//
-//              if (c->isMousePressed(SDL_BUTTON_LEFT)) Log::getDebug().log("Left mouse pressed.");
-//              if (c->isMousePressed(SDL_BUTTON_MIDDLE)) Log::getDebug().log("Middle mouse pressed.");
-//              if (c->isMousePressed(SDL_BUTTON_RIGHT)) Log::getDebug().log("Right mouse pressed.");
-//
-//              if (c->isMouseReleased(SDL_BUTTON_LEFT)) Log::getDebug().log("Left mouse released.");
-//              if (c->isMouseReleased(SDL_BUTTON_MIDDLE)) Log::getDebug().log("Middle mouse released.");
-//              if (c->isMouseReleased(SDL_BUTTON_RIGHT)) Log::getDebug().log("Right mouse released.");
-//
-//              if (c->isMouseDown(SDL_BUTTON_LEFT)) Log::getDebug().log("Left mouse down.");
-//              if (c->isMouseDown(SDL_BUTTON_MIDDLE)) Log::getDebug().log("Middle mouse down.");
-//              if (c->isMouseDown(SDL_BUTTON_RIGHT)) Log::getDebug().log("Right mouse down.");
-//
-//              if (c->isMouseMoving()) Log::getDebug().log("Mouse is moving.");
-//
-//              if (c->isMouseReleased(SDL_BUTTON_LEFT)) Log::getDebug().log("Left mouse delta == %.",c->getButtonDown_time(SDL_BUTTON_LEFT));
-//              if (c->isMouseReleased(SDL_BUTTON_MIDDLE)) Log::getDebug().log("Middle mouse delta == %.",c->getButtonDown_time(SDL_BUTTON_MIDDLE));
-//              if (c->isMouseReleased(SDL_BUTTON_RIGHT)) Log::getDebug().log("Right mouse delta == %.",c->getButtonDown_time(SDL_BUTTON_RIGHT));
-//
-//              });
-    //            case SDLK_1:
-    //                ProgramState::getInstance().toggleLumi();
-    //                break;
-    //            case SDLK_2:
-    //                ProgramState::getInstance().toggleVerho();
-    //                break;
-    //            case SDLK_3:
-    //                ProgramState::getInstance().toggleRuohikko();
-    //                break;
-//  int id2 = eh->register_lambda_function(EventType::QUIT,[&](const InputCache* c) { running = false; });
 
 
   //auto d = GPU_Device::getInstance();
@@ -336,57 +309,57 @@ int main(int argc, char* argv[])
 
 	//cl::Program context({default_device});
 
-  ParticleGenerator r;
-
-  // The program state must be created first.
-  // Laitetaan jo tassa time step.
-  //ProgramState::getInstance().setTimeStep(0.0004f);
-  //ProgramState::getInstance().setTimeStep(0.0008f);
-  
-  // Initialize the base information for the marching cubes.
-  initializeCubeAttributes();
-
-  // Create the window. This also creates the opengl context.
-  //Window window = Window::getInstance();
-
-  // Create all textures.
-  createtextures();
-
-  // Context creation. (webassembly).
-  context c;
-
-  // We create marching cubes shader only with native opengl.
-    
-  #ifndef EMSCRIPTEN
-
-  createShaders();
-
-  VertexBufferManager::getInstance().createExamplePoints(30, 30, 30,30.0, glm::vec3(-0.2f,-0.1f,-0.4f), "tuuli_pisteet");
-  VertexBufferManager::getInstance().createExamplePoints(40, 1, 40,50.0, glm::vec3(-0.2f,0.0f,-0.2f), "maa_pisteet");
-  #endif
-
-  // Initialize the renderer.
-  c.renderer.init();
-
-    /**
-     * Schedule the main loop handler to get 
-     * called on each animation frame
-     */
-
-    #ifdef EMSCRIPTEN
-    emscripten_set_main_loop_arg(loop_handler2, &c, -1, 1);
-    #endif
-
-//    void generateGrass(const uint32_t grassCount, const uint32_t grassHeight, const uint32_t areaWidth, const uint32_t areaheight);
-    #ifndef EMSCRIPTEN
-  while (running) {
-    eh->pollEvents();
-    loop_handler2(&c);
-  }
-//    while (ProgramState::getInstance().getAppRunning())
-//    {
-//    }
-    #endif
+///  ParticleGenerator r;
+///
+///  // The program state must be created first.
+///  // Laitetaan jo tassa time step.
+///  //ProgramState::getInstance().setTimeStep(0.0004f);
+///  //ProgramState::getInstance().setTimeStep(0.0008f);
+///  
+///  // Initialize the base information for the marching cubes.
+///  initializeCubeAttributes();
+///
+///  // Create the window. This also creates the opengl context.
+///  //Window window = Window::getInstance();
+///
+///  // Create all textures.
+///  createtextures();
+///
+///  // Context creation. (webassembly).
+///  context c;
+///
+///  // We create marching cubes shader only with native opengl.
+///    
+///  #ifndef EMSCRIPTEN
+///
+///  createShaders();
+///
+///  VertexBufferManager::getInstance().createExamplePoints(30, 30, 30,30.0, glm::vec3(-0.2f,-0.1f,-0.4f), "tuuli_pisteet");
+///  VertexBufferManager::getInstance().createExamplePoints(40, 1, 40,50.0, glm::vec3(-0.2f,0.0f,-0.2f), "maa_pisteet");
+///  #endif
+///
+///  // Initialize the renderer.
+///  c.renderer.init();
+///
+///    /**
+///     * Schedule the main loop handler to get 
+///     * called on each animation frame
+///     */
+///
+///    #ifdef EMSCRIPTEN
+///    emscripten_set_main_loop_arg(loop_handler2, &c, -1, 1);
+///    #endif
+///
+/////    void generateGrass(const uint32_t grassCount, const uint32_t grassHeight, const uint32_t areaWidth, const uint32_t areaheight);
+///    #ifndef EMSCRIPTEN
+///  while (running) {
+///    eh->pollEvents();
+///    loop_handler2(&c);
+///  }
+/////    while (ProgramState::getInstance().getAppRunning())
+/////    {
+/////    }
+///    #endif
 
     return 0;
 }

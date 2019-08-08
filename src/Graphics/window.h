@@ -16,7 +16,7 @@ class Window
 
   public:
 
-    static Window& getInstance();
+    static Window* getInstance();
 
     // Swaps buffers.
     void swapBuffers();

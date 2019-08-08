@@ -7,6 +7,7 @@
 #include <functional>
 #include <optional>
 #include <memory>
+#include <glm/glm.hpp>
 
 namespace Program {
 
@@ -154,36 +155,14 @@ class GlobalPropertyManager
 };
 
 /* Examples */
-//int main()
-//{
+// Creating property.
 //  IntProperty i;
 //  i.set(5);
-//  std::cout << i.get() << std::endl;
+//  i.registerTest([](int x) {if (x < 15) { Log::getDebug().log("hellureijaa. alle 15."); return true;} else { Log::getDebug().log("Ei onnaa."); return false; }});
 //
-//
-//  StringProperty s;
-//  s.set("hauki");
-//  std::cout << s.get() << std::endl;
-//
-//  auto ptrManager = GlobalPropertyManager::getInstance();
-//  ptrManager->add("kisuli",i);
-//  ptrManager->add("kala",s);
-//
-//  auto hevonkukkuu = ptrManager->get<StringProperty>(std::string(std::string("kala")));
-//  if (hevonkukkuu->has_value())
-//  {
-//     auto val = &(hevonkukkuu->value());
-//     val->set(std::string("joopajoo"));
-//     std::cout << val->get() << std::endl;
-//  }
-//
-//  auto hevonkukkuu2 = ptrManager->get<StringProperty>(std::string(std::string("kala")));
-//  if (hevonkukkuu2->has_value())
-//  {
-//     auto val = &(hevonkukkuu2->value());
-//     std::cout << val->get() << std::endl;
-//  }
-//}
+// Accessing property.
+//  auto hevonkukkuu = ptrManager->get<IntProperty>("kisuli");
+//  if (auto val = hevonkukkuu ; val) val->value().set(12);
 
 } // namespace Program
 #endif

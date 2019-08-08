@@ -4,10 +4,10 @@
 #include "../Utils/log.h"
 #include "../Utils/Helper.h"
 
-Window& Window::getInstance()
+Window* Window::getInstance()
 {
     static Window instance;
-    return instance;
+    return &instance;
 }
 
 Window::Window()
