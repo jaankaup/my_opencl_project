@@ -47,6 +47,42 @@ Camera::Camera(const glm::vec3& cameraPosition, const glm::vec3& cameraTarget, c
                   this->position_ -= glm::normalize(this->up_) * speedMultiplier * deltaTime;
               this->update(deltaTime);
               });
+
+    ic->register_lambda_function(EventType::KEYBOARD_MOUSE,
+              [&](const InputCache* c) {  
+
+              if (c->isMousePressed(SDL_BUTTON_LEFT)) Log::getDebug().log("Left mouse pressed.");
+              if (c->isMousePressed(SDL_BUTTON_MIDDLE)) Log::getDebug().log("Middle mouse pressed.");
+              if (c->isMousePressed(SDL_BUTTON_RIGHT)) Log::getDebug().log("Right mouse pressed.");
+
+              if (c->isMouseReleased(SDL_BUTTON_LEFT)) Log::getDebug().log("Left mouse pressed.");
+              if (c->isMouseReleased(SDL_BUTTON_MIDDLE)) Log::getDebug().log("Middle mouse pressed.");
+              if (c->isMouseReleased(SDL_BUTTON_RIGHT)) Log::getDebug().log("Right mouse pressed.");
+
+              if (c->isMouseDown(SDL_BUTTON_LEFT)) Log::getDebug().log("Left mouse down.");
+              if (c->isMouseDown(SDL_BUTTON_MIDDLE)) Log::getDebug().log("Middle mouse down.");
+              if (c->isMouseDown(SDL_BUTTON_RIGHT)) Log::getDebug().log("Right mouse down.");
+
+              if (c->isMouseMoving()) Log::getDebug().log("Mouse is moving.");
+
+              });
+
+//    ic->register_lambda_function(EventType::KEYBOARD_MOUSE,
+//              [&](const InputCache* c) {  
+//    case (SDL_MOUSEBUTTONDOWN): /* Klikkaus. Sijainti talteen sulavampaa liikettä varten */
+//        lastMouseX = inputEvent.motion.x;
+//        lastMouseY = inputEvent.motion.y;
+//    case (SDL_MOUSEMOTION):
+//        switch (inputEvent.motion.state)
+//        {
+//        case (SDL_BUTTON_LMASK): /* Hiiren vasen nappi pohjassa */
+//            rotateCamera((inputEvent.motion.x - lastMouseX) * camSensitivity * deltaTime,
+//                         (lastMouseY - inputEvent.motion.y) * camSensitivity * deltaTime);
+//            /* Hiiren sijainti talteen muutoksen laskemista varten */
+//            lastMouseX = inputEvent.motion.x;
+//            lastMouseY = inputEvent.motion.y;
+//            break;
+//    }
 }
 
 // Destruktori

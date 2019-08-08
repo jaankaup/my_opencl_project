@@ -11,12 +11,30 @@
 #include "../Utils/log.h"
 
 enum class EventType { UNKNOW, KEYBOARD_MOUSE, RESIZE_EVENT, QUIT};
+enum class MouseButtonType { LEFT, MIDDLE, RIGHT, UNKNOW};
 
 // Forward declaration.
 class InputCache;
 
 typedef std::function<void(const InputCache*)> ICF;
 typedef std::variant<ICF, void (*)(const InputCache*) > InputCache_Function;
+
+struct MouseButton {
+  uint64_t buttonDown_time_start = 0;
+  uint64_t buttonDown_time_end = 0;
+  uint8_t buttonType = 0;
+  bool buttonPressed = false;
+  bool buttonReleased = false;
+  bool buttonDown = false;
+};
+
+struct Mouse {
+  std::vector<MouseButton> buttons;
+  glm::ivec2 old_position = glm::ivec2(0);
+  glm::ivec2 current_position = glm::ivec2(0);
+  bool isMoving = false;
+  bool cursor_initialized = false;
+};
 
 class RegisteredFunction
 {
@@ -76,6 +94,8 @@ class InputCache
     uint32_t register_lambda_function(const EventType et, ICF&& lambda_f);
     uint32_t register_function_pointer(const EventType et, void (*function_pointer)(const InputCache*));
 
+    void preprocess_inputs();
+
     void handle_keyboad_mouse();
     void handle_window_events();
 
@@ -84,6 +104,11 @@ class InputCache
 
     bool isKeyDown(const uint32_t key) const;
     bool isKeyUp(const uint32_t key) const;
+
+    bool isMousePressed(const uint8_t button_type) const;
+    bool isMouseReleased(const uint8_t button_type) const;
+    bool isMouseDown(const uint8_t button_type) const;
+    bool isMouseMoving() const;
 
     int get_screenWidth() const;
     int get_screenHeight() const;
@@ -108,6 +133,14 @@ class InputCache
       pMouseButtonUp.reserve(5);
       pWindowEvents.reserve(5);
       pQuitEvent.reserve(5);
+
+      MouseButton left; left.buttonType = SDL_BUTTON_LEFT;
+      MouseButton middle; middle.buttonType = SDL_BUTTON_MIDDLE;
+      MouseButton right; right.buttonType = SDL_BUTTON_RIGHT;
+
+      pMouse.buttons.push_back(left);
+      pMouse.buttons.push_back(middle);
+      pMouse.buttons.push_back(right);
     };
     static uint32_t nextId;
 
@@ -145,8 +178,18 @@ class InputCache
     uint32_t pTicks_prev = 0;
     uint32_t pTicks_now = 0;
 
-    glm::vec2 pMousePos_prev = glm::vec2(0.0f);
-    glm::vec2 pMousePos_now = glm::vec2(0.0f);
+    glm::ivec2 pMousePos_prev = glm::vec2(0);
+    glm::ivec2 pMousePos_now = glm::vec2(0);
+
+    Mouse pMouse; 
+      
+   //   MouseButton leftButton;
+   //   MouseButton middleButton;
+   //   MouseButton rightButton;
+   //   bool mouse_old_pos = glm::ivec2(0);
+   //   bool mouse_current_pos = glm::ivec2(0);
+   //   bool mouse_relative_pos = glm::ivec2(0);
+   //   bool mouse_on_motion = false;
 };
 
     //uint32_t registerKeysum(std::function<void(const uint8_t*)> rFunction);

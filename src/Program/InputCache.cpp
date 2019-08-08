@@ -82,6 +82,8 @@ void InputCache::pollEvents()
         }
     }
 
+    preprocess_inputs();
+
     handle_window_events();
     handle_keyboad_mouse();
 
@@ -106,6 +108,118 @@ void InputCache::pollEvents()
       // Awake registered functions for quit.
       for (auto& f : pQuit) f.callFunction(this);
     }
+}
+
+/////////////////////////////////////////////////////////////////////////////////////
+
+void InputCache::preprocess_inputs()
+{
+
+  // Clear the previous state.
+    
+  pMouse.isMoving = false;
+
+  for (auto& button : pMouse.buttons)
+  {
+    button.buttonPressed = false;
+    if (button.buttonDown == false)
+    {
+      button.buttonDown_time_start = 0;
+      button.buttonDown_time_end = 0;
+      button.buttonReleased = false;
+    }
+  }
+
+  // Buttons are pressed.
+  for (const auto& e : pMouseButtonDown)
+  {
+    for (auto& button : pMouse.buttons)
+    {
+      if (button.buttonType == e.button.button)
+      {
+        button.buttonPressed = true;
+        button.buttonDown = true;
+        button.buttonDown_time_start = e.button.timestamp; // TODO: high-resolution clock.
+        button.buttonDown_time_end = e.button.timestamp; // TODO: high-resolution clock.
+      }
+    }
+  }
+
+  // Buttons are released.
+  for (const auto& e : pMouseButtonUp)
+  {
+    for (auto& button : pMouse.buttons)
+    {
+      if (button.buttonType == e.button.button)
+      {
+        button.buttonDown = false;
+        button.buttonReleased = true;
+        button.buttonDown_time_end = e.button.timestamp; // TODO: high-resolution clock.
+      }
+    }
+  }
+
+  // Mouse motion.
+
+  // If there are more mouse motion events than one, we must fix this function.
+  if (pMouseMotionEvents.size() > 1) Log::getError().log("InputCache::preprocess_inputs: pMouseMotionEvents.size() ==  %", pMouseMotionEvents.size());
+
+  for (const auto& e : pMouseMotionEvents)
+  {
+    pMouse.isMoving = true;
+    auto x = e.motion.x;
+    auto y = e.motion.y;
+    if (!pMouse.cursor_initialized) { pMouse.old_position, pMouse.current_position = glm::ivec2(e.motion.x,e.motion.y); pMouse.cursor_initialized = true; }
+    else {
+      pMouse.old_position = pMouse.current_position;
+      pMouse.current_position = glm::ivec2(x,y);
+    }
+  }
+}
+
+/////////////////////////////////////////////////////////////////////////////////////
+
+bool InputCache::isMousePressed(const uint8_t mbt) const
+{
+  for (const auto& b : pMouse.buttons)
+  {
+    if (b.buttonType == mbt) return b.buttonPressed;
+  }
+  Log::getError().log("InputCache::isMousePressed(%): No such mouse type found!",mbt);
+  return false;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////
+
+bool InputCache::isMouseReleased(const uint8_t mbt) const
+{
+  for (const auto& b : pMouse.buttons)
+  {
+    if (b.buttonType == mbt) return b.buttonReleased;
+  }
+  Log::getError().log("InputCache::isMouseReleased(%): No such mouse type found!",mbt);
+  return false;
+
+}
+
+/////////////////////////////////////////////////////////////////////////////////////
+
+bool InputCache::isMouseDown(const uint8_t mbt) const
+{
+  for (const auto& b : pMouse.buttons)
+  {
+    if (b.buttonType == mbt) return b.buttonDown;
+  }
+  Log::getError().log("InputCache::isMouseDown(%): No such mouse type found!",mbt);
+  return false;
+
+}
+
+/////////////////////////////////////////////////////////////////////////////////////
+
+bool InputCache::isMouseMoving() const
+{
+  return pMouse.isMoving;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////

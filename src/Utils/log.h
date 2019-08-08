@@ -5,6 +5,7 @@
 #include <stdexcept>
 #include <string>
 
+#define USE_GLM
 #ifdef USE_GLM
   #include <glm/glm.hpp>
   #include <glm/gtc/type_ptr.hpp>
@@ -66,6 +67,7 @@ class Log
               else if constexpr (std::is_arithmetic<T>::value) os_ << std::to_string(val);
 #ifdef USE_GLM
               else if constexpr (std::is_same<T, glm::vec2>::value) os_ << vec_toString(val);
+              else if constexpr (std::is_same<T, glm::ivec2>::value) os_ << vec_toString(val);
               else if constexpr (std::is_same<T, glm::vec3>::value) os_ << vec_toString(val);
               else if constexpr (std::is_same<T, glm::vec4>::value) os_ << vec_toString(val);
               else if constexpr (std::is_same<T, glm::mat3>::value) os_ << vec_toString(val);
@@ -100,6 +102,11 @@ class Log
     std::string vec_toString(const glm::vec2& object)
     {
       return "glm::vec2(" + std::to_string(object.x) + "," + std::to_string(object.y) + ")";
+    }
+
+    std::string vec_toString(const glm::ivec2& object)
+    {
+      return "glm::ivec2(" + std::to_string(object.x) + "," + std::to_string(object.y) + ")";
     }
 
     std::string vec_toString(const glm::vec3& object)
