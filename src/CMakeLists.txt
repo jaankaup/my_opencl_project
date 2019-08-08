@@ -22,6 +22,7 @@ set (util_dir ${src_dir}/Utils)
 set (physics_dir ${src_dir}/Physics)
 set (opencl_dir ${src_dir}/OpenCL)
 set (program_dir ${src_dir}/Program)
+set (test_dir ${src_dir}/Tests)
 
 set(graphics_src 
       ${graphics_dir}/window.cpp
@@ -65,6 +66,10 @@ set (soil_src
 	${soil_dir}/SOIL.c
 	${soil_dir}/stb_image_aug.c
 	)
+
+#set (tests_src
+#  ${tests_dir}/TestEvents.c
+#	)
 
 
 set (headers ${CMAKE_SOURCE_DIR}/headers)

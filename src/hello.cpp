@@ -284,6 +284,29 @@ int main(int argc, char* argv[])
   auto id4 = eh->register_function_pointer(EventType::KEYBOARD_MOUSE,[](const InputCache* c) {if (c->isKeyDown('1')) {Log::getDebug().log("1"); ProgramState::getInstance().toggleLumi();}});
   auto id5 = eh->register_function_pointer(EventType::KEYBOARD_MOUSE,[](const InputCache* c) {if (c->isKeyDown('2')) {Log::getDebug().log("2"); ProgramState::getInstance().toggleVerho();}});
   auto id6 = eh->register_function_pointer(EventType::KEYBOARD_MOUSE,[](const InputCache* c) {if (c->isKeyDown('3')) {Log::getDebug().log("3"); ProgramState::getInstance().toggleRuohikko();}});
+
+//    ic->register_lambda_function(EventType::KEYBOARD_MOUSE,
+//              [](const InputCache* c) {  
+//
+//              if (c->isMousePressed(SDL_BUTTON_LEFT)) Log::getDebug().log("Left mouse pressed.");
+//              if (c->isMousePressed(SDL_BUTTON_MIDDLE)) Log::getDebug().log("Middle mouse pressed.");
+//              if (c->isMousePressed(SDL_BUTTON_RIGHT)) Log::getDebug().log("Right mouse pressed.");
+//
+//              if (c->isMouseReleased(SDL_BUTTON_LEFT)) Log::getDebug().log("Left mouse released.");
+//              if (c->isMouseReleased(SDL_BUTTON_MIDDLE)) Log::getDebug().log("Middle mouse released.");
+//              if (c->isMouseReleased(SDL_BUTTON_RIGHT)) Log::getDebug().log("Right mouse released.");
+//
+//              if (c->isMouseDown(SDL_BUTTON_LEFT)) Log::getDebug().log("Left mouse down.");
+//              if (c->isMouseDown(SDL_BUTTON_MIDDLE)) Log::getDebug().log("Middle mouse down.");
+//              if (c->isMouseDown(SDL_BUTTON_RIGHT)) Log::getDebug().log("Right mouse down.");
+//
+//              if (c->isMouseMoving()) Log::getDebug().log("Mouse is moving.");
+//
+//              if (c->isMouseReleased(SDL_BUTTON_LEFT)) Log::getDebug().log("Left mouse delta == %.",c->getButtonDown_time(SDL_BUTTON_LEFT));
+//              if (c->isMouseReleased(SDL_BUTTON_MIDDLE)) Log::getDebug().log("Middle mouse delta == %.",c->getButtonDown_time(SDL_BUTTON_MIDDLE));
+//              if (c->isMouseReleased(SDL_BUTTON_RIGHT)) Log::getDebug().log("Right mouse delta == %.",c->getButtonDown_time(SDL_BUTTON_RIGHT));
+//
+//              });
     //            case SDLK_1:
     //                ProgramState::getInstance().toggleLumi();
     //                break;

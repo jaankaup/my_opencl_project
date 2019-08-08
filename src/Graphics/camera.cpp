@@ -14,8 +14,11 @@ Camera::Camera(const glm::vec3& cameraPosition, const glm::vec3& cameraTarget, c
     auto ic = InputCache::getInstance();
     ic->register_lambda_function(EventType::KEYBOARD_MOUSE,
               [&](const InputCache* c) {  
-              auto deltaTime = ProgramState::getInstance().getTimeDelta();
-
+              auto deltaTime2 = c->get_timeDelta();
+              Log::getWarning().log("Deleta on %",deltaTime2);
+              double deltaTime3 = deltaTime2 / 10000000.0;
+              Log::getWarning().log("Deleta double on %",deltaTime3);
+              float deltaTime = float(deltaTime3);
               /* Pyydetään SDL:n näppäintila */
               //const Uint8* keystate = ic->get_keyboardState() ;
 
@@ -48,27 +51,27 @@ Camera::Camera(const glm::vec3& cameraPosition, const glm::vec3& cameraTarget, c
               this->update(deltaTime);
               });
 
+
     ic->register_lambda_function(EventType::KEYBOARD_MOUSE,
               [&](const InputCache* c) {  
+                if (c->isMousePressed(SDL_BUTTON_LEFT))
+                {
+                  Log::getWarning().log("no höhhh!!! kilkattu on");
+                  auto pos = c->getCurrent_mousePosition();
+                  this->lastMouseX = pos.x;
+                  this->lastMouseY = pos.y;
+                }
 
-              if (c->isMousePressed(SDL_BUTTON_LEFT)) Log::getDebug().log("Left mouse pressed.");
-              if (c->isMousePressed(SDL_BUTTON_MIDDLE)) Log::getDebug().log("Middle mouse pressed.");
-              if (c->isMousePressed(SDL_BUTTON_RIGHT)) Log::getDebug().log("Right mouse pressed.");
-
-              if (c->isMouseReleased(SDL_BUTTON_LEFT)) Log::getDebug().log("Left mouse pressed.");
-              if (c->isMouseReleased(SDL_BUTTON_MIDDLE)) Log::getDebug().log("Middle mouse pressed.");
-              if (c->isMouseReleased(SDL_BUTTON_RIGHT)) Log::getDebug().log("Right mouse pressed.");
-
-              if (c->isMouseDown(SDL_BUTTON_LEFT)) Log::getDebug().log("Left mouse down.");
-              if (c->isMouseDown(SDL_BUTTON_MIDDLE)) Log::getDebug().log("Middle mouse down.");
-              if (c->isMouseDown(SDL_BUTTON_RIGHT)) Log::getDebug().log("Right mouse down.");
-
-              if (c->isMouseMoving()) Log::getDebug().log("Mouse is moving.");
-
+                if (c->isMouseMoving() && c->isMouseDown(SDL_BUTTON_LEFT))
+                {
+                  Log::getWarning().log("no höhhh!!! nyt liikkuuu!!!");
+                  auto pos = c->getCurrent_mousePosition();
+                  this->rotateCamera((pos.x - this->lastMouseX) * this->camSensitivity * this->deltaTime,
+                                    (this->lastMouseY - pos.y) * this->camSensitivity * this->deltaTime);
+                  this->lastMouseX = pos.x;
+                  this->lastMouseY = pos.y;
+                }
               });
-
-//    ic->register_lambda_function(EventType::KEYBOARD_MOUSE,
-//              [&](const InputCache* c) {  
 //    case (SDL_MOUSEBUTTONDOWN): /* Klikkaus. Sijainti talteen sulavampaa liikettä varten */
 //        lastMouseX = inputEvent.motion.x;
 //        lastMouseY = inputEvent.motion.y;
@@ -198,6 +201,7 @@ void Camera::adjustSensitivity(const float &adjust)
  */
 void Camera::update(const float time)
 {
+  Log::getDebug().log("Nyt updeittailee : %", time);
         // WASD-kamera
         translate(position_);
         setView(position_ + front_);

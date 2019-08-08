@@ -124,10 +124,11 @@ void InputCache::preprocess_inputs()
     button.buttonPressed = false;
     if (button.buttonDown == false)
     {
-      button.buttonDown_time_start = 0;
-      button.buttonDown_time_end = 0;
+      button.buttonDown_time_start = pTicks_now;
+      button.buttonDown_time_end = pTicks_now;
       button.buttonReleased = false;
     }
+    else button.buttonDown_time_end += (pTicks_now - pTicks_prev);  
   }
 
   // Buttons are pressed.
@@ -139,8 +140,8 @@ void InputCache::preprocess_inputs()
       {
         button.buttonPressed = true;
         button.buttonDown = true;
-        button.buttonDown_time_start = e.button.timestamp; // TODO: high-resolution clock.
-        button.buttonDown_time_end = e.button.timestamp; // TODO: high-resolution clock.
+        button.buttonDown_time_start = pTicks_now;
+        button.buttonDown_time_end = pTicks_now;
       }
     }
   }
@@ -154,7 +155,6 @@ void InputCache::preprocess_inputs()
       {
         button.buttonDown = false;
         button.buttonReleased = true;
-        button.buttonDown_time_end = e.button.timestamp; // TODO: high-resolution clock.
       }
     }
   }
@@ -217,9 +217,35 @@ bool InputCache::isMouseDown(const uint8_t mbt) const
 
 /////////////////////////////////////////////////////////////////////////////////////
 
+uint64_t InputCache::getButtonDown_time(const uint8_t mbt) const
+{
+  for (const auto& b : pMouse.buttons)
+  {
+    if (b.buttonType == mbt) return std::chrono::duration_cast<std::chrono::microseconds>(b.buttonDown_time_end - b.buttonDown_time_start).count();
+  }
+  Log::getError().log("InputCache::isMouseDown(%): No such mouse type found!",mbt);
+  return 0;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////
+
 bool InputCache::isMouseMoving() const
 {
   return pMouse.isMoving;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////
+
+glm::ivec2 InputCache::getMouseDelta() const
+{
+  return pMouse.current_position - pMouse.old_position;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////
+
+glm::ivec2 InputCache::getCurrent_mousePosition() const
+{
+  return pMouse.current_position; 
 }
 
 /////////////////////////////////////////////////////////////////////////////////////
@@ -463,21 +489,23 @@ const uint8_t* InputCache::get_keyboardState() const
 
 void InputCache::updateTick()
 {
+
+//  std::cout << type_name<decltype(joo)>() << std::endl;
   pTicks_prev = pTicks_now;
-  pTicks_now = SDL_GetTicks();
+  pTicks_now = std::chrono::system_clock::now();
+
 }
 
 /////////////////////////////////////////////////////////////////////////////////////
 
-uint32_t InputCache::get_timeDelta() const
+uint64_t InputCache::get_timeDelta() const
 {
-  return pTicks_now - pTicks_prev;
-  //auto del = pTicks_now - pTicks_prev;
-  //if (del != 0)
-  //{
-  //  return float(newTick)/float(pTick);
-  //}
-  //return 0.0f;
+  
+//  Log::getDebug().log("now == %", pTicks_now);
+//  Log::getDebug().log("prev == %", pTicks_prev);
+//  Log::getDebug().log("delta == %", pTicks_now - pTicks_prev);
+  //auto delta = pTicks_now - pTicks_prev; 
+  return std::chrono::duration_cast<std::chrono::microseconds>(pTicks_now - pTicks_prev).count();
 }
 
 /////////////////////////////////////////////////////////////////////////////////////

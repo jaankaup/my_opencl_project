@@ -1,6 +1,7 @@
 #ifndef INPUTCACHE_H
 #define INPUTCACHE_H
 
+#include <chrono>
 #include <vector>
 #include <functional>
 //#include <optional>
@@ -13,6 +14,8 @@
 enum class EventType { UNKNOW, KEYBOARD_MOUSE, RESIZE_EVENT, QUIT};
 enum class MouseButtonType { LEFT, MIDDLE, RIGHT, UNKNOW};
 
+typedef std::chrono::time_point<std::chrono::_V2::system_clock, std::chrono::duration<long int, std::ratio<1, 1000000000>>> HTime;
+
 // Forward declaration.
 class InputCache;
 
@@ -20,8 +23,8 @@ typedef std::function<void(const InputCache*)> ICF;
 typedef std::variant<ICF, void (*)(const InputCache*) > InputCache_Function;
 
 struct MouseButton {
-  uint64_t buttonDown_time_start = 0;
-  uint64_t buttonDown_time_end = 0;
+  HTime buttonDown_time_start;
+  HTime buttonDown_time_end;
   uint8_t buttonType = 0;
   bool buttonPressed = false;
   bool buttonReleased = false;
@@ -108,14 +111,18 @@ class InputCache
     bool isMousePressed(const uint8_t button_type) const;
     bool isMouseReleased(const uint8_t button_type) const;
     bool isMouseDown(const uint8_t button_type) const;
+    uint64_t getButtonDown_time(const uint8_t button_type) const;
     bool isMouseMoving() const;
+
+    glm::ivec2 getMouseDelta() const;
+    glm::ivec2 getCurrent_mousePosition() const;
 
     int get_screenWidth() const;
     int get_screenHeight() const;
 
     const uint8_t* get_keyboardState() const;
 
-    uint32_t get_timeDelta() const;
+    uint64_t get_timeDelta() const;
 
 
     ~InputCache() {};
@@ -141,6 +148,9 @@ class InputCache
       pMouse.buttons.push_back(left);
       pMouse.buttons.push_back(middle);
       pMouse.buttons.push_back(right);
+      auto time = std::chrono::system_clock::now();
+      pTicks_prev = time;
+      pTicks_now = time;
     };
     static uint32_t nextId;
 
@@ -154,8 +164,6 @@ class InputCache
     std::vector<RegisteredFunction> pResize;
     std::vector<RegisteredFunction> pQuit;
    
-//    std::vector<InputCache_Function> pKeyMouse;
-
     //std::unordered_map<const ICF*,ICF> pKeyMouse;
 //    std::unordered_map<int,ICF> pQuit;
 //    std::unordered_map<int,ICF> pResize;
@@ -174,9 +182,10 @@ class InputCache
     std::vector<SDL_Event> pMouseButtonUp;
     std::vector<SDL_Event> pWindowEvents;
     std::vector<SDL_Event> pQuitEvent;
-
-    uint32_t pTicks_prev = 0;
-    uint32_t pTicks_now = 0;
+    HTime pTicks_prev;
+    HTime pTicks_now;
+//    uint64_t pTicks_prev = 0;
+//    uint64_t pTicks_now = 0;
 
     glm::ivec2 pMousePos_prev = glm::vec2(0);
     glm::ivec2 pMousePos_now = glm::vec2(0);
