@@ -456,10 +456,10 @@ int InputCache::get_screenHeight() const
 
 /////////////////////////////////////////////////////////////////////////////////////
 
-bool InputCache::isKeyDown(const uint32_t key) const
+bool InputCache::isKeyPressed(const uint32_t key) const
 {
   if (pKeyDownEvents.size() > 0) {
-    if (pKeyDownEvents[0].key.keysym.sym == key) {
+    if (pKeyDownEvents[0].key.keysym.scancode == key || pKeyDownEvents[0].key.keysym.sym == key ) {
       return true;
     }
   }
@@ -468,7 +468,16 @@ bool InputCache::isKeyDown(const uint32_t key) const
 
 /////////////////////////////////////////////////////////////////////////////////////
 
-bool InputCache::isKeyUp(const uint32_t key) const
+bool InputCache::isKeyDown(const uint32_t key) const
+{
+  auto state = SDL_GetKeyboardState(NULL);
+  if (state[key]) return true;
+  return false;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////
+
+bool InputCache::isKeyReleased(const uint32_t key) const
 {
   if (pKeyUpEvents.size() > 0) {
     if (pKeyUpEvents[0].key.keysym.sym == key) {

@@ -12,45 +12,47 @@ Camera::Camera(const glm::vec3& cameraPosition, const glm::vec3& cameraTarget, c
 
     rotateCamera(0,0);
     auto ic = InputCache::getInstance();
-    ic->register_lambda_function(EventType::KEYBOARD_MOUSE,
-              [&](const InputCache* c) {  
-              auto deltaTime2 = c->get_timeDelta();
-              Log::getWarning().log("Deleta on %",deltaTime2);
-              double deltaTime3 = deltaTime2 / 10000000.0;
-              Log::getWarning().log("Deleta double on %",deltaTime3);
-              float deltaTime = float(deltaTime3);
-              /* Pyydetään SDL:n näppäintila */
-              //const Uint8* keystate = ic->get_keyboardState() ;
-
-              /* Shift hidastaa liikkumisnopeutta */
-              float speedMultiplier = this->camSpeed;
-              if (c->isKeyDown(SDL_SCANCODE_LSHIFT) || c->isKeyDown(SDL_SCANCODE_RSHIFT) )
-              {
-                  speedMultiplier *= 0.3f;
-              }
-
-              /* WASD-näppäimet */
-              if(c->isKeyDown(SDL_SCANCODE_UP) || c->isKeyDown(SDL_SCANCODE_W))
-                  this->position_ += this->front_ * speedMultiplier * deltaTime;
-
-              if(c->isKeyDown(SDL_SCANCODE_DOWN) || c->isKeyDown(SDL_SCANCODE_S))
-                  this->position_ -= this->front_ * speedMultiplier * deltaTime;
-
-              if(c->isKeyDown(SDL_SCANCODE_LEFT) || c->isKeyDown(SDL_SCANCODE_A))
-                  this->position_ -= glm::normalize(glm::cross(this->front_, this->up_)) * speedMultiplier * deltaTime;
-
-              if(c->isKeyDown(SDL_SCANCODE_RIGHT) || c->isKeyDown(SDL_SCANCODE_D))
-                  this->position_ += glm::normalize(glm::cross(this->front_, this->up_)) * speedMultiplier * deltaTime;
-
-              /* Ylös ja alas liikkuminen */
-              if(c->isKeyDown(SDL_SCANCODE_V))
-                  this->position_ += glm::normalize(this->up_) * speedMultiplier * deltaTime;
-
-              if(c->isKeyDown(SDL_SCANCODE_C))
-                  this->position_ -= glm::normalize(this->up_) * speedMultiplier * deltaTime;
-              this->update(deltaTime);
-              });
-
+//    ic->register_lambda_function(EventType::KEYBOARD_MOUSE,
+//              [&](const InputCache* c) {  
+//              auto deltaTime2 = c->get_timeDelta();
+//              Log::getWarning().log("Deleta on %",deltaTime2);
+//              double deltaTime3 = 1.0 + deltaTime2 / 1000000.0;
+//              Log::getWarning().log("Deleta double on %",deltaTime3);
+//              this->deltaTime = float(deltaTime3);
+//              /* Pyydetään SDL:n näppäintila */
+//              //const Uint8* keystate = ic->get_keyboardState() ;
+//
+//              /* Shift hidastaa liikkumisnopeutta */
+//              float speedMultiplier = this->camSpeed;
+//              if (c->isKeyDown(SDL_SCANCODE_LSHIFT) || c->isKeyDown(SDL_SCANCODE_RSHIFT) )
+//              {
+//                  speedMultiplier *= 0.3f;
+//              }
+//
+//              /* WASD-näppäimet */
+//              if(c->isKeyDown(SDL_SCANCODE_UP) || c->isKeyDown(SDL_SCANCODE_W)) {
+//                  Log::getWarning().log("uppppppppppppp");
+//                  this->position_ += this->front_ * speedMultiplier * this->deltaTime;
+//              }
+//
+//              if(c->isKeyDown(SDL_SCANCODE_DOWN) || c->isKeyDown(SDL_SCANCODE_S))
+//                  this->position_ -= this->front_ * speedMultiplier * this->deltaTime;
+//
+//              if(c->isKeyDown(SDL_SCANCODE_LEFT) || c->isKeyDown(SDL_SCANCODE_A))
+//                  this->position_ -= glm::normalize(glm::cross(this->front_, this->up_)) * speedMultiplier * this->deltaTime;
+//
+//              if(c->isKeyDown(SDL_SCANCODE_RIGHT) || c->isKeyDown(SDL_SCANCODE_D))
+//                  this->position_ += glm::normalize(glm::cross(this->front_, this->up_)) * speedMultiplier * this->deltaTime;
+//
+//              /* Ylös ja alas liikkuminen */
+//              if(c->isKeyDown(SDL_SCANCODE_V))
+//                  this->position_ += glm::normalize(this->up_) * speedMultiplier * this->deltaTime;
+//
+//              if(c->isKeyDown(SDL_SCANCODE_C))
+//                  this->position_ -= glm::normalize(this->up_) * speedMultiplier * this->deltaTime;
+//              Log::getWarning().log("position: %",this->position_);
+//              this->update(this->deltaTime); // TODO: this->deltaTime does nothing
+//              });
 
     ic->register_lambda_function(EventType::KEYBOARD_MOUSE,
               [&](const InputCache* c) {  
@@ -72,6 +74,8 @@ Camera::Camera(const glm::vec3& cameraPosition, const glm::vec3& cameraTarget, c
                   this->lastMouseY = pos.y;
                 }
               });
+
+
 //    case (SDL_MOUSEBUTTONDOWN): /* Klikkaus. Sijainti talteen sulavampaa liikettä varten */
 //        lastMouseX = inputEvent.motion.x;
 //        lastMouseY = inputEvent.motion.y;
@@ -212,45 +216,39 @@ void Camera::update(const float time)
  */
 void Camera::handleKeyInput()
 {
-  deltaTime = ProgramState::getInstance().getTimeDelta();
-//  uint32_t newTick = SDL_GetTicks();
-//  auto del = newTick - pPrevTick;
-//  if (del != 0)
-//  {
-//    ProgramState::getInstance().getDeltaTime();
-//    deltaTime = float(newTick)/float(pPrevTick);
-//  }
-//  pPrevTick = newTick;
-    /* Pyydetään SDL:n näppäintila */
-    const Uint8* keystate = SDL_GetKeyboardState(NULL);
+  auto ic = InputCache::getInstance();
+  auto deltaTime2 = ic->get_timeDelta();
 
-    /* Shift hidastaa liikkumisnopeutta */
-    float speedMultiplier = camSpeed;
-    if (keystate[SDL_SCANCODE_LSHIFT] || keystate[SDL_SCANCODE_RSHIFT] )
-    {
-        speedMultiplier *= 0.3f;
-    }
+  double deltaTime3 = 1.0 + deltaTime2 / 1000000.0;
+  Log::getWarning().log("Deleta double on %",deltaTime3);
+  this->deltaTime = float(deltaTime3);
 
-    /* WASD-näppäimet */
-    if(keystate[SDL_SCANCODE_UP] || keystate[SDL_SCANCODE_W])
-        position_ += front_ * speedMultiplier * deltaTime;
+  /* Shift hidastaa liikkumisnopeutta */
+  float speedMultiplier = camSpeed;
+  if (ic->isKeyDown(SDL_SCANCODE_LSHIFT) || ic->isKeyDown(SDL_SCANCODE_RSHIFT) )
+  {
+      speedMultiplier *= 0.3f;
+  }
 
-    if(keystate[SDL_SCANCODE_DOWN] || keystate[SDL_SCANCODE_S])
-        position_ -= front_ * speedMultiplier * deltaTime;
+  if(ic->isKeyDown(SDL_SCANCODE_UP) || ic->isKeyDown(SDL_SCANCODE_W)) {
+      position_ += front_ * speedMultiplier * deltaTime;
+  }
 
-    if(keystate[SDL_SCANCODE_LEFT] || keystate[SDL_SCANCODE_A])
-        position_ -= glm::normalize(glm::cross(front_, up_)) * speedMultiplier * deltaTime;
+  if(ic->isKeyDown(SDL_SCANCODE_DOWN) || ic->isKeyDown(SDL_SCANCODE_S))
+      position_ -= front_ * speedMultiplier * deltaTime;
 
-    if(keystate[SDL_SCANCODE_RIGHT] || keystate[SDL_SCANCODE_D])
-        position_ += glm::normalize(glm::cross(front_, up_)) * speedMultiplier * deltaTime;
+  if(ic->isKeyDown(SDL_SCANCODE_LEFT) || ic->isKeyDown(SDL_SCANCODE_A))
+      position_ -= glm::normalize(glm::cross(front_, up_)) * speedMultiplier * deltaTime;
 
-    /* Ylös ja alas liikkuminen */
-    if(keystate[SDL_SCANCODE_V])
-        position_ += glm::normalize(up_) * speedMultiplier * deltaTime;
+  if(ic->isKeyDown(SDL_SCANCODE_RIGHT) || ic->isKeyDown(SDL_SCANCODE_D))
+      position_ += glm::normalize(glm::cross(front_, up_)) * speedMultiplier * deltaTime;
 
-    if(keystate[SDL_SCANCODE_C])
-        position_ -= glm::normalize(up_) * speedMultiplier * deltaTime;
-    update(deltaTime);
+  if(ic->isKeyDown(SDL_SCANCODE_V))
+      position_ += glm::normalize(up_) * speedMultiplier * deltaTime;
+
+  if(ic->isKeyDown(SDL_SCANCODE_C))
+      position_ -= glm::normalize(up_) * speedMultiplier * deltaTime;
+  update(deltaTime);
 
 }
 

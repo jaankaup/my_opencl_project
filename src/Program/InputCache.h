@@ -105,8 +105,9 @@ class InputCache
     // Remove an event listener function.
     bool unregister(const uint32_t id);
 
+    bool isKeyPressed(const uint32_t key) const;
+    bool isKeyReleased(const uint32_t key) const;
     bool isKeyDown(const uint32_t key) const;
-    bool isKeyUp(const uint32_t key) const;
 
     bool isMousePressed(const uint8_t button_type) const;
     bool isMouseReleased(const uint8_t button_type) const;

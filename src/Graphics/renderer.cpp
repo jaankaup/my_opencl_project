@@ -23,6 +23,7 @@ void Renderer::init()
 }
 
 void Renderer::render(const Camera& camera) {
+  //Log::getDebug().log("camera % .",camera.getMatrix());
   glClearColor(0.0f,0.0f,0.0f,1.0f);
   glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 

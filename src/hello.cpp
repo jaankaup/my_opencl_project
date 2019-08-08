@@ -257,7 +257,7 @@ void loop_handler2(void *arg)
 
     //    }
     //}
-    //c->camera.handleKeyInput();
+    c->camera.handleKeyInput();
     Window::getInstance().swapBuffers();
     c->renderer.render(c->camera);
     // Kasvatetaan h laskuria.
@@ -279,11 +279,11 @@ int main(int argc, char* argv[])
   eh->init();
 
   bool running = true;
-  auto id1 = eh->register_lambda_function(EventType::KEYBOARD_MOUSE,[&](const InputCache* c) { running = !c->isKeyUp('a'); });
+  auto id1 = eh->register_lambda_function(EventType::KEYBOARD_MOUSE,[&](const InputCache* c) { running = !c->isKeyReleased('q'); });
 //  auto id3 = eh->register_function_pointer(EventType::KEYBOARD_MOUSE,&yhyy);
-  auto id4 = eh->register_function_pointer(EventType::KEYBOARD_MOUSE,[](const InputCache* c) {if (c->isKeyDown('1')) {Log::getDebug().log("1"); ProgramState::getInstance().toggleLumi();}});
-  auto id5 = eh->register_function_pointer(EventType::KEYBOARD_MOUSE,[](const InputCache* c) {if (c->isKeyDown('2')) {Log::getDebug().log("2"); ProgramState::getInstance().toggleVerho();}});
-  auto id6 = eh->register_function_pointer(EventType::KEYBOARD_MOUSE,[](const InputCache* c) {if (c->isKeyDown('3')) {Log::getDebug().log("3"); ProgramState::getInstance().toggleRuohikko();}});
+  auto id4 = eh->register_function_pointer(EventType::KEYBOARD_MOUSE,[](const InputCache* c) {if (c->isKeyPressed('1')) {Log::getDebug().log("1"); ProgramState::getInstance().toggleLumi();}});
+  auto id5 = eh->register_function_pointer(EventType::KEYBOARD_MOUSE,[](const InputCache* c) {if (c->isKeyPressed('2')) {Log::getDebug().log("2"); ProgramState::getInstance().toggleVerho();}});
+  auto id6 = eh->register_function_pointer(EventType::KEYBOARD_MOUSE,[](const InputCache* c) {if (c->isKeyPressed('3')) {Log::getDebug().log("3"); ProgramState::getInstance().toggleRuohikko();}});
 
 //    ic->register_lambda_function(EventType::KEYBOARD_MOUSE,
 //              [](const InputCache* c) {  
