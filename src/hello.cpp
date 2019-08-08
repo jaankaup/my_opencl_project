@@ -281,7 +281,7 @@ int main(int argc, char* argv[])
 //  eh->init();
 
   Program::MainProgram prog;
-  prog.initialize();
+  if (!prog.initialize()) return 1;
   prog.start();
 //  bool running = true;
 //  auto id1 = eh->register_lambda_function(EventType::KEYBOARD_MOUSE,[&](const InputCache* c) { running = !c->isKeyReleased('q'); });

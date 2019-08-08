@@ -8,6 +8,7 @@
 #include <optional>
 #include <memory>
 #include <glm/glm.hpp>
+#include "../Utils/log.h"
 
 namespace Program {
 
@@ -69,71 +70,62 @@ class GlobalPropertyManager
       static GlobalPropertyManager* getInstance() { static GlobalPropertyManager gp; return &gp; }
       
       /* Add functions for global variables. */
-      void add(std::string key, const IntProperty& value)    { pInts[key] = std::make_optional(value); }
-      void add(std::string key, const FloatProperty& value)  { pFloats[key] = std::make_optional(value); }
-      void add(std::string key, const BoolProperty& value)   { pBools[key] = std::make_optional(value); }
-      void add(std::string key, const StringProperty& value) { pStrings[key] = std::make_optional(value); }
-      void add(std::string key, const Vec2Property& value)   { pVec2[key] = std::make_optional(value); }
-      void add(std::string key, const Vec3Property& value)   { pVec3[key] = std::make_optional(value); }
-      void add(std::string key, const Vec4Property& value)   { pVec4[key] = std::make_optional(value); }
-      void add(std::string key, const Mat3Property& value)   { pMat3[key] = std::make_optional(value); }
-      void add(std::string key, const Mat4Property& value)   { pMat4[key] = std::make_optional(value); }
+      void add(std::string key, const IntProperty& value)    { pInts[key] = std::move(value); }
+      void add(std::string key, const FloatProperty& value)  { pFloats[key] = std::move(value); }
+      void add(std::string key, const BoolProperty& value)   { pBools[key] = std::move(value); }
+      void add(std::string key, const StringProperty& value) { pStrings[key] = std::move(value); }
+      void add(std::string key, const Vec2Property& value)   { pVec2[key] = std::move(value); }
+      void add(std::string key, const Vec3Property& value)   { pVec3[key] = std::move(value); }
+      void add(std::string key, const Vec4Property& value)   { pVec4[key] = std::move(value); }
+      void add(std::string key, const Mat3Property& value)   { pMat3[key] = std::move(value); }
+      void add(std::string key, const Mat4Property& value)   { pMat4[key] = std::move(value); }
       
       /* Get functions. */
       template<typename C>
-      std::optional<C>* get(std::string key)
+      C* get(std::string key)
       {    
          if constexpr (std::is_same<C, IntProperty>::value) {
-           static auto empty = std::optional<C>();
-           if (pInts.count(key) == 0) return &empty;
+           if (pInts.count(key) == 0) { Log::getError().log("Trying to access IntProperty '%' but the property doesn't exist!", key); return nullptr;}
            return &pInts[key];   
          }
 
          if constexpr (std::is_same<C, FloatProperty>::value) {
-           static auto empty = std::optional<C>();
-           if (pFloats.count(key) == 0) return &empty;
+           if (pFloats.count(key) == 0) { Log::getError().log("Trying to access FloatProperty '%' but the property doesn't exist!", key); return nullptr;}
            return &pFloats[key];   
          }
 
          if constexpr (std::is_same<C, StringProperty>::value) {
-           static auto empty = std::optional<C>();
-           if (pStrings.count(key) == 0) return &empty;
+           if (pStrings.count(key) == 0) { Log::getError().log("Trying to access StringProperty '%' but the property doesn't exist!", key); return nullptr;}
            return &pStrings[key];   
          }
 
          if constexpr (std::is_same<C, BoolProperty>::value) {
-           static auto empty = std::optional<C>();
-           if (pBools.count(key) == 0) return &empty;
+           if (pBools.count(key) == 0) { Log::getError().log("Trying to access BoolProperty '%' but the property doesn't exist!", key); return nullptr;}
            return &pBools[key];   
          }
 
          if constexpr (std::is_same<C, Vec2Property>::value) {
-           static auto empty = std::optional<C>();
-           if (pVec2.count(key) == 0) return &empty;
+           if (pVec2.count(key) == 0) { Log::getError().log("Trying to access Vec2Property '%' but the property doesn't exist!", key); return nullptr;}
            return &pVec2[key];   
          }
 
          if constexpr (std::is_same<C, Vec3Property>::value) {
-           static auto empty = std::optional<C>();
-           if (pVec3.count(key) == 0) return &empty;
+           if (pVec3.count(key) == 0) { Log::getError().log("Trying to access Vec3Property '%' but the property doesn't exist!", key); return nullptr;}
            return &pVec3[key];   
          }
 
          if constexpr (std::is_same<C, Vec4Property>::value) {
-           static auto empty = std::optional<C>();
-           if (pVec4.count(key) == 0) return &empty;
+           if (pVec4.count(key) == 0) { Log::getError().log("Trying to access Vec4Property '%' but the property doesn't exist!", key); return nullptr;}
            return &pVec4[key];   
          }
 
          if constexpr (std::is_same<C, Mat3Property>::value) {
-           static auto empty = std::optional<C>();
-           if (pMat3.count(key) == 0) return &empty;
+           if (pMat3.count(key) == 0) { Log::getError().log("Trying to access Mat3Property '%' but the property doesn't exist!", key); return nullptr;}
            return &pMat3[key];   
          }
 
          if constexpr (std::is_same<C, Mat4Property>::value) {
-           static auto empty = std::optional<C>();
-           if (pMat4.count(key) == 0) return &empty;
+           if (pMat4.count(key) == 0) { Log::getError().log("Trying to access Mat4Property '%' but the property doesn't exist!", key); return nullptr;}
            return &pMat4[key];   
          }
       }
@@ -143,15 +135,15 @@ class GlobalPropertyManager
       // A private contructor for manager.
       GlobalPropertyManager() {};
     
-      std::unordered_map<std::string,std::optional<GlobalProperty<int>>> pInts;
-      std::unordered_map<std::string,std::optional<GlobalProperty<float>>> pFloats;
-      std::unordered_map<std::string,std::optional<GlobalProperty<std::string>>> pStrings;
-      std::unordered_map<std::string,std::optional<GlobalProperty<bool>>> pBools;
-      std::unordered_map<std::string,std::optional<GlobalProperty<glm::vec2>>> pVec2;
-      std::unordered_map<std::string,std::optional<GlobalProperty<glm::vec3>>> pVec3;
-      std::unordered_map<std::string,std::optional<GlobalProperty<glm::vec4>>> pVec4;
-      std::unordered_map<std::string,std::optional<GlobalProperty<glm::mat3>>> pMat3;
-      std::unordered_map<std::string,std::optional<GlobalProperty<glm::mat4>>> pMat4;
+      std::unordered_map<std::string,IntProperty> pInts;
+      std::unordered_map<std::string,FloatProperty> pFloats;
+      std::unordered_map<std::string,StringProperty> pStrings;
+      std::unordered_map<std::string,BoolProperty> pBools;
+      std::unordered_map<std::string,Vec2Property> pVec2;
+      std::unordered_map<std::string,Vec3Property> pVec3;
+      std::unordered_map<std::string,Vec4Property> pVec4;
+      std::unordered_map<std::string,Mat3Property> pMat3;
+      std::unordered_map<std::string,Mat4Property> pMat4;
 };
 
 /* Examples */

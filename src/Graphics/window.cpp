@@ -12,7 +12,7 @@ Window* Window::getInstance()
 
 Window::Window()
 {
-    init(1280,720);
+    //init(1280,720);
 }
 
 Window::~Window()
@@ -87,7 +87,7 @@ bool Window::init(int width, int height)
 
     // Register the resize event function.
     InputCache* ic = InputCache::getInstance();
-    glViewport(0, 0, ic->get_screenWidth(), ic->get_screenHeight());
+    glViewport(0, 0, width, height);
     ic->register_lambda_function(EventType::RESIZE_EVENT,
                                  [&](const InputCache* c) {  
                                  int w = ic->get_screenWidth(); 

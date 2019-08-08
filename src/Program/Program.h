@@ -19,7 +19,7 @@ class MainProgram
     void createTextures();
     void createShaders();
     bool createWindow();
-    void createOpencl();
+    void createOpenCl();
     void registerHandlers();
 
 };
