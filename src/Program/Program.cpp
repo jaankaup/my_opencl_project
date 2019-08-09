@@ -117,11 +117,11 @@ bool MainProgram::createWindow()
 
 /////////////////////////////////////////////////////////////////////////////////////
 
-void MainProgram::createOpenCl()
+bool MainProgram::createOpenCl()
 {
   Log::getInfo().log("Initializing OpenCl.");
   auto d = GPU_Device::getInstance();
-  d->init();
+  return d->init();
 }
 
 /////////////////////////////////////////////////////////////////////////////////////

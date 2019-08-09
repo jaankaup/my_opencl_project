@@ -18,11 +18,12 @@
 enum class EventType { UNKNOW, /**< An unknow event type. */
                        KEYBOARD_MOUSE, /**< An event type for both keyboard and mouse events. */
                        RESIZE_EVENT, /**< An event type for window resize event. */
-                       QUIT} /**< An event for application quit event. **/ ;
+                       QUIT /**< An event for application quit event. **/} ;
 
 /** A typedef for time. */
 typedef std::chrono::time_point<std::chrono::_V2::system_clock, std::chrono::duration<long int, std::ratio<1, 1000000000>>> HTime;
 
+/** A class for handling SDL events and invoking registered functions. */
 class InputCache;
 
 /** A typedef for the registered function prototype. */
@@ -81,7 +82,7 @@ class RegisteredFunction
     /** Move a lambda-function to this object.
      * A only one lambda function or function pointer can be added. 
      * This operation is permanent.
-     * @param ICF&& is the function to be moved.
+     * @param function is the function move reference.
      */ 
     void add_lambda_function(ICF&& function);
 
@@ -104,10 +105,17 @@ class RegisteredFunction
     void callFunction(InputCache* ic);
 
   private:
+
+    /** A variant that holds the function.  */
     InputCache_Function pIcf;
+
+    /** The id for this object. */
     uint32_t pId = 0;
 
+    /** A boolean value for indicating whetever a function is already added. */
     bool initialized = false;
+
+    /** A static number for the next object id. */
     inline static uint32_t nextId = 0; 
 };
 
@@ -151,7 +159,7 @@ class InputCache
 
     /** A method for registerin a labmda function.
      * @et is the event type.
-     * @lambda_f if the lambda function that will be moved to the registered
+     * @param lambda_f if the lambda function that will be moved to the registered
      * functions.
      * @return an id for unregisterin the function
      */
@@ -159,8 +167,8 @@ class InputCache
 
     /** A method for registerin a function pointer.
      * @et is the event type.
-     * @function_pointer if the function pointer that will be registered.
-     * @return an id for unregisterin the function
+     * @param function_pointer if the function pointer that will be registered.
+     * @param return an id for unregisterin the function
      */
     uint32_t register_function_pointer(const EventType et, void (*function_pointer)(const InputCache*));
 

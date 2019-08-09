@@ -5,6 +5,7 @@ cmake_minimum_required(VERSION 2.8)
 project(MainProject)
 set (src_dir ${CMAKE_SOURCE_DIR}/src)
 set (asset_dir ${CMAKE_SOURCE_DIR}/assets)
+set (soil_dir ${CMAKE_SOURCE_DIR}/includes/soil)
 message(${src_dir}!!!!!)
 
 set ( CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/modules" )

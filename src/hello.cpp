@@ -7,10 +7,6 @@
 //#include <SDL2/SDL_image.h>
 #include <GL/glew.h>
 
-#ifdef EMSCRIPTEN
-  #include <emscripten.h>
-#endif
-
 #include <math.h>
 #include <vector>
 

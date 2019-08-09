@@ -17,7 +17,6 @@ elseif(${CMAKE_BUILD_TYPE} MATCHES Release)
 endif()
 
 set (graphics_dir ${src_dir}/Graphics)
-set (soil_dir ${src_dir}/soil)
 set (util_dir ${src_dir}/Utils)
 set (physics_dir ${src_dir}/Physics)
 set (opencl_dir ${src_dir}/OpenCL)
@@ -61,11 +60,11 @@ set(physics_src
       )
 
 set (soil_src
-	${soil_dir}/image_DXT.c
+  ${soil_dir}/image_DXT.c
   ${soil_dir}/image_helper.c
-	${soil_dir}/SOIL.c
-	${soil_dir}/stb_image_aug.c
-	)
+  ${soil_dir}/SOIL.c
+  ${soil_dir}/stb_image_aug.c
+  )
 
 #set (tests_src
 #  ${tests_dir}/TestEvents.c
@@ -97,7 +96,7 @@ set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/lib)
 #add_library(math SHARED lib/math/operations.cpp)
 #add_library(math STATIC lib/math/operations.cpp)
 
-add_executable(hello ${src_dir}/hello.cpp ${util_src} ${graphics_src} ${physics_src} ${soil_src} ${opencl_src} ${program_src})
+add_executable(hello ${src_dir}/hello.cpp ${util_src} ${graphics_src} ${physics_src} ${opencl_src} ${program_src} ${soil_src})  
 
 #Tanne linkitykset
-target_link_libraries(hello ${SDL2_LIBRARIES} ${OPENGL_LIBRARIES} ${GLEW_LIBRARIES} OpenCL::OpenCL ${Boost_LIBRARIES}) # ${OpenCL_LIBRARIIES})
+target_link_libraries(hello ${SDL2_LIBRARIES} ${OPENGL_LIBRARIES} ${GLEW_LIBRARIES} OpenCL::OpenCL ${Boost_LIBRARIES}) 
