@@ -18,7 +18,7 @@
 enum class EventType { UNKNOW, /**< An unknow event type. */
                        KEYBOARD_MOUSE, /**< An event type for both keyboard and mouse events. */
                        RESIZE_EVENT, /**< An event type for window resize event. */
-                       QUIT /**< An event for application quit event. **/} ;
+                       QUIT /**< An event for application quit event. */} ;
 
 /** A typedef for time. */
 typedef std::chrono::time_point<std::chrono::_V2::system_clock, std::chrono::duration<long int, std::ratio<1, 1000000000>>> HTime;

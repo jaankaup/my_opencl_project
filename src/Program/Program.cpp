@@ -12,7 +12,7 @@ namespace Program {
 
 bool MainProgram::initialize()
 {
-  Log::getDebug().log("INITIALIZING PROGRAM.");
+  Log::getDebug().log("INITIALIZING PROGRAM.\n");
 
   // Initialize InputCache.
   auto ic = InputCache::getInstance();
@@ -58,7 +58,7 @@ void MainProgram::start()
 
 void MainProgram::createGlobalProperties()
 {
-
+  Log::getDebug().log("CREATING GLOBAL PROPERTIES.\n");
   auto glob_manager = GlobalPropertyManager::getInstance();
 
   // The name for defaut_rendering shader.
@@ -88,6 +88,7 @@ void MainProgram::createGlobalProperties()
 
 void MainProgram::createTextures()
 {
+  Log::getDebug().log("CREATING TEXTURES.\n");
 
 }
 
@@ -95,6 +96,7 @@ void MainProgram::createTextures()
 
 void MainProgram::createShaders()
 {
+  Log::getDebug().log("CREATING SHADERS.\n");
 
 }
 
@@ -102,14 +104,12 @@ void MainProgram::createShaders()
 
 bool MainProgram::createWindow()
 {
-  Log::getDebug().log("CREATIMNG WINDOW.");
+  Log::getDebug().log("CREATING WINDOW.\n");
   // Initialize window/sdl/opengl context.
   Window* window = Window::getInstance();
   auto glob_manager = GlobalPropertyManager::getInstance();
   auto w = glob_manager->get<IntProperty>("initial_screen_width");
   auto h = glob_manager->get<IntProperty>("initial_screen_height");
-  Log::getInfo().log("w == %", w->get());
-  Log::getInfo().log("h == %", h->get());
 
   if (w == nullptr || h == nullptr || !window->init(w->get(),h->get())) return false;
   return true;
@@ -119,7 +119,7 @@ bool MainProgram::createWindow()
 
 bool MainProgram::createOpenCl()
 {
-  Log::getInfo().log("Initializing OpenCl.");
+  Log::getDebug().log("CREATING OPENCL DEVICE/CONTEXT.\n");
   auto d = GPU_Device::getInstance();
   return d->init();
 }

@@ -32,7 +32,6 @@ bool Window::init(int width, int height)
   bool result = Helper::initSDL();
   if (!result) return false;
 
-  Log::getDebug().log("%","Window::Window. window created.");
     int x = SDL_WINDOWPOS_UNDEFINED;
     int y = SDL_WINDOWPOS_UNDEFINED;
     int flags = SDL_WINDOW_OPENGL|SDL_WINDOW_RESIZABLE;

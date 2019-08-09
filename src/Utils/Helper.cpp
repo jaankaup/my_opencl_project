@@ -28,7 +28,7 @@ bool initSDL()
   uint32_t sub_systems = SDL_WasInit(SDL_INIT_EVERYTHING);
 
   // Video is already initialized. ok.
-  if (sub_systems & SDL_INIT_VIDEO) { Log::getDebug().log("Helper::initSDL: SDL video already initialized."); return true; }
+  if (sub_systems & SDL_INIT_VIDEO) return true;
 
   // If initialization fails...
   if (SDL_Init(SDL_INIT_VIDEO) != 0)

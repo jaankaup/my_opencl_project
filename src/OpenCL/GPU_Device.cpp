@@ -20,7 +20,7 @@ bool GPU_Device::init()
 
   cl::Platform default_platform=all_platforms[0];
 
-  Log::getInfo().log("GPU:Device::init(): Using platform: %.",default_platform.getInfo<CL_PLATFORM_NAME>());     
+  Log::getInfo().log("Using platform: %.",default_platform.getInfo<CL_PLATFORM_NAME>());     
 
   //get default device of the default platform
   std::vector<cl::Device> all_devices;

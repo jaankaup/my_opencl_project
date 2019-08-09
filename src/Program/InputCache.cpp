@@ -4,7 +4,6 @@
 
 void RegisteredFunction::add_lambda_function(ICF&& function)
 {
-  Log::getDebug().log("InputCache::add_lambda_function");
   if (initialized) return; // TODO: assert
 
   InputCache_Function icf;
@@ -18,7 +17,6 @@ void RegisteredFunction::add_lambda_function(ICF&& function)
 
 void RegisteredFunction::add_function_pointer(void (*function_pointer)(const InputCache*))
 {
-  Log::getDebug().log("RegisteredFunction::add_function_pointer.");
   if (initialized) return; // TODO: assert
 
   InputCache_Function icf;
@@ -87,22 +85,6 @@ void InputCache::pollEvents()
 
     handle_window_events();
     handle_keyboad_mouse();
-
-    // The window events.
-//    if (pWindowEvents.size() > 0) {
-//      //Log::getDebug().log("Windows eventtejä == % ", pWindowEvents.size());
-//
-//      handle_window_events();
-//    }
-
-    //SDL_PumpEvents();
-
-    //if (pKeyDownEvents.size() > 0 ) Log::getDebug().log("Keydown eventtejä(1) == % ", pKeyDownEvents.size());
-    //if (pKeyUpEvents.size() > 0 ) Log::getDebug().log("Keyup eventtejä(1) == % ", pKeyUpEvents.size());
-    //Log::getDebug().log("Mousemotion eventtejä == % ", pMouseMotionEvents.size());
-    //Log::getDebug().log("MouseButtonDown eventtejä == % ", pMouseButtonDown.size());
-    //Log::getDebug().log("MouseButtonUp eventtejä == % ", pMouseButtonUp.size());
-
 
     if (pQuit.size() > 0)
     {
@@ -347,8 +329,6 @@ void InputCache::handle_window_events()
 
 uint32_t InputCache::register_lambda_function(const EventType et, ICF&& lambda_function) // -> decltype(&function)
 {
-   Log::getDebug().log("InputCache::register_kyboardMouse by ICF&& function");
-
    RegisteredFunction rf;
    rf.add_lambda_function(std::move(lambda_function));
 
@@ -388,24 +368,6 @@ uint32_t InputCache::register_function_pointer(const EventType et, void (*functi
 
 /////////////////////////////////////////////////////////////////////////////////////
 
-//uint32_t InputCache::register_quit(const ICF& function)
-//{
-//  Log::getDebug().log("InputCache::register_quit: %", &function);
-//  pQuit.insert({pNext_Id, function});
-//  return pNext_Id++;
-//}
-
-/////////////////////////////////////////////////////////////////////////////////////
-
-//uint32_t InputCache::register_resize(const ICF& function)
-//{
-//  Log::getDebug().log("InputCache::register_resize: %", &function);
-//  pResize.insert({pNext_Id, function});
-//  return pNext_Id++;
-//}
-
-/////////////////////////////////////////////////////////////////////////////////////
-
 bool InputCache::unregister(const uint32_t id)
 {
   Log::getDebug().log("InputCache::unregister %",id);
@@ -421,6 +383,7 @@ bool InputCache::unregister(const uint32_t id)
   Log::getDebug().log("InputCache::unregister: unregister failed.");
   return false;
 }
+
 /////////////////////////////////////////////////////////////////////////////////////
 
 bool InputCache::whatsUpMan() const
