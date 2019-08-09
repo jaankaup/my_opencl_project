@@ -42,6 +42,7 @@ void RegisteredFunction::callFunction(InputCache* ic)
     //Log::getDebug().log("InputCache::pollEvents: calling pointer to function");
     (*(*f))(ic);
   }
+  else Log::getError().log("RegisteredFunction::callFunction(): The is no function to invoke!"); 
 }
 
 /////////////////////////////////////////////////////////////////////////////////////

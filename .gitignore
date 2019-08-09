@@ -1,6 +1,7 @@
 *.swp
 *.swo
 .project
+DoxygenOut
 bak
 buildNative
 lib/sdl2
