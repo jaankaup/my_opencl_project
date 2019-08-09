@@ -1,10 +1,13 @@
 #include "Program.h"
 #include "GlobalPropertyManager.h"
 #include "../Utils/log.h"
+#include "../Utils/Helper.h"
 #include "../Graphics/window.h"
 #include "../Graphics/camera.h"
 #include "../Graphics/renderer.h"
 #include "../OpenCL/GPU_Device.h"
+#include "../OpenCL/CL_Program.h"
+#include "../OpenCL/CL_Buffer.h"
 
 namespace Program {
 
@@ -121,7 +124,28 @@ bool MainProgram::createOpenCl()
 {
   Log::getDebug().log("CREATING OPENCL DEVICE/CONTEXT.\n");
   auto d = GPU_Device::getInstance();
-  return d->init();
+  if (!d->init()) return false;
+
+  int i[10] = {1,2,3,4,5,6,7,8,9,10};
+
+  CL_Buffer b;
+  b.create(d, CL_MEM_READ_WRITE, sizeof(int)*10); 
+
+  b.addData(&i, sizeof(int)*10);
+
+  auto com = d->getCommandQueue();
+
+  
+
+//  CL_Program program;  
+//
+//  cl::Program::Sources sources;
+//
+//  std::string kernel_code = Helper::loadSource("shaders/mc.cl"); 
+//  sources.push_back({kernel_code.c_str(),kernel_code.length()});
+//
+//  program.create(d, sources);
+//  return true;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////

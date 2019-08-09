@@ -61,13 +61,93 @@ bool GPU_Device::init()
   // TODO: error handling for context creation.
   pContext = cl::Context({pDevice});
 
+  //cl_int error;
+
+  pQueue = cl::CommandQueue(pContext, pDevice, 0, &success);
+
+  if (success != CL_SUCCESS)
+  {
+    Log::getError().log("GPU:Device::init(): Failed to create CommmandQueue with error code %.",success);     
+    return false;
+  }
   pInitialized = true;
 
   return true;
 }
 
+/////////////////////////////////////////////////////////////////////////////////////
+
 cl::Context* GPU_Device::getContext()
 {
   if (pInitialized) return &pContext;
   return nullptr;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////
+
+cl::Device* GPU_Device::getDevice()
+{
+  if (!pInitialized) return nullptr;
+  return &pDevice;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////
+
+cl::CommandQueue* GPU_Device::getCommandQueue()
+{
+  if (!pInitialized) return nullptr;
+  return &pQueue;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////
+
+size_t GPU_Device::getMaxGroupSize() const
+{
+  int max_size;
+  cl_int error;
+
+  pDevice.getInfo(CL_DEVICE_MAX_WORK_GROUP_SIZE, &max_size);
+
+  if (error != CL_SUCCESS)
+  {
+    Log::getError().log("GPU_Device::getMaxGroupSize(): Failed to get the maximum group size with error code %.",error);     
+    return 0;
+  }
+
+  return max_size;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////
+
+cl::NDRange GPU_Device::getGlobalDim(const int total_count)
+{
+  size_t max_group_size = getMaxGroupSize();
+  size_t workGroupCount = total_count/max_group_size + 1;
+  cl::NDRange globalDim(workGroupCount*max_group_size, 1, 1);
+  return globalDim;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////
+
+cl::NDRange GPU_Device::getLocalDim()
+{
+  cl::NDRange localDim(getMaxGroupSize(), 1, 1);
+  return localDim;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////
+
+bool GPU_Device::runKernel(cl::Kernel* kernel, cl::NDRange globalDim, cl::NDRange localDim)
+{
+  cl_int error;
+
+  pQueue.enqueueNDRangeKernel(*kernel, cl::NullRange, globalDim, localDim, 0, 0);
+
+  if (error != CL_SUCCESS)
+  {
+    Log::getError().log("GPU_Device::runKernel(): Failed to run the kernel with error code %.",error);     
+    return false;
+  }
+
+  return true;
 }

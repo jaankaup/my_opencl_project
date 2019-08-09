@@ -54,6 +54,7 @@ set(opencl_src
   ${opencl_dir}/GPU_Device.cpp
   ${opencl_dir}/CL_Program.cpp
   ${opencl_dir}/CL_Buffer.cpp
+  ${opencl_dir}/CommandQueue.cpp
       )
 
 set(physics_src 
