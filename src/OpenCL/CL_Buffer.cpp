@@ -53,3 +53,11 @@ bool CL_Buffer::addData(const void* data, uint32_t size)
 
   return true;
 }
+
+/////////////////////////////////////////////////////////////////////////////////////
+
+cl::Buffer* CL_Buffer::getBuffer()
+{
+  if (!pInitialized) return nullptr;
+  return &pBuffer;
+}

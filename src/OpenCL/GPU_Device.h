@@ -1,13 +1,16 @@
 #ifndef GPU_DEVICE_H
 #define GPU_DEVICE_H
 
-#define CL_ENABLE_EXCEPTIONS
+//#define __CL_ENABLE_EXCEPTIONS
 //#define CL_HPP_TARGET_OPENCL_VERSION 200
 
 #include <vector>
 //#include <CL/cl2.hpp>
 #include <CL/cl.hpp>
 #include "../Utils/log.h"
+#include "CL_Program.h"
+
+class CL_Program;
 
 /** A singleton class for represention of a single GPU opencl device. */
 class GPU_Device
@@ -95,7 +98,7 @@ class GPU_Device
      * @param localDim The local dimension.
      * @param return Did the kernel execution succeed.
      */
-    bool runKernel(cl::Kernel* kernel, cl::NDRange globalDim, cl::NDRange localDim);
+    bool runKernel(CL_Program* kernel, cl::NDRange globalDim, cl::NDRange localDim);
 
 	private:
 

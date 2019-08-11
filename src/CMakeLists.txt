@@ -55,6 +55,7 @@ set(opencl_src
   ${opencl_dir}/CL_Program.cpp
   ${opencl_dir}/CL_Buffer.cpp
   ${opencl_dir}/CommandQueue.cpp
+  ${opencl_dir}/CL_Helper.cpp
       )
 
 set(physics_src 

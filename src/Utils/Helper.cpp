@@ -9,8 +9,8 @@ std::string loadSource(const std::string& fileLoc)
 
     if (!file.is_open())
     {
-      Log::getError().log("Shader::loadSource(%): Failed to load source.","fileLoc");
-      throw std::runtime_error("Shader::loadSource: counld'n open file '" + fileLoc + "'.");
+      Log::getError().log("Helper::loadSource(%): Failed to load source.",fileLoc);
+      throw std::runtime_error("Helper::loadSource: counld'n open file '" + fileLoc + "'.");
     }
 
     std::string str;

@@ -28,6 +28,13 @@ class CL_Buffer
      */
     bool addData(const void* data, uint32_t size);
 
+    /** 
+     * Get the pointer to the cl:Buffer object.
+     * @param return The pointer to the cl::Buffer. Is CL_Buffer is not
+     * initialized properly, return nullptr;
+     */
+    cl::Buffer* getBuffer();
+
   private:
 
     cl::Buffer pBuffer; /**< The actual buffer. */

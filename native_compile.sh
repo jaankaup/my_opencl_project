@@ -7,4 +7,4 @@ make -j4 all
 #make all
 cd ..
 mkdir -p buildNative/bin/shaders
-cp shadersNative/* buildNative/bin/shaders
+cp shaders/* buildNative/bin/shaders

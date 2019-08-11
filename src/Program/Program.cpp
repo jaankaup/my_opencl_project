@@ -128,14 +128,37 @@ bool MainProgram::createOpenCl()
 
   int i[10] = {1,2,3,4,5,6,7,8,9,10};
 
+  // Create a buffer.
   CL_Buffer b;
-  b.create(d, CL_MEM_READ_WRITE, sizeof(int)*10); 
+  if (!b.create(d, CL_MEM_READ_WRITE, sizeof(int)*10)) Log::getError().log("Failed to create buffer."); 
 
+  // Add data to the buffer.
   b.addData(&i, sizeof(int)*10);
 
-  auto com = d->getCommandQueue();
+  // Load the source code.
+  cl::Program::Sources sources;
+  std::string kernel_code = Helper::loadSource("shaders/example.cl"); 
+  sources.push_back({kernel_code.c_str(),kernel_code.length()});
+  //sources.push_back(kernel_code);
 
+  // Create a program
+  Log::getDebug().log("Creating the program.");
+  CL_Program program;
+  if (!program.create(d,sources,"add_one")) Log::getError().log("Failed to create the program.");
+
+  // Set parameter to the first argument.
+  Log::getDebug().log("Setting parameters.");
+  Log::getDebug().log("Parameter 0.");
+  program.setArg(0,*(b.getBuffer()));
+  Log::getDebug().log("Parameter 1.");
+  program.setArg(1,10);
+
+  Log::getDebug().log("Get the dimensions.");
+  auto global_dim = d->getGlobalDim(10);
+  auto local_dim = d->getLocalDim();
   
+  Log::getDebug().log("Run the kernel.");
+  d->runKernel(&program, global_dim, local_dim);
 
 //  CL_Program program;  
 //

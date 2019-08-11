@@ -137,11 +137,12 @@ cl::NDRange GPU_Device::getLocalDim()
 
 /////////////////////////////////////////////////////////////////////////////////////
 
-bool GPU_Device::runKernel(cl::Kernel* kernel, cl::NDRange globalDim, cl::NDRange localDim)
+bool GPU_Device::runKernel(CL_Program* program, cl::NDRange globalDim, cl::NDRange localDim)
 {
+  assert(program != nullptr);
   cl_int error;
 
-  pQueue.enqueueNDRangeKernel(*kernel, cl::NullRange, globalDim, localDim, 0, 0);
+  pQueue.enqueueNDRangeKernel(*(program->getKernel()), cl::NullRange, globalDim, localDim, 0, 0);
 
   if (error != CL_SUCCESS)
   {

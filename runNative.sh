@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cp shadersNative/* buildNative/bin/shaders
+cp shaders/* buildNative/bin/shaders
 cd buildNative/bin
 ./hello
 cd ../..

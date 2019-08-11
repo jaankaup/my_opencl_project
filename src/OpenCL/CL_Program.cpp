@@ -3,7 +3,7 @@
 
 /////////////////////////////////////////////////////////////////////////////////////
 
-bool CL_Program::create(GPU_Device* device, const cl::Program::Sources& src)
+bool CL_Program::create(GPU_Device* device, const cl::Program::Sources& src, const std::string kernel_name)
 {
   assert(device != nullptr);
   
@@ -18,6 +18,7 @@ bool CL_Program::create(GPU_Device* device, const cl::Program::Sources& src)
   if (error != CL_SUCCESS)
   {
     Log::getError().log("CL_Program::create: failed to create program with error code (%)", error);
+    Log::getError().log("%",errorcode_toString(error));
     return false;
   }
 
@@ -26,20 +27,28 @@ bool CL_Program::create(GPU_Device* device, const cl::Program::Sources& src)
   if (error != CL_SUCCESS)
   {
     Log::getError().log("CL_Program::create: Program build failed.");
+    Log::getError().log("%",errorcode_toString(error));
     Log::getError().log("%", pProgram.getBuildInfo<CL_PROGRAM_BUILD_LOG>(*(device->getDevice())));
     return false;
   }
 
-  pKernel = cl::Kernel(pProgram, "juu", &error);
+  pKernel = cl::Kernel(pProgram, kernel_name.c_str(), &error);
   
   if (error != CL_SUCCESS)
   {
     Log::getError().log("CL_Program::create: Kernel creation failed.");
+    Log::getError().log("%",errorcode_toString(error));
     return false;
   }
 //  std::cout << type_name<decltype(cl::make_kernel<cl::Buffer&, int>(pProgram, "Ohojelma"))>() << std::endl;
-
+  pInitialized = true;
   return true;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////
+
+cl::Kernel* CL_Program::getKernel()
+{
+  if (pInitialized) return &pKernel;
+  return nullptr;
+}
