@@ -29,6 +29,14 @@ class CL_Buffer
     bool addData(const void* data, uint32_t size);
 
     /** 
+     * Get data from the buffer.
+     * @param blocking Should this operation block.
+     * @param dest_buffer is the pointer to the destination buffer.
+     * @param size The size of data.
+     */
+    bool getData(const bool blocking, void* dest_buffer, size_t size);
+
+    /** 
      * Get the pointer to the cl:Buffer object.
      * @param return The pointer to the cl::Buffer. Is CL_Buffer is not
      * initialized properly, return nullptr;

@@ -160,6 +160,16 @@ bool MainProgram::createOpenCl()
   Log::getDebug().log("Run the kernel.");
   d->runKernel(&program, global_dim, local_dim);
 
+  int bee[10];
+
+  b.getData(true,&bee, sizeof(int)*10);
+
+  for (int i=0; i<10 ; i++)
+  {
+    Log::getDebug().log("%", bee[i]);
+  }
+//bool CL_Buffer::getData(const bool blocking, void* dest_buffer, size_t size)
+
 //  CL_Program program;  
 //
 //  cl::Program::Sources sources;

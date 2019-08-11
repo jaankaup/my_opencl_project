@@ -48,9 +48,29 @@ bool CL_Buffer::addData(const void* data, uint32_t size)
   if (error != CL_SUCCESS)
   {
     Log::getError().log("CL_Buffer::addData: failed to add data to the  buffer with error code (%)", error);
+    Log::getError().log("%",errorcode_toString(error));
     return false;
   }
 
+  return true;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////
+
+bool CL_Buffer::getData(const bool blocking, void* dest_buffer, size_t size)
+{
+  assert(pInitialized);
+  auto device = GPU_Device::getInstance();
+
+  cl_int error;
+  error = device->getCommandQueue()->enqueueReadBuffer(pBuffer, blocking, 0, size, dest_buffer, 0, 0);
+
+  if (error != CL_SUCCESS)
+  {
+    Log::getError().log("CL_Buffer::addData: failed to add data to the buffer with error code (%)", error);
+    Log::getError().log("%",errorcode_toString(error));
+    return false;
+  }
   return true;
 }
 
