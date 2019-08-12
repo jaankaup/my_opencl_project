@@ -27,7 +27,7 @@ class CL_Buffer
      * @param size The size of data.
      * @param return Was the data added succesfully.
      */
-    bool addData(GPU_Device* device, const void* data, uint32_t size);
+    bool addData(GPU_Device* device, const bool blocking, const void* data, uint32_t size);
 
     /** 
      * Get data from the GPU_Devices CommandQueue.

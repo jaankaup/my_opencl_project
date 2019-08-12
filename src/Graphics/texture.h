@@ -11,7 +11,6 @@
 #include "../Utils/log.h"
 #include "../Utils/myrandom.h"
 
-//enum textureType : int32_t;
 enum class TextureType {d1,d2,d3};
 
 class Texture
@@ -23,11 +22,9 @@ class Texture
         /// before the use method. @param unit is the texture unit to use.
         void use(const GLuint unit) const;
 
-        //GLuint getID() const;
         TextureType getTextureType() const;
         void create(const std::string& fileloc);
         void create3D(const TextureData& td);
-        void createExample2D();
         void create_tritable_texture();
         std::tuple<std::unique_ptr<float[]>,unsigned int> getTextureData();
 

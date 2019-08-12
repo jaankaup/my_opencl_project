@@ -36,13 +36,13 @@ bool CL_Buffer::create(GPU_Device* device, const cl_mem_flags flags, uint32_t si
 
 /////////////////////////////////////////////////////////////////////////////////////
 
-bool CL_Buffer::addData(GPU_Device* device, const void* data, uint32_t size)
+bool CL_Buffer::addData(GPU_Device* device, const bool blocking, const void* data, uint32_t size)
 {
   assert(pInitialized);
 
   cl_int error;
 
-  error = device->getCommandQueue()->enqueueWriteBuffer(pBuffer, CL_FALSE, 0, size, data, 0, 0);  
+  error = device->getCommandQueue()->enqueueWriteBuffer(pBuffer, blocking, 0, size, data, 0, 0);  
 
   if (error != CL_SUCCESS)
   {

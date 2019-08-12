@@ -257,6 +257,10 @@
       0.0,   3.0,   8.0,  255.0,255.0,  255.0,  255.0 ,255.0 ,255.0, 255.0 ,255.0 ,255.0, 255.0 ,255.0 ,255.0 ,
    255.0 , 255.0, 255.0,  255.0,255.0,  255.0,  255.0 ,255.0 ,255.0, 255.0 ,255.0 ,255.0, 255.0 ,255.0 ,255.0 };
 
-    kernel void simple_add(global const int* A, global const int* B, global int* C){       
-       C[get_global_id(0)]=A[get_global_id(0)]+B[get_global_id(0)];                 
-    }                                                                               
+__kernel void simple_add(global const int* A, global const int* B, global int* C, int n){       
+
+  const int global_id = get_global_id(0);
+
+  if(global_id < n)
+     C[global_id]=A[global_id]+B[global_id];                 
+  }                                                                               

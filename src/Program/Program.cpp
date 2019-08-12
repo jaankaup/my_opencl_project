@@ -96,7 +96,6 @@ void MainProgram::createGlobalProperties()
 void MainProgram::createTextures()
 {
   Log::getDebug().log("CREATING TEXTURES.\n");
-
 }
 
 /////////////////////////////////////////////////////////////////////////////////////
@@ -132,41 +131,52 @@ bool MainProgram::createOpenCl()
 
   int i[10] = {1,2,3,4,5,6,7,8,9,10};
 
-  // Create a buffer.
+  // Create a buffers.
+  CL_Buffer a;
+  if (!a.create(d, CL_MEM_READ_WRITE, sizeof(int)*10)) Log::getError().log("Failed to create buffer."); 
+
   CL_Buffer b;
   if (!b.create(d, CL_MEM_READ_WRITE, sizeof(int)*10)) Log::getError().log("Failed to create buffer."); 
 
-  // Add data to the buffer.
-  b.addData(d,&i, sizeof(int)*10);
+  CL_Buffer c;
+  if (!c.create(d, CL_MEM_READ_WRITE, sizeof(int)*10)) Log::getError().log("Failed to create buffer."); 
+
+  // Add data to the buffer a.
+  a.addData(d,true, &i, sizeof(int)*10);
+
+  // Add data to the buffer b.
+  b.addData(d,true, &i, sizeof(int)*10);
 
   // Load the source code.
   cl::Program::Sources sources;
-  std::string kernel_code = Helper::loadSource("shaders/example.cl"); 
+  std::string kernel_code = Helper::loadSource("shaders/mc.cl"); 
   sources.push_back({kernel_code.c_str(),kernel_code.length()});
   //sources.push_back(kernel_code);
 
   // Create a program
   Log::getDebug().log("Creating the program.");
   CL_Program program;
-  if (!program.create(d,sources,"add_one")) Log::getError().log("Failed to create the program.");
+  if (!program.create(d,sources,"simple_add")) Log::getError().log("Failed to create the program.");
 
-  // Set parameter to the first argument.
   Log::getDebug().log("Setting parameters.");
-  Log::getDebug().log("Parameter 0.");
-  program.setArg(0,*(b.getBuffer()));
-  Log::getDebug().log("Parameter 1.");
-  program.setArg(1,10);
+  program.setArg(0,*(a.getBuffer()));
+  program.setArg(1,*(b.getBuffer()));
+  program.setArg(2,*(c.getBuffer()));
+  program.setArg(3,10);
 
   Log::getDebug().log("Get the dimensions.");
   auto global_dim = d->getGlobalDim(10);
   auto local_dim = d->getLocalDim();
   
   Log::getDebug().log("Run the kernel.");
-  d->runKernel(&program, global_dim, local_dim);
+
+  //cl::EnqueueArgs eargs(*(d->getCommandQueue()), cl::NullRange, cl::NDRange(10), cl::NullRange);
+  //*(program.getKernel())(eargs, a,b,c,10).wait();
+  d->runKernel(&program, /* global_dim */ cl::NDRange(10), cl::NullRange);// local_dim);
 
   int bee[10];
 
-  b.getData(d,true,&bee, sizeof(int)*10);
+  c.getData(d,true,&bee, sizeof(int)*10);
 
   for (int i=0; i<10 ; i++)
   {

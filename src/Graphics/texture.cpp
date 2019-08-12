@@ -93,39 +93,6 @@ TextureType Texture::getTextureType() const
   return pType;
 }
 
-void Texture::createExample2D()
-{
-    Log::getDebug().log("Texture::createExample2D()");
-    int width =  32;
-    int height = 32;
-    int size = width*height*3;
-    bool hah = true;
-    auto image = new uint8_t[size];
-    for (int i=0 ; i<size ; i = (i+1)*3)
-    {
-      image[i] = 66;// 0.5f; //   (i*1.0f/size)*255 < 255 ? (i*1.0f/size)*255 : 255;
-      image[i+1] = i % 255; // 1.0f; //(i*1.0f/size) < 1.0f ? (i*1.0f/size) : 1.0f;
-      image[i+2] = hah ? 13 : 99; // (i*1.0f/size)*255 < 255 ? (i*1.0f/size)*255 : 255;
-      hah = !hah;
-    }
-    use(0);
-
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
-    glGenerateMipmap(GL_TEXTURE_2D);
-
-    delete[] image;
-}
-
-//void Texture::dispose() const
-//{
-//    if (pId != 0) glDeleteTextures(1,&pId);
-//}
-
 void Texture::create_tritable_texture()
 {
     Log::getDebug().log("Texture::create_tritable_texture()");
