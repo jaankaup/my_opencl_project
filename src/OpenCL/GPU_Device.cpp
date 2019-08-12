@@ -6,11 +6,11 @@ bool GPU_Device::init()
   std::vector<cl::Platform> all_platforms;
 
   /* Static method for lists all available opencl platforms. */
-  /* cl_int == CL_SUCCESS. CL_INVALID_VALUE if platforms is NULL. */
   cl_int success = cl::Platform::get(&all_platforms);
 
   if (success == CL_INVALID_VALUE) {
-    Log::getError().log("GPU:Device::init(): Platforms is NULL.");     return false;
+    Log::getError().log("GPU:Device::init(): Platforms is NULL.");
+    return false;
   }
 
   if(all_platforms.size()==0){
@@ -25,7 +25,7 @@ bool GPU_Device::init()
   //get default device of the default platform
   std::vector<cl::Device> all_devices;
 
-  success = default_platform.getDevices(CL_DEVICE_TYPE_ALL, &all_devices);
+  success = default_platform.getDevices(CL_DEVICE_TYPE_GPU, &all_devices);
 
   if (success != CL_SUCCESS) {
     std::string error = "Failed to create default platform. ";

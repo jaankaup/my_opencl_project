@@ -14,123 +14,14 @@ Shader::~Shader()
   if (pId != 0) glDeleteProgram(pId);
 }
 
-//void Shader::dispose() const
-//{
-//  //Log::getDebug().log("Deleting shader program: %", std::to_string(pId));
-//  if (pId != 0) glDeleteProgram(pId);
-//}
-
-//void Shader::init()
-//{
-//  pId = glCreateProgram();
-//
-//  //Log::getDebug().log("Created shader program: %", std::to_string(pId));
-//
-//  if (pId == 0)
-//  {
-//    Log::getError().log("%","Shader::Shader. Failed to create program.");
-//  }
-//}
-
 void Shader::setFeedback(const bool feedback, const std::string& feedbackVarying)
 {
   pFeedback = feedback;
   pFeedbackVarying = feedbackVarying;
 }
 
-void Shader::buildDensity(const std::vector<std::string>& sources)
-{
-  std::string density;
-  std::string geom;
-  std::string vert;
 
-  // This is a copy paste function. TODO: move it to the misc.cpp.
-  static const auto endsWith = [](const std::string& str, const std::string& postFix)
-  {
-    if (str.length() >= postFix.length()) {
-      return (0 == str.compare(str.length() - postFix.length(), postFix.length(), postFix));
-    } else {
-      return false;
-    } 
-  };
-
-  static const auto replace = [](std::string& str, const std::string& from, const std::string& to)
-  {
-     size_t start_pos = str.find(from);
-    if (start_pos == std::string::npos) return false;
-    str.replace(start_pos, from.length(), to);
-    return true;
-  };
-
-  for (const auto& src : sources)
-  {
-    if (endsWith(src,".geom")) geom = loadSource(src);
-    else if (endsWith(src,".df")) density = loadSource(src);
-    else if (endsWith(src,".vert")) vert = loadSource(src);
-  }
-
-  static const std::string regText = R"([\w|\W]*voxels_per_block:(\d+)[\w|\W]*)";
-  static const std::regex reg_vpb(regText);
-
-  static const std::string regDim = R"([\w|\W]*SceneDimension:(\-?\d+),(\-?\d+),(\-?\d+),(\-?\d+),(\-?\d+),(\-?\d+)[\w|\W]*)";
-  static const std::regex reg_dim(regDim);
-
-   auto metadata = ProgramState::getInstance().getMetadata(); 
-
-
-   int voxs_per_b;  
-
-  // Find the voxels_per_block from the density file.
-  std::smatch rex_result;
-  if (regex_match(density, rex_result, reg_vpb))
-  {
-    std::string s_num = rex_result[1];
-    
-    voxs_per_b = atoi(s_num.c_str()); 
-  }
-
-  // Find the dimension of the scene.
-  std::smatch rex_result_dim;
-  if (regex_match(density, rex_result_dim, reg_dim))
-  {
-    std::string xMin = rex_result_dim[1];
-    std::string yMin = rex_result_dim[2];
-    std::string zMin = rex_result_dim[3];
-    std::string xMax = rex_result_dim[4];
-    std::string yMax = rex_result_dim[5];
-    std::string zMax = rex_result_dim[6];
-//    metadata->dimensionX_min = atoi(xMin.c_str()); 
-//    metadata->dimensionY_min = atoi(yMin.c_str()); 
-//    metadata->dimensionZ_min = atoi(zMin.c_str()); 
-//    metadata->dimensionX_max = atoi(xMax.c_str()); 
-//    metadata->dimensionY_max = atoi(yMax.c_str()); 
-//    metadata->dimensionZ_max = atoi(zMax.c_str()); 
-    Log::getDebug().log("% % % % % %",
-                        std::to_string(atoi(xMin.c_str())),
-                        std::to_string(atoi(yMin.c_str())),
-                        std::to_string(atoi(zMin.c_str())),
-                        std::to_string(atoi(xMax.c_str())),
-                        std::to_string(atoi(yMax.c_str())),
-                        std::to_string(atoi(zMax.c_str()))
-        );
-    metadata->dimensionsPerDF.push_back(std::make_tuple(atoi(xMin.c_str()),
-                                                        atoi(yMin.c_str()),
-                                                        atoi(zMin.c_str()),
-                                                        atoi(xMax.c_str()),
-                                                        atoi(yMax.c_str()),
-                                                        atoi(zMax.c_str()),
-                                                        voxs_per_b));
-                             
-  }
-
-  replace(geom, "{{density_function_comes_here_from_another_file}}", density); 
-  
-  std::vector<std::string> triangulate_src = {vert, geom};
-  build(triangulate_src, true);
-
-}
-
-void Shader::build(const std::vector<std::string>& sources, const bool triangulate)
+void Shader::build(const std::vector<std::string>& sources)
 {
     using ShaderObjData = struct{
         GLenum shaderType;
@@ -146,8 +37,6 @@ void Shader::build(const std::vector<std::string>& sources, const bool triangula
 
     /* We iterate trought all source codes and extract shader object types and sourcecodes. */
     // This is stupid, but I'm running out of time! TODO: Fix this.
-    if (!triangulate)
-    {
       for (const auto& location : sources)
       {
           //Log::getDebug().log("Creating shader from file: %", location);
@@ -168,23 +57,6 @@ void Shader::build(const std::vector<std::string>& sources, const bool triangula
           /* Put the source type and source code to sod. */
           sod.push_back(shaderObjectData);
       }
-    }
-    else 
-    {
-          ShaderObjData shaderObjectData;
-          shaderObjectData.shaderType = GL_VERTEX_SHADER;
-          shaderObjectData.shaderObj = glCreateShader(GL_VERTEX_SHADER);
-          shaderObjectData.sourceCode = sources[0]; // Really hacky stuff!
-          /* Put the source type and source code to sod. */
-          sod.push_back(shaderObjectData);
-       
-          ShaderObjData shaderObjectData2;
-          shaderObjectData2.shaderType = GL_GEOMETRY_SHADER;
-          shaderObjectData2.shaderObj = glCreateShader(GL_GEOMETRY_SHADER);
-          shaderObjectData2.sourceCode = sources[1]; // Really hacky stuff!!!!!
-          /* Put the source type and source code to sod. */
-          sod.push_back(shaderObjectData2);
-    }
 
     for (const auto& object : sod)
     {

@@ -3,7 +3,7 @@
 #include "vertexbuffer.h"
 #include "../Utils/log.h"
 
-#include "manager.h"
+//#include "manager.h"
 
 Vertexbuffer::Vertexbuffer()
 {

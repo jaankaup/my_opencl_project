@@ -36,14 +36,13 @@ bool CL_Buffer::create(GPU_Device* device, const cl_mem_flags flags, uint32_t si
 
 /////////////////////////////////////////////////////////////////////////////////////
 
-bool CL_Buffer::addData(const void* data, uint32_t size)
+bool CL_Buffer::addData(GPU_Device* device, const void* data, uint32_t size)
 {
   assert(pInitialized);
 
-  auto gpu_devive = GPU_Device::getInstance();
   cl_int error;
 
-  error = gpu_devive->getCommandQueue()->enqueueWriteBuffer(pBuffer, CL_FALSE, 0, size, data, 0, 0);  
+  error = device->getCommandQueue()->enqueueWriteBuffer(pBuffer, CL_FALSE, 0, size, data, 0, 0);  
 
   if (error != CL_SUCCESS)
   {
@@ -57,10 +56,9 @@ bool CL_Buffer::addData(const void* data, uint32_t size)
 
 /////////////////////////////////////////////////////////////////////////////////////
 
-bool CL_Buffer::getData(const bool blocking, void* dest_buffer, size_t size)
+bool CL_Buffer::getData(GPU_Device* device, const bool blocking, void* dest_buffer, size_t size)
 {
   assert(pInitialized);
-  auto device = GPU_Device::getInstance();
 
   cl_int error;
   error = device->getCommandQueue()->enqueueReadBuffer(pBuffer, blocking, 0, size, dest_buffer, 0, 0);

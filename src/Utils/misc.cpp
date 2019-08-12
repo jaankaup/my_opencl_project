@@ -119,31 +119,6 @@ TextureData createPerlin3D_rough(const int width, const int height, const int de
   return std::move(td);
 }
 
-// Create the buffer for the base data points.
-void createBaseVertexBuffer()
-{
-  const std::string BASE_VERTEX_BUFFER_NAME = "sceneVBO"; 
-
-  auto metadata = ProgramState::getInstance().getMetadata();
-  metadata->base_vertex_buffer_name = BASE_VERTEX_BUFFER_NAME;
-  auto shaderName = metadata->triangulationShader; 
-  if (shaderName == "") Log::getError().log("Misc::createBaseVertexBuffer: triangulation shader was not created.");
-  VertexBufferManager::getInstance().optimize_vertex_buffer(BASE_VERTEX_BUFFER_NAME, shaderName );
-}
-
-void changeScene(const char number)
-{
-        std::string shaderName = ProgramState::getInstance().getMetadata()->triangulationShader;
-        std::string newName = shaderName.substr(0, shaderName.size()-1) + std::to_string(number);
-        Log::getInfo().log("ShaderName == %", newName);
-        auto metadata = ProgramState::getInstance().getMetadata();
-        metadata->triangulationShader = newName;
-        metadata->activeShaderNumber = number;
-        metadata->block_size = std::get<6>(metadata->dimensionsPerDF[number]);
-        Log::getInfo().log("Changing densityShader to % ...", newName);
-        ModelManager::getInstance().createSceneObject();
-}
-
 int getLeft(const int index, const int width, const int height)
 {
   if (index % width == 0) return -1;  

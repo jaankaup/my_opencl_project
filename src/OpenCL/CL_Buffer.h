@@ -21,20 +21,22 @@ class CL_Buffer
     bool create(GPU_Device* device, const cl_mem_flags flags, uint32_t size);
 
     /** 
-     * Add data to the buffer.
+     * Add data to the buffer (GPU_Devices CommandQueue).
+     * @param device Pointer to the device.
      * @param data Pointer to the data.
      * @param size The size of data.
      * @param return Was the data added succesfully.
      */
-    bool addData(const void* data, uint32_t size);
+    bool addData(GPU_Device* device, const void* data, uint32_t size);
 
     /** 
-     * Get data from the buffer.
+     * Get data from the GPU_Devices CommandQueue.
+     * @param device Pointer to the device.
      * @param blocking Should this operation block.
      * @param dest_buffer is the pointer to the destination buffer.
      * @param size The size of data.
      */
-    bool getData(const bool blocking, void* dest_buffer, size_t size);
+    bool getData(GPU_Device* device, const bool blocking, void* dest_buffer, size_t size);
 
     /** 
      * Get the pointer to the cl:Buffer object.

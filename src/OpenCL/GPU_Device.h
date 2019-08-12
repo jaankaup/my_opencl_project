@@ -93,7 +93,7 @@ class GPU_Device
     cl::NDRange getLocalDim();
 
     /**
-     * Run the kernel.
+     * Makes the GPU_Devices CommandQueue to run the kernel.
      * @param globalDim The global dimension.
      * @param localDim The local dimension.
      * @param return Did the kernel execution succeed.

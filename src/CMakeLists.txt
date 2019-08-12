@@ -18,7 +18,6 @@ endif()
 
 set (graphics_dir ${src_dir}/Graphics)
 set (util_dir ${src_dir}/Utils)
-set (physics_dir ${src_dir}/Physics)
 set (opencl_dir ${src_dir}/OpenCL)
 set (program_dir ${src_dir}/Program)
 set (test_dir ${src_dir}/Tests)
@@ -26,15 +25,12 @@ set (test_dir ${src_dir}/Tests)
 set(graphics_src 
       ${graphics_dir}/window.cpp
       ${graphics_dir}/shader.cpp
-      ${graphics_dir}/model.cpp
       ${graphics_dir}/vertexbuffer.cpp
       ${graphics_dir}/vertexAttributes.cpp
       ${graphics_dir}/renderer.cpp
       ${graphics_dir}/texture.cpp
       ${graphics_dir}/camera.cpp
-      ${graphics_dir}/programstate.cpp
       ${graphics_dir}/textureData.cpp
-      ${graphics_dir}/modelManager.cpp
       )
 
 set(util_src 
@@ -56,11 +52,6 @@ set(opencl_src
   ${opencl_dir}/CL_Buffer.cpp
   ${opencl_dir}/CommandQueue.cpp
   ${opencl_dir}/CL_Helper.cpp
-      )
-
-set(physics_src 
-  ${physics_dir}/ParticleSystem.cpp
-  ${physics_dir}/ParticleGenerator.cpp
       )
 
 set (soil_src
@@ -100,7 +91,7 @@ set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/lib)
 #add_library(math SHARED lib/math/operations.cpp)
 #add_library(math STATIC lib/math/operations.cpp)
 
-add_executable(hello ${src_dir}/hello.cpp ${util_src} ${graphics_src} ${physics_src} ${opencl_src} ${program_src} ${soil_src})  
+add_executable(hello ${src_dir}/hello.cpp ${util_src} ${graphics_src} ${opencl_src} ${program_src} ${soil_src})  
 
 #Tanne linkitykset
 target_link_libraries(hello ${SDL2_LIBRARIES} ${OPENGL_LIBRARIES} ${GLEW_LIBRARIES} OpenCL::OpenCL ${Boost_LIBRARIES}) 

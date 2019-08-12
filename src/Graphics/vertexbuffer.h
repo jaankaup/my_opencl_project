@@ -13,9 +13,7 @@
 // TODO: erillinen piirto-purkuri ja tavallinen data-puskuri periyttamalla.
 class Vertexbuffer
 {
-  template <typename T> friend class Manager;
-  friend class VertexBufferManager;
-//  friend class std::vector<std::tuple<const std::string, Vertexbuffer>>;
+    friend class ResourceManager;
 
 	public:
 

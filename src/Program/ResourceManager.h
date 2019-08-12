@@ -24,7 +24,7 @@ class ResourceManager
     static auto* getInstance() { static ResourceManager instance; return &instance; }
 
     template<typename T>
-    T* create(const std::string& key, T value)
+    T* create(const std::string& key)
     {
       if constexpr (std::is_same<T,Shader>::value) { Shader s; pShaders[key] = s; }
       if constexpr (std::is_same<T,Texture>::value) {Texture t; pTextures[key] = t; }

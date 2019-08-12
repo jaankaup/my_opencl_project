@@ -7,7 +7,6 @@
 #include <tuple>
 #include <GL/glew.h>
 #include <SOIL.h>
-//#include "textureManager.h"
 #include "textureData.h"
 #include "../Utils/log.h"
 #include "../Utils/myrandom.h"
@@ -17,11 +16,7 @@ enum class TextureType {d1,d2,d3};
 
 class Texture
 {
-    /// TextureManager object has access to all Texture member functions.
-    /// TextureManager creates and destroys textures objects.
-    template <typename T> friend class Manager;
-    friend class TextureManager;
-
+      friend class ResourceManager;
     public:
 
         /// Uses the texture object. Texture object must be initialized 

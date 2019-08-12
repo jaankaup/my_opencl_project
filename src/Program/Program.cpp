@@ -1,5 +1,6 @@
 #include "Program.h"
 #include "GlobalPropertyManager.h"
+#include "ResourceManager.h"
 #include "../Utils/log.h"
 #include "../Utils/Helper.h"
 #include "../Graphics/window.h"
@@ -24,6 +25,9 @@ bool MainProgram::initialize()
   createGlobalProperties();
 
   if (!createWindow()) { Log::getError().log("Failed to create window."); return false; }
+
+  // Create the resource manager.
+  ResourceManager::getInstance();
   createOpenCl();
   createShaders();
   createTextures();
@@ -133,7 +137,7 @@ bool MainProgram::createOpenCl()
   if (!b.create(d, CL_MEM_READ_WRITE, sizeof(int)*10)) Log::getError().log("Failed to create buffer."); 
 
   // Add data to the buffer.
-  b.addData(&i, sizeof(int)*10);
+  b.addData(d,&i, sizeof(int)*10);
 
   // Load the source code.
   cl::Program::Sources sources;
@@ -162,7 +166,7 @@ bool MainProgram::createOpenCl()
 
   int bee[10];
 
-  b.getData(true,&bee, sizeof(int)*10);
+  b.getData(d,true,&bee, sizeof(int)*10);
 
   for (int i=0; i<10 ; i++)
   {

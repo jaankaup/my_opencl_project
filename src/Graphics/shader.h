@@ -10,8 +10,6 @@
 #include <GL/glew.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
-//#include "manager.h"
-#include "programstate.h"
 
 /** A simple shader class with basic shader operations. */
 class Shader
@@ -19,14 +17,14 @@ class Shader
     /// TextureManager object has access to all Texture member functions.
     /// TextureManager creates and destroys textures objects.
     //friend class ShaderManager;
-    template <typename T> friend class Manager;
-    friend std::unique_ptr<Shader> std::make_unique<Shader>(Shader&);
+//    template <typename T> friend class Manager;
+//    friend std::unique_ptr<Shader> std::make_unique<Shader>(Shader&);
+      friend class ResourceManager;
 
 	public:
 
 		~Shader();
-		void build(const std::vector<std::string>& sources,const bool triangulate);
-    void buildDensity(const std::vector<std::string>& sources);
+		void build(const std::vector<std::string>& sources);
 		void bind() const;
 
     void setUniform(const std::string& name, int value) const;

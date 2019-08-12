@@ -15,19 +15,9 @@
 #include "shader.h"
 #include "vertexbuffer.h"
 #include "texture.h"
-#include "model.h"
 #include "camera.h"
-#include "manager.h"
-#include "manager.h"
-#include "programstate.h"
-#include "timer.h"
-#include "modelManager.h"
 #include "../Utils/log.h"
 #include "../Utils/misc.h"
-
-//#include "misc.h"
-
-//struct Command;
 
 /** A simple shader class with basic shader operations. */
 class Renderer
@@ -42,8 +32,6 @@ class Renderer
 
 	private:
 
-//    int lkm = 0;
-//    bool pah = true;
 };
 
 
