@@ -132,9 +132,9 @@ bool MainProgram::createOpenCl()
   Log::getDebug().log("AHHAAAAA");
   int i[10] = {1,2,3,4,5,6,7,8,9,10};
 
-  const static int X = 10;
-  const static int Y = 10;
-  const static int Z = 10;
+  const static int X = 2;
+  const static int Y = 2;
+  const static int Z = 2;
   const static float ISOVALUE = 0.0f;
 
   std::vector<glm::vec3> base_points;
@@ -192,22 +192,33 @@ bool MainProgram::createOpenCl()
   Log::getDebug().log("Get the dimensions.");
   auto global_dim = d->getGlobalDim(X*Y*Z);
   auto local_dim = d->getLocalDim();
+
+  auto global_dims = global_dim.dimensions();
+//  size_t x_global;
+//  size_t y_global;
+//  size_t z_global;
+//  global_dim();
+  //Log::getDebug().log("global_dim = %",global_dims);
   
   Log::getDebug().log("Run the kernel.");
 
   //cl::EnqueueArgs eargs(*(d->getCommandQueue()), cl::NullRange, cl::NDRange(10), cl::NullRange);
   //*(program.getKernel())(eargs, a,b,c,10).wait();
   d->runKernel(&program, global_dim, local_dim);// local_dim);
-  //d->runKernel(&program, /* global_dim */ cl::NDRange(10), cl::NullRange);// local_dim);
+  //d->runKernel(&program, /* global_dim */ cl::NDRange(5), cl::NullRange);// local_dim);
 
-////  int bee[10];
-////
-////  c.getData(d,true,&bee, sizeof(int)*10);
-////
-////  for (int i=0; i<10 ; i++)
-////  {
-////    Log::getDebug().log("%", bee[i]);
-////  }
+  int lkm[1];
+  glm::vec3 bee[X*Y*Z];
+
+  counter.getData(d,true,&lkm, sizeof(int));
+  Log::getDebug().log("LKM == %", lkm[0]);
+
+  output.getData(d,true,&bee, sizeof(glm::vec3)*X*Y*Z);
+
+  for (int i=0; i<X*Y*Z ; i++)
+  {
+    Log::getDebug().log("%", bee[i]);
+  }
 //bool CL_Buffer::getData(const bool blocking, void* dest_buffer, size_t size)
 
 //  CL_Program program;  

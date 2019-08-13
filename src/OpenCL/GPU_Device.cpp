@@ -103,7 +103,7 @@ cl::CommandQueue* GPU_Device::getCommandQueue()
 
 size_t GPU_Device::getMaxGroupSize() const
 {
-  int max_size;
+  size_t max_size;
   cl_int error;
 
   pDevice.getInfo(CL_DEVICE_MAX_WORK_GROUP_SIZE, &max_size);
@@ -121,9 +121,16 @@ size_t GPU_Device::getMaxGroupSize() const
 
 cl::NDRange GPU_Device::getGlobalDim(const int total_count)
 {
+  Log::getDebug().log("GPU_Device::getGlobalDim(%)",total_count);     
+
   size_t max_group_size = getMaxGroupSize();
+  Log::getDebug().log("max_group_size %.",max_group_size);     
+
   size_t workGroupCount = total_count/max_group_size + 1;
+  Log::getDebug().log("workGroupCount =  %/% + 1 == %", total_count,max_group_size,workGroupCount);     
+
   cl::NDRange globalDim(workGroupCount*max_group_size, 1, 1);
+  Log::getDebug().log("cl::NDRange globalDim(%*% == %, 1, 1);", workGroupCount,max_group_size,workGroupCount*max_group_size);     
   return globalDim;
 }
 
@@ -132,6 +139,7 @@ cl::NDRange GPU_Device::getGlobalDim(const int total_count)
 cl::NDRange GPU_Device::getLocalDim()
 {
   cl::NDRange localDim(getMaxGroupSize(), 1, 1);
+  Log::getDebug().log("cl::NDRange localDim(%, 1, 1);", getMaxGroupSize());     
   return localDim;
 }
 

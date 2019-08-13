@@ -264,7 +264,7 @@ void increase(volatile __global int* counter)
 }
 
 // The kernel. 
-__kernel void mc(__global float* base_points, float isovalue, __global float* output,  int n,  __global int* counterArg){       
+__kernel void mc(__global float3* base_points, float isovalue, __global float3* output,  int n,  __global int* counterArg){       
 
   volatile __global int* counterPtr = counterArg;
   increase(counterPtr); // OR increase(counterArg);
@@ -272,5 +272,5 @@ __kernel void mc(__global float* base_points, float isovalue, __global float* ou
   const int global_id = get_global_id(0);
 
   if(global_id < n) {}
-//     C[global_id]=A[global_id]+B[global_id];                 
+     output[global_id]=base_points[global_id];                 
 }                                                                               
