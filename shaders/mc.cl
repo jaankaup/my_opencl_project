@@ -1,5 +1,5 @@
-    __constant int4 x; 
-    __constant float triTable[3840] =
+// The tritable.
+__constant float triTable[3840] =
    {255.0, 255.0,  255.0, 255.0, 255.0, 255.0, 255.0, 255.0, 255.0, 255.0, 255.0, 255.0, 255.0, 255.0, 255.0,  
       0.0,   8.0,   3.0,  255.0, 255.0, 255.0, 255.0, 255.0, 255.0, 255.0, 255.0, 255.0, 255.0, 255.0, 255.0,     
       0.0,   1.0,   9.0,  255.0, 255.0, 255.0, 255.0, 255.0, 255.0, 255.0, 255.0, 255.0, 255.0, 255.0, 255.0,     
@@ -257,10 +257,20 @@
       0.0,   3.0,   8.0,  255.0,255.0,  255.0,  255.0 ,255.0 ,255.0, 255.0 ,255.0 ,255.0, 255.0 ,255.0 ,255.0 ,
    255.0 , 255.0, 255.0,  255.0,255.0,  255.0,  255.0 ,255.0 ,255.0, 255.0 ,255.0 ,255.0, 255.0 ,255.0 ,255.0 };
 
-__kernel void simple_add(global const int* A, global const int* B, global int* C, int n){       
+// A global counter.
+void increase(volatile __global int* counter)
+{
+  atomic_inc(counter);
+}
+
+// The kernel. 
+__kernel void mc(__global float* base_points, float isovalue, __global float* output,  int n,  __global int* counterArg){       
+
+  volatile __global int* counterPtr = counterArg;
+  increase(counterPtr); // OR increase(counterArg);
 
   const int global_id = get_global_id(0);
 
-  if(global_id < n)
-     C[global_id]=A[global_id]+B[global_id];                 
-  }                                                                               
+  if(global_id < n) {}
+//     C[global_id]=A[global_id]+B[global_id];                 
+}                                                                               

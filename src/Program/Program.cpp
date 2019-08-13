@@ -106,7 +106,7 @@ void MainProgram::createShaders()
 
 }
 
-/////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////
 
 bool MainProgram::createWindow()
 {
@@ -129,23 +129,46 @@ bool MainProgram::createOpenCl()
   auto d = GPU_Device::getInstance();
   if (!d->init()) return false;
 
+  Log::getDebug().log("AHHAAAAA");
   int i[10] = {1,2,3,4,5,6,7,8,9,10};
 
+  const static int X = 10;
+  const static int Y = 10;
+  const static int Z = 10;
+  const static float ISOVALUE = 0.0f;
+
+  std::vector<glm::vec3> base_points;
+
+  Log::getDebug().log("YHHYYYYYYY");
+  base_points.reserve(X*Y*Z*3);
+
+  Log::getDebug().log("EHHEEEEEEE");
+//  for (int x=0; x<X; x++) {
+//  for (int y=0; y<Y; y++) {
+//  for (int z=0; y<Z; z++) {
+//    base_points.push_back(glm::vec3(x,y,z));
+//  }}};
+
+  Log::getDebug().log("JUPPPPI");
+  int c[1] = {0};
+
   // Create a buffers.
-  CL_Buffer a;
-  if (!a.create(d, CL_MEM_READ_WRITE, sizeof(int)*10)) Log::getError().log("Failed to create buffer."); 
 
-  CL_Buffer b;
-  if (!b.create(d, CL_MEM_READ_WRITE, sizeof(int)*10)) Log::getError().log("Failed to create buffer."); 
+  Log::getDebug().log("AAA");
+  CL_Buffer counter;
+  if (!counter.create(d, CL_MEM_READ_WRITE, sizeof(int))) Log::getError().log("Failed to create counter buffer."); 
 
-  CL_Buffer c;
-  if (!c.create(d, CL_MEM_READ_WRITE, sizeof(int)*10)) Log::getError().log("Failed to create buffer."); 
+  Log::getDebug().log("BBB");
+  CL_Buffer b_points;
+  if (!b_points.create(d, CL_MEM_READ_WRITE,  sizeof(glm::vec3)*X*Y*Z)) Log::getError().log("Failed to create base_points buffer."); 
 
-  // Add data to the buffer a.
-  a.addData(d,true, &i, sizeof(int)*10);
+  Log::getDebug().log("CCC");
+  CL_Buffer output;
+  if (!output.create(d, CL_MEM_READ_WRITE, sizeof(glm::vec3)*X*Y*Z*10)) Log::getError().log("Failed to create output buffer."); 
 
-  // Add data to the buffer b.
-  b.addData(d,true, &i, sizeof(int)*10);
+  Log::getDebug().log("DDD");
+  b_points.addData(d,true, &base_points[0] , sizeof(glm::vec3)*X*Y*Z);
+  counter.addData(d,true, &c , sizeof(int));
 
   // Load the source code.
   cl::Program::Sources sources;
@@ -156,32 +179,35 @@ bool MainProgram::createOpenCl()
   // Create a program
   Log::getDebug().log("Creating the program.");
   CL_Program program;
-  if (!program.create(d,sources,"simple_add")) Log::getError().log("Failed to create the program.");
+  if (!program.create(d,sources,"mc")) Log::getError().log("Failed to create the program.");
 
+//__kernel void mc(__global float* base_points, __global const float isovalue, __global float* output,  __global int n,  __global int* counterArg){       
   Log::getDebug().log("Setting parameters.");
-  program.setArg(0,*(a.getBuffer()));
-  program.setArg(1,*(b.getBuffer()));
-  program.setArg(2,*(c.getBuffer()));
-  program.setArg(3,10);
+  program.setArg(0,*(b_points.getBuffer()));
+  program.setArg(1,ISOVALUE);
+  program.setArg(2,*(output.getBuffer()));
+  program.setArg(3,X*Y*Z);
+  program.setArg(4,*(counter.getBuffer()));
 
   Log::getDebug().log("Get the dimensions.");
-  auto global_dim = d->getGlobalDim(10);
+  auto global_dim = d->getGlobalDim(X*Y*Z);
   auto local_dim = d->getLocalDim();
   
   Log::getDebug().log("Run the kernel.");
 
   //cl::EnqueueArgs eargs(*(d->getCommandQueue()), cl::NullRange, cl::NDRange(10), cl::NullRange);
   //*(program.getKernel())(eargs, a,b,c,10).wait();
-  d->runKernel(&program, /* global_dim */ cl::NDRange(10), cl::NullRange);// local_dim);
+  d->runKernel(&program, global_dim, local_dim);// local_dim);
+  //d->runKernel(&program, /* global_dim */ cl::NDRange(10), cl::NullRange);// local_dim);
 
-  int bee[10];
-
-  c.getData(d,true,&bee, sizeof(int)*10);
-
-  for (int i=0; i<10 ; i++)
-  {
-    Log::getDebug().log("%", bee[i]);
-  }
+////  int bee[10];
+////
+////  c.getData(d,true,&bee, sizeof(int)*10);
+////
+////  for (int i=0; i<10 ; i++)
+////  {
+////    Log::getDebug().log("%", bee[i]);
+////  }
 //bool CL_Buffer::getData(const bool blocking, void* dest_buffer, size_t size)
 
 //  CL_Program program;  
