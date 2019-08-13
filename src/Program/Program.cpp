@@ -132,22 +132,27 @@ bool MainProgram::createOpenCl()
   Log::getDebug().log("AHHAAAAA");
   int i[10] = {1,2,3,4,5,6,7,8,9,10};
 
-  const static int X = 2;
-  const static int Y = 2;
-  const static int Z = 2;
-  const static float ISOVALUE = 0.0f;
+  const static  int X_DIMENSION = 2;
+  const static  int Y_DIMENSION = 2;
+  const static  int Z_DIMENSION = 2;
+  const static  int TOTAL_SIZE = X_DIMENSION * Y_DIMENSION * Z_DIMENSION;
+  const static  float ISOVALUE = 0.0f;
 
-  std::vector<glm::vec3> base_points;
+  //std::vector<cl_float3> base_points;
+  std::vector<cl_float3> base_points;
 
   Log::getDebug().log("YHHYYYYYYY");
-  base_points.reserve(X*Y*Z*3);
+  base_points.reserve(TOTAL_SIZE);
 
   Log::getDebug().log("EHHEEEEEEE");
-//  for (int x=0; x<X; x++) {
-//  for (int y=0; y<Y; y++) {
-//  for (int z=0; y<Z; z++) {
-//    base_points.push_back(glm::vec3(x,y,z));
-//  }}};
+  for (int x=0; x<X_DIMENSION; x++) {
+  for (int y=0; y<Y_DIMENSION; y++) {
+  for (int z=0; z<Z_DIMENSION; z++) {
+    //cl_float3 v3(x,y,z);
+    //Log::getDebug().log("%",v3);
+    base_points.push_back({x,y,z});
+    //base_points.push_back(cl_float3(float(x),float(y),float(z)));
+  }}};
 
   Log::getDebug().log("JUPPPPI");
   int c[1] = {0};
@@ -160,14 +165,15 @@ bool MainProgram::createOpenCl()
 
   Log::getDebug().log("BBB");
   CL_Buffer b_points;
-  if (!b_points.create(d, CL_MEM_READ_WRITE,  sizeof(glm::vec3)*X*Y*Z)) Log::getError().log("Failed to create base_points buffer."); 
+  //if (!b_points.create(d, CL_MEM_READ_WRITE, sizeof(cl_float3)*TOTAL_SIZE)) Log::getError().log("Failed to create base_points buffer."); 
+  if (!b_points.create(d, CL_MEM_READ_WRITE, sizeof(cl_float3)*TOTAL_SIZE)) Log::getError().log("Failed to create base_points buffer."); 
 
   Log::getDebug().log("CCC");
   CL_Buffer output;
-  if (!output.create(d, CL_MEM_READ_WRITE, sizeof(glm::vec3)*X*Y*Z*10)) Log::getError().log("Failed to create output buffer."); 
+  if (!output.create(d, CL_MEM_READ_WRITE, sizeof(cl_float3)*TOTAL_SIZE)) Log::getError().log("Failed to create output buffer."); 
 
   Log::getDebug().log("DDD");
-  b_points.addData(d,true, &base_points[0] , sizeof(glm::vec3)*X*Y*Z);
+  b_points.addData(d,true, &base_points[0] , sizeof(cl_float3)*TOTAL_SIZE);
   counter.addData(d,true, &c , sizeof(int));
 
   // Load the source code.
@@ -186,11 +192,11 @@ bool MainProgram::createOpenCl()
   program.setArg(0,*(b_points.getBuffer()));
   program.setArg(1,ISOVALUE);
   program.setArg(2,*(output.getBuffer()));
-  program.setArg(3,X*Y*Z);
+  program.setArg(3,TOTAL_SIZE);
   program.setArg(4,*(counter.getBuffer()));
 
   Log::getDebug().log("Get the dimensions.");
-  auto global_dim = d->getGlobalDim(X*Y*Z);
+  auto global_dim = d->getGlobalDim(TOTAL_SIZE);
   auto local_dim = d->getLocalDim();
 
   auto global_dims = global_dim.dimensions();
@@ -208,16 +214,16 @@ bool MainProgram::createOpenCl()
   //d->runKernel(&program, /* global_dim */ cl::NDRange(5), cl::NullRange);// local_dim);
 
   int lkm[1];
-  glm::vec3 bee[X*Y*Z];
+  cl_float3 bee[TOTAL_SIZE];
 
   counter.getData(d,true,&lkm, sizeof(int));
   Log::getDebug().log("LKM == %", lkm[0]);
 
-  output.getData(d,true,&bee, sizeof(glm::vec3)*X*Y*Z);
+  output.getData(d,true,&bee, sizeof(cl_float3)*TOTAL_SIZE);
 
-  for (int i=0; i<X*Y*Z ; i++)
+  for (int i=0; i<TOTAL_SIZE ; i++)
   {
-    Log::getDebug().log("%", bee[i]);
+    Log::getDebug().log("%,%,%", bee[i].x, bee[i].y,bee[i].z);
   }
 //bool CL_Buffer::getData(const bool blocking, void* dest_buffer, size_t size)
 

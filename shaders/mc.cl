@@ -260,17 +260,26 @@ __constant float triTable[3840] =
 // A global counter.
 void increase(volatile __global int* counter)
 {
+  barrier(CLK_GLOBAL_MEM_FENCE);
   atomic_inc(counter);
+  barrier(CLK_GLOBAL_MEM_FENCE);
 }
 
 // The kernel. 
 __kernel void mc(__global float3* base_points, float isovalue, __global float3* output,  int n,  __global int* counterArg){       
 
-  volatile __global int* counterPtr = counterArg;
-  increase(counterPtr); // OR increase(counterArg);
 
   const int global_id = get_global_id(0);
+  volatile __global int* counterPtr = counterArg;
 
-  if(global_id < n) {}
-     output[global_id]=base_points[global_id];                 
+  if(global_id < n) { 
+     //increase(counterPtr); // OR increase(counterArg);
+     //increase(counterArg); // OR increase(counterArg);
+     float3 f;
+     f.x = global_id;
+     f.y = counterPtr[0];
+     f.z = 6.0;
+     output[atomic_inc(counterPtr)]= f; //base_points[global_id];                 
+     //output[atomic_inc(counterPtr)]= f; //base_points[global_id];                 
+  }
 }                                                                               
