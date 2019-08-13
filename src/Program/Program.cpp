@@ -103,7 +103,6 @@ void MainProgram::createTextures()
 void MainProgram::createShaders()
 {
   Log::getDebug().log("CREATING SHADERS.\n");
-
 }
 
 ////////////////////////////////////////////////////////////////////////////////////
@@ -129,113 +128,141 @@ bool MainProgram::createOpenCl()
   auto d = GPU_Device::getInstance();
   if (!d->init()) return false;
 
-  Log::getDebug().log("AHHAAAAA");
-  int i[10] = {1,2,3,4,5,6,7,8,9,10};
-
-  const static  int X_DIMENSION = 2;
-  const static  int Y_DIMENSION = 2;
-  const static  int Z_DIMENSION = 2;
-  const static  int TOTAL_SIZE = X_DIMENSION * Y_DIMENSION * Z_DIMENSION;
-  const static  float ISOVALUE = 0.0f;
+  const static int X_DIMENSION = 15;
+  const static int Y_DIMENSION = 15;
+  const static int Z_DIMENSION = 15;
+  const static int TOTAL_SIZE = X_DIMENSION * Y_DIMENSION * Z_DIMENSION;
+  const static float ISOVALUE = 0.0f;
+  const static float CUBE_SIZE_LENGTH = 0.1f;
 
   //std::vector<cl_float3> base_points;
   std::vector<cl_float3> base_points;
 
-  Log::getDebug().log("YHHYYYYYYY");
   base_points.reserve(TOTAL_SIZE);
 
-  Log::getDebug().log("EHHEEEEEEE");
-  for (int x=0; x<X_DIMENSION; x++) {
-  for (int y=0; y<Y_DIMENSION; y++) {
-  for (int z=0; z<Z_DIMENSION; z++) {
-    //cl_float3 v3(x,y,z);
-    //Log::getDebug().log("%",v3);
-    base_points.push_back({x,y,z});
-    //base_points.push_back(cl_float3(float(x),float(y),float(z)));
+  for (int x= -1; x<X_DIMENSION; x++) {
+  for (int y= -1; y<Y_DIMENSION; y++) {
+  for (int z= -1; z<Z_DIMENSION; z++) {
+    base_points.push_back({float(x)*CUBE_SIZE_LENGTH,float(y)*CUBE_SIZE_LENGTH,float(z)*CUBE_SIZE_LENGTH});
   }}};
 
-  Log::getDebug().log("JUPPPPI");
-  int c[1] = {0};
-
-  // Create a buffers.
-
-  Log::getDebug().log("AAA");
-  CL_Buffer counter;
-  if (!counter.create(d, CL_MEM_READ_WRITE, sizeof(int))) Log::getError().log("Failed to create counter buffer."); 
-
-  Log::getDebug().log("BBB");
   CL_Buffer b_points;
-  //if (!b_points.create(d, CL_MEM_READ_WRITE, sizeof(cl_float3)*TOTAL_SIZE)) Log::getError().log("Failed to create base_points buffer."); 
-  if (!b_points.create(d, CL_MEM_READ_WRITE, sizeof(cl_float3)*TOTAL_SIZE)) Log::getError().log("Failed to create base_points buffer."); 
+  if (!b_points.create(d, CL_MEM_READ_ONLY, sizeof(cl_float3)*TOTAL_SIZE)) Log::getError().log("Failed to create base_points buffer."); 
+ 
+  CL_Buffer b_values;
+  if (!b_values.create(d, CL_MEM_READ_WRITE, sizeof(cl_float)*TOTAL_SIZE)) Log::getError().log("Failed to create base_values buffer."); 
+  //int c[1] = {0};
 
-  Log::getDebug().log("CCC");
-  CL_Buffer output;
-  if (!output.create(d, CL_MEM_READ_WRITE, sizeof(cl_float3)*TOTAL_SIZE)) Log::getError().log("Failed to create output buffer."); 
-
-  Log::getDebug().log("DDD");
-  b_points.addData(d,true, &base_points[0] , sizeof(cl_float3)*TOTAL_SIZE);
-  counter.addData(d,true, &c , sizeof(int));
+  b_points.addData(d,true, &base_points[0] , sizeof(cl_float)*TOTAL_SIZE);
 
   // Load the source code.
   cl::Program::Sources sources;
-  std::string kernel_code = Helper::loadSource("shaders/mc.cl"); 
+  std::string kernel_code = Helper::loadSource("shaders/evalDencity.cl"); 
   sources.push_back({kernel_code.c_str(),kernel_code.length()});
-  //sources.push_back(kernel_code);
 
   // Create a program
   Log::getDebug().log("Creating the program.");
   CL_Program program;
   if (!program.create(d,sources,"mc")) Log::getError().log("Failed to create the program.");
 
-//__kernel void mc(__global float* base_points, __global const float isovalue, __global float* output,  __global int n,  __global int* counterArg){       
   Log::getDebug().log("Setting parameters.");
   program.setArg(0,*(b_points.getBuffer()));
-  program.setArg(1,ISOVALUE);
-  program.setArg(2,*(output.getBuffer()));
-  program.setArg(3,TOTAL_SIZE);
-  program.setArg(4,*(counter.getBuffer()));
+  program.setArg(1,*(b_values.getBuffer()));
+  program.setArg(2,TOTAL_SIZE);
 
   Log::getDebug().log("Get the dimensions.");
   auto global_dim = d->getGlobalDim(TOTAL_SIZE);
   auto local_dim = d->getLocalDim();
 
-  auto global_dims = global_dim.dimensions();
-//  size_t x_global;
-//  size_t y_global;
-//  size_t z_global;
-//  global_dim();
-  //Log::getDebug().log("global_dim = %",global_dims);
-  
-  Log::getDebug().log("Run the kernel.");
+  d->runKernel(&program, global_dim, local_dim);
 
-  //cl::EnqueueArgs eargs(*(d->getCommandQueue()), cl::NullRange, cl::NDRange(10), cl::NullRange);
-  //*(program.getKernel())(eargs, a,b,c,10).wait();
-  d->runKernel(&program, global_dim, local_dim);// local_dim);
-  //d->runKernel(&program, /* global_dim */ cl::NDRange(5), cl::NullRange);// local_dim);
-
-  int lkm[1];
-  cl_float3 bee[TOTAL_SIZE];
-
-  counter.getData(d,true,&lkm, sizeof(int));
-  Log::getDebug().log("LKM == %", lkm[0]);
-
-  output.getData(d,true,&bee, sizeof(cl_float3)*TOTAL_SIZE);
+  cl_float bee[TOTAL_SIZE];
+  b_values.getData(d,true,&bee, sizeof(cl_float)*TOTAL_SIZE);
 
   for (int i=0; i<TOTAL_SIZE ; i++)
   {
-    Log::getDebug().log("%,%,%", bee[i].x, bee[i].y,bee[i].z);
+    Log::getDebug().log("%", bee[i]);
   }
-//bool CL_Buffer::getData(const bool blocking, void* dest_buffer, size_t size)
 
-//  CL_Program program;  
-//
-//  cl::Program::Sources sources;
-//
-//  std::string kernel_code = Helper::loadSource("shaders/mc.cl"); 
-//  sources.push_back({kernel_code.c_str(),kernel_code.length()});
-//
-//  program.create(d, sources);
-//  return true;
+////
+////  // Create a buffers.
+////  CL_Buffer counter;
+////  if (!counter.create(d, CL_MEM_READ_WRITE, sizeof(int))) Log::getError().log("Failed to create counter buffer."); 
+////
+////  CL_Buffer b_points;
+////  //if (!b_points.create(d, CL_MEM_READ_WRITE, sizeof(cl_float3)*TOTAL_SIZE)) Log::getError().log("Failed to create base_points buffer."); 
+////  if (!b_points.create(d, CL_MEM_READ_ONLY, sizeof(cl_float3)*TOTAL_SIZE)) Log::getError().log("Failed to create base_points buffer."); 
+////
+////  CL_Buffer b_values;
+////  if (!b_values.create(d, CL_MEM_READ_WRITE, sizeof(cl_float3)*TOTAL_SIZE)) Log::getError().log("Failed to create base_values buffer."); 
+////
+////  CL_Buffer output;
+////  if (!output.create(d, CL_MEM_READ_WRITE, sizeof(cl_float3)*TOTAL_SIZE)) Log::getError().log("Failed to create output buffer."); 
+////
+////  b_points.addData(d,true, &base_points[0] , sizeof(cl_float3)*TOTAL_SIZE);
+////  counter.addData(d,true, &c , sizeof(int));
+////
+////  // Load the source code.
+////  cl::Program::Sources sources;
+////  std::string kernel_code = Helper::loadSource("shaders/mc.cl"); 
+////  sources.push_back({kernel_code.c_str(),kernel_code.length()});
+////  //sources.push_back(kernel_code);
+////
+////  // Create a program
+////  Log::getDebug().log("Creating the program.");
+////  CL_Program program;
+////  if (!program.create(d,sources,"mc")) Log::getError().log("Failed to create the program.");
+////
+//////__kernel void mc(__global float* base_points, __global const float isovalue, __global float* output,  __global int n,  __global int* counterArg){       
+////  Log::getDebug().log("Setting parameters.");
+////  program.setArg(0,*(b_points.getBuffer()));
+////  program.setArg(1,*(b_values.getBuffer()));
+////  program.setArg(2,*(output.getBuffer()));
+////  program.setArg(3,*(counter.getBuffer()));
+////  program.setArg(4,ISOVALUE);
+////  program.setArg(5,TOTAL_SIZE);
+////
+////  Log::getDebug().log("Get the dimensions.");
+////  auto global_dim = d->getGlobalDim(TOTAL_SIZE);
+////  auto local_dim = d->getLocalDim();
+////
+////  auto global_dims = global_dim.dimensions();
+//////  size_t x_global;
+//////  size_t y_global;
+//////  size_t z_global;
+//////  global_dim();
+////  //Log::getDebug().log("global_dim = %",global_dims);
+////  
+////  Log::getDebug().log("Run the kernel.");
+////
+////  //cl::EnqueueArgs eargs(*(d->getCommandQueue()), cl::NullRange, cl::NDRange(10), cl::NullRange);
+////  //*(program.getKernel())(eargs, a,b,c,10).wait();
+////  d->runKernel(&program, global_dim, local_dim);// local_dim);
+////  //d->runKernel(&program, /* global_dim */ cl::NDRange(5), cl::NullRange);// local_dim);
+////
+////  int lkm[1];
+////  cl_float3 bee[TOTAL_SIZE];
+////
+////  counter.getData(d,true,&lkm, sizeof(int));
+////  Log::getDebug().log("LKM == %", lkm[0]);
+////
+////  output.getData(d,true,&bee, sizeof(cl_float3)*TOTAL_SIZE);
+////
+////  for (int i=0; i<TOTAL_SIZE ; i++)
+////  {
+////    Log::getDebug().log("%,%,%", bee[i].x, bee[i].y,bee[i].z);
+////  }
+//////bool CL_Buffer::getData(const bool blocking, void* dest_buffer, size_t size)
+////
+//////  CL_Program program;  
+//////
+//////  cl::Program::Sources sources;
+//////
+//////  std::string kernel_code = Helper::loadSource("shaders/mc.cl"); 
+//////  sources.push_back({kernel_code.c_str(),kernel_code.length()});
+//////
+//////  program.create(d, sources);
+//////  return true;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////
