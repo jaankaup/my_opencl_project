@@ -5,10 +5,12 @@
 //#define CL_HPP_TARGET_OPENCL_VERSION 200
 
 #include <vector>
+#include <unordered_map>
 //#include <CL/cl2.hpp>
 #include <CL/cl.hpp>
 #include "../Utils/log.h"
 #include "CL_Program.h"
+#include "CL_Helper.h"
 
 class CL_Program;
 
@@ -100,10 +102,32 @@ class GPU_Device
      */
     bool runKernel(CL_Program* kernel, cl::NDRange globalDim, cl::NDRange localDim);
 
+    template<typename T>
+    T* create(const std::string& key)
+    {
+      if constexpr (std::is_same<T,cl::CommandQueue>::value) {
+        cl_int error;
+        cl::CommandQueue cq = cl::CommandQueue(pContext, pDevice, 0, &error);
+        if (error != CL_SUCCESS)
+        {
+          Log::getError().log("GPU:Device::create(): Failed to create CommmandQueue.");     
+          Log::getError().log("%",errorcode_toString(error));
+          return nullptr;
+        }
+        pCommandQueues[key] = cq;
+        return &pCommandQueues[key];
+      }
+      //if constexpr (std::is_same<T,Texture>::value) {Texture t; pTextures[key] = t; }
+      //if constexpr (std::is_same<T,Vertexbuffer>::value) { Vertexbuffer vb; pVertexBuffers[key] = vb; }
+    }
+
 	private:
 
     /** The constructor. */
 		GPU_Device() {};
+
+    std::unordered_map<std::string, cl::Buffer> pBuffers;
+    std::unordered_map<std::string, cl::CommandQueue> pCommandQueues;
 
     bool pInitialized = false; /**< Indicates the initialization state. */ 
     cl::Device pDevice; /**< The cl::Device. */ 
