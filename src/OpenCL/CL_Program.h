@@ -31,6 +31,13 @@ class CL_Program
      * */
     cl::Kernel* getKernel();
 
+    /** 
+     * Get the pointer to the cl::Program.
+     * @param return A pointer to the program. If this object is uninitialized,
+     * return nullptr.
+     */
+    cl::Program* getProgram();
+
     /**
      * Adds one value to the kernel.
      * @param index is the index of the arg.

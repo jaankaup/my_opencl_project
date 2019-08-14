@@ -9,6 +9,7 @@
 #include "../OpenCL/GPU_Device.h"
 #include "../OpenCL/CL_Program.h"
 #include "../OpenCL/CL_Buffer.h"
+#include "../OpenCL/CL_Helper.h"
 
 namespace Program {
 
@@ -88,7 +89,6 @@ void MainProgram::createGlobalProperties()
   initial_screen_height.set(720);
   initial_screen_height.registerTest(height_filter);
   glob_manager->add("initial_screen_height",initial_screen_height);
-
 }
 
 /////////////////////////////////////////////////////////////////////////////////////
@@ -146,14 +146,19 @@ bool MainProgram::createOpenCl()
     base_points.push_back({float(x)*CUBE_SIZE_LENGTH,float(y)*CUBE_SIZE_LENGTH,float(z)*CUBE_SIZE_LENGTH});
   }}};
 
-  CL_Buffer b_points;
-  if (!b_points.create(d, CL_MEM_READ_ONLY, sizeof(cl_float3)*TOTAL_SIZE)) Log::getError().log("Failed to create base_points buffer."); 
+  cl::Buffer b_Points(*(d->getContext()),CL_MEM_READ_ONLY, sizeof(cl_float3)*TOTAL_SIZE);
+  cl::Buffer b_values(*(d->getContext()),CL_MEM_READ_WRITE, sizeof(cl_float)*TOTAL_SIZE);
+  int error = d->getCommandQueue()->enqueueWriteBuffer(b_Points,CL_TRUE,0,sizeof(cl_float3)*TOTAL_SIZE,&base_points[0]);
+  Log::getDebug().log("error == CL_SUCCESS => %", error == CL_SUCCESS);
+  Log::getError().log("%",errorcode_toString(error));
+  //CL_Buffer b_points;
+  //if (!b_points.create(d, CL_MEM_READ_ONLY, sizeof(cl_float3)*TOTAL_SIZE)) Log::getError().log("Failed to create base_points buffer."); 
  
-  CL_Buffer b_values;
-  if (!b_values.create(d, CL_MEM_READ_WRITE, sizeof(cl_float)*TOTAL_SIZE)) Log::getError().log("Failed to create base_values buffer."); 
+  //CL_Buffer b_values;
+  //if (!b_values.create(d, CL_MEM_READ_WRITE, sizeof(cl_float)*TOTAL_SIZE)) Log::getError().log("Failed to create base_values buffer."); 
   //int c[1] = {0};
 
-  b_points.addData(d,true, &base_points[0] , sizeof(cl_float3)*TOTAL_SIZE);
+  //b_points.addData(d,true, &base_points[0] , sizeof(cl_float3)*TOTAL_SIZE);
 
   // Load the source code.
   cl::Program::Sources sources;
@@ -165,29 +170,42 @@ bool MainProgram::createOpenCl()
   CL_Program program;
   if (!program.create(d,sources,"mc")) Log::getError().log("Failed to create the program.");
 
-  Log::getDebug().log("Setting parameters.");
-  program.setArg(0,*(b_points.getBuffer()));
-  program.setArg(1,*(b_values.getBuffer()));
-  program.setArg(2,TOTAL_SIZE);
-
+  
   Log::getDebug().log("Get the dimensions.");
   auto global_dim = d->getGlobalDim(TOTAL_SIZE);
   auto local_dim = d->getLocalDim();
 
-  d->runKernel(&program, global_dim, local_dim);
+  Log::getDebug().log("Creating kernel and setting arguments.");
+  cl::make_kernel<cl::Buffer, cl::Buffer, int> evalDensity_kernel(cl::Kernel(*(program.getProgram()),"eval_density"));
+  //cl::make_kernel<cl::Buffer&, cl::Buffer&, int> evalDensity_kernel(cl::Kernel(*(program.getProgram()),"evalDensity"));
+  cl::EnqueueArgs eargs(*(d->getCommandQueue()), cl::NullRange, global_dim, local_dim);
+  evalDensity_kernel(eargs, b_Points,b_values,TOTAL_SIZE).getInfo(CL_EVENT_COMMAND_QUEUE, d->getCommandQueue());
+
+  //Log::getDebug().log("error == CL_SUCCESS => %", error == CL_SUCCESS);
+  //Log::getError().log("%",errorcode_toString(error));
+
+//  program.setArg(0,*(b_points.getBuffer()));
+//  program.setArg(1,*(b_values.getBuffer()));
+//  program.setArg(2,TOTAL_SIZE);
+
+
+//  d->runKernel(&program, global_dim, local_dim);
 
   cl_float bee[TOTAL_SIZE];
-  b_values.getData(d,true,&bee, sizeof(cl_float)*TOTAL_SIZE);
+  //b_values.getData(d,true,&bee, sizeof(cl_float)*TOTAL_SIZE);
+  error = d->getCommandQueue()->enqueueReadBuffer(b_values,CL_TRUE,0,sizeof(cl_float)*TOTAL_SIZE,bee);
+  Log::getDebug().log("error == CL_SUCCESS => %", error == CL_SUCCESS);
+  Log::getError().log("%",errorcode_toString(error));
 
   int x_offset = X_DIMENSION + 2;
   int y_offset = (X_DIMENSION + 2) * (Y_DIMENSION + 2);
   int z_offset = (X_DIMENSION + 2) * (Y_DIMENSION + 2) * (Z_DIMENSION + 2);
-  for (int i=0; i<TOTAL_SIZE ; i++)
-  {
-    auto x_coord = (i % x_offset) - 1;
-    auto y_coord = ((i / x_offset) % (Y_DIMENSION + 2)) - 1;
-    auto z_coord = ((i / y_offset) % (Z_DIMENSION + 2)) - 1;
-    Log::getDebug().log("f(%,%,%) = : %", x_coord, y_coord, z_coord , bee[i]);
+   for (int i=0; i<TOTAL_SIZE ; i++)
+   {
+     auto x_coord = (i % x_offset) - 1;
+     auto y_coord = ((i / x_offset) % (Y_DIMENSION + 2)) - 1;
+     auto z_coord = ((i / y_offset) % (Z_DIMENSION + 2)) - 1;
+     Log::getDebug().log("f(%,%,%) = : %", x_coord, y_coord, z_coord , bee[i]);
   }
 
 ////

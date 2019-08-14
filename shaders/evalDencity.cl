@@ -5,9 +5,7 @@ float ball(float3 f_pos, float3 ball_center, float radius)
 }
 
 // The kernel. 
-__kernel void mc(__global float3* base_points,
-	         __global float* base_values,
-		 int n)
+__kernel void eval_density(__global float3* base_points, __global float* base_values, int n)
 {
   const int global_id = get_global_id(0);
   const float3 b_center;
