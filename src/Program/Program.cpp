@@ -128,10 +128,10 @@ bool MainProgram::createOpenCl()
   auto d = GPU_Device::getInstance();
   if (!d->init()) return false;
 
-  const static int X_DIMENSION = 15;
-  const static int Y_DIMENSION = 15;
-  const static int Z_DIMENSION = 15;
-  const static int TOTAL_SIZE = X_DIMENSION * Y_DIMENSION * Z_DIMENSION;
+  const static int X_DIMENSION = 5;
+  const static int Y_DIMENSION = 5;
+  const static int Z_DIMENSION = 5;
+  const static int TOTAL_SIZE = (X_DIMENSION + 2) * (Y_DIMENSION + 2) * (Z_DIMENSION + 2);
   const static float ISOVALUE = 0.0f;
   const static float CUBE_SIZE_LENGTH = 0.1f;
 
@@ -140,9 +140,9 @@ bool MainProgram::createOpenCl()
 
   base_points.reserve(TOTAL_SIZE);
 
-  for (int x= -1; x<X_DIMENSION; x++) {
-  for (int y= -1; y<Y_DIMENSION; y++) {
-  for (int z= -1; z<Z_DIMENSION; z++) {
+  for (int x= -1; x<X_DIMENSION + 1; x++) {
+  for (int y= -1; y<Y_DIMENSION + 1; y++) {
+  for (int z= -1; z<Z_DIMENSION + 1; z++) {
     base_points.push_back({float(x)*CUBE_SIZE_LENGTH,float(y)*CUBE_SIZE_LENGTH,float(z)*CUBE_SIZE_LENGTH});
   }}};
 
@@ -153,7 +153,7 @@ bool MainProgram::createOpenCl()
   if (!b_values.create(d, CL_MEM_READ_WRITE, sizeof(cl_float)*TOTAL_SIZE)) Log::getError().log("Failed to create base_values buffer."); 
   //int c[1] = {0};
 
-  b_points.addData(d,true, &base_points[0] , sizeof(cl_float)*TOTAL_SIZE);
+  b_points.addData(d,true, &base_points[0] , sizeof(cl_float3)*TOTAL_SIZE);
 
   // Load the source code.
   cl::Program::Sources sources;
@@ -179,9 +179,15 @@ bool MainProgram::createOpenCl()
   cl_float bee[TOTAL_SIZE];
   b_values.getData(d,true,&bee, sizeof(cl_float)*TOTAL_SIZE);
 
+  int x_offset = X_DIMENSION + 2;
+  int y_offset = (X_DIMENSION + 2) * (Y_DIMENSION + 2);
+  int z_offset = (X_DIMENSION + 2) * (Y_DIMENSION + 2) * (Z_DIMENSION + 2);
   for (int i=0; i<TOTAL_SIZE ; i++)
   {
-    Log::getDebug().log("%", bee[i]);
+    auto x_coord = (i % x_offset) - 1;
+    auto y_coord = ((i / x_offset) % (Y_DIMENSION + 2)) - 1;
+    auto z_coord = ((i / y_offset) % (Z_DIMENSION + 2)) - 1;
+    Log::getDebug().log("f(%,%,%) = : %", x_coord, y_coord, z_coord , bee[i]);
   }
 
 ////
