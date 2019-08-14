@@ -102,6 +102,12 @@ class GPU_Device
      */
     bool runKernel(CL_Program* kernel, cl::NDRange globalDim, cl::NDRange localDim);
 
+    /**
+     * Create a new resource (gl::CommandQueue).
+     * @param key A key for getting and deleting the resource.
+     * @param return A pointer to the created resource or nullptr on
+     * failure.
+     */
     template<typename T>
     T* create(const std::string& key)
     {
@@ -117,8 +123,44 @@ class GPU_Device
         pCommandQueues[key] = cq;
         return &pCommandQueues[key];
       }
-      //if constexpr (std::is_same<T,Texture>::value) {Texture t; pTextures[key] = t; }
-      //if constexpr (std::is_same<T,Vertexbuffer>::value) { Vertexbuffer vb; pVertexBuffers[key] = vb; }
+    }
+
+    /**
+     * Create a new resource (gl::Buffer).
+     * @param key A key for getting and deleting the resource.
+     * @param value The resource.
+     * @param return A pointer to the created resource. TODO: how to react if
+     * key already existst?
+     */
+    template<typename T>
+    T* create(const std::string& key, T value)
+    {
+      if constexpr (std::is_same<T,cl::Buffer>::value) {
+        pBuffers[key] = value;
+        return &pBuffers[key];
+      }
+    }
+
+    /**
+     * Delete a resource.
+     * @param key for deleting the resource.
+     */
+    template<typename T>
+    void del(const std::string& key)
+    {
+      if constexpr (std::is_same<T,cl::CommandQueue>::value) { pCommandQueues.erase(key); }
+      if constexpr (std::is_same<T,cl::Buffer>::value) { pBuffers.erase(key); }
+    }
+
+    /**
+     * Get a resource for given key.
+     * @param key for getting the resource.
+     * @return A pointer to the resource or nullptr is resource is not found.
+     */
+    template<typename T>
+    T* get(const std::string& key)
+    {
+      if constexpr (std::is_same<T,cl::CommandQueue>::value) { auto f =  pCommandQueues.find(key); if (f != pCommandQueues.end()) return &f->second; else return nullptr; }
     }
 
 	private:
@@ -132,7 +174,7 @@ class GPU_Device
     bool pInitialized = false; /**< Indicates the initialization state. */ 
     cl::Device pDevice; /**< The cl::Device. */ 
     cl::Context pContext; /**< The cl::Context for this device. */ 
-    cl::CommandQueue pQueue; /**< The cl::CommandQueue for this device. */ 
+    cl::CommandQueue pQueue; /**< The cl::CommandQueue for this device. TODO: remove. */ 
 };
 
 #endif

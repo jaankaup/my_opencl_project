@@ -149,8 +149,11 @@ bool MainProgram::createOpenCl()
   cl::Buffer b_Points(*(d->getContext()),CL_MEM_READ_ONLY, sizeof(cl_float3)*TOTAL_SIZE);
   cl::Buffer b_values(*(d->getContext()),CL_MEM_READ_WRITE, sizeof(cl_float)*TOTAL_SIZE);
 
+  auto b_PointsPtr = d->create("b_pointsit", b_Points);
+  auto b_valuesPtr = d->create("b_arvot", b_values);
+
   cl::CommandQueue* c_Queue = d->create<cl::CommandQueue>("mc1");
-  int error = c_Queue->enqueueWriteBuffer(b_Points,CL_TRUE,0,sizeof(cl_float3)*TOTAL_SIZE,&base_points[0]);
+  int error = c_Queue->enqueueWriteBuffer(*b_PointsPtr,CL_TRUE,0,sizeof(cl_float3)*TOTAL_SIZE,&base_points[0]);
   Log::getDebug().log("error == CL_SUCCESS => %", error == CL_SUCCESS);
   Log::getError().log("%",errorcode_toString(error));
   //CL_Buffer b_points;
@@ -181,7 +184,7 @@ bool MainProgram::createOpenCl()
   cl::make_kernel<cl::Buffer, cl::Buffer, int> evalDensity_kernel(cl::Kernel(*(program.getProgram()),"eval_density"));
   //cl::make_kernel<cl::Buffer&, cl::Buffer&, int> evalDensity_kernel(cl::Kernel(*(program.getProgram()),"evalDensity"));
   cl::EnqueueArgs eargs(*c_Queue, cl::NullRange, global_dim, local_dim);
-  evalDensity_kernel(eargs, b_Points,b_values,TOTAL_SIZE); //.getInfo(CL_EVENT_COMMAND_QUEUE, *c_Queue));
+  evalDensity_kernel(eargs, *b_PointsPtr,*b_valuesPtr,TOTAL_SIZE); //.getInfo(CL_EVENT_COMMAND_QUEUE, *c_Queue));
 
   //Log::getDebug().log("error == CL_SUCCESS => %", error == CL_SUCCESS);
   //Log::getError().log("%",errorcode_toString(error));
@@ -195,7 +198,7 @@ bool MainProgram::createOpenCl()
 
   cl_float bee[TOTAL_SIZE];
   //b_values.getData(d,true,&bee, sizeof(cl_float)*TOTAL_SIZE);
-  error = c_Queue->enqueueReadBuffer(b_values,CL_TRUE,0,sizeof(cl_float)*TOTAL_SIZE,bee);
+  error = c_Queue->enqueueReadBuffer(*b_valuesPtr,CL_TRUE,0,sizeof(cl_float)*TOTAL_SIZE,bee);
   Log::getDebug().log("error == CL_SUCCESS => %", error == CL_SUCCESS);
   Log::getError().log("%",errorcode_toString(error));
 
