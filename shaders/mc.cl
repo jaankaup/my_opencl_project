@@ -478,7 +478,7 @@ __kernel void mc(__global __read_only float* base_values,
 {
   const int global_id = get_global_id(0);
   volatile __global int* counterPtr = counterArg;
-  
+
   if (global_id >= n) return;  
   
   const int x_offset = x_dimension + 2;

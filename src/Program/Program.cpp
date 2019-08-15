@@ -164,13 +164,13 @@ bool MainProgram::createOpenCl()
     base_points.push_back(float(i));
   }
   cl::Buffer b_Points(*(d->getContext()),CL_MEM_READ_WRITE, sizeof(cl_float)*TOTAL_SIZE);
-  //cl::Buffer b_values(*(d->getContext()),CL_MEM_READ_WRITE, sizeof(cl_float4)*TOTAL_SIZE);
+  cl::Buffer mc_output(*(d->getContext()),CL_MEM_READ_WRITE, sizeof(cl_float4)*TOTAL_SIZE*10);
 
   auto b_PointsPtr = d->create("b_pointsit", b_Points);
   //auto b_valuesPtr = d->create("b_arvot", b_values);
 
   cl::CommandQueue* c_Queue = d->create<cl::CommandQueue>("mc1");
-  cl::CommandQueue* c_Queue_pass2 = d->create<cl::CommandQueue>("mc2");
+  //cl::CommandQueue* c_Queue_pass2 = d->create<cl::CommandQueue>("mc2");
 
   int error = c_Queue->enqueueWriteBuffer(*b_PointsPtr,CL_TRUE,0,sizeof(float)*TOTAL_SIZE,&base_points[0]);
   Log::getDebug().log("error == CL_SUCCESS => %", error == CL_SUCCESS);
@@ -184,24 +184,31 @@ bool MainProgram::createOpenCl()
   // Load and compile the source code for mc.cl.
   cl::Program::Sources sources_mc;
   std::string mc_kernel_code = Helper::loadSource("shaders/mc.cl"); 
-  sources.push_back({mc_kernel_code.c_str(),mc_kernel_code.length()});
+  sources_mc.push_back({mc_kernel_code.c_str(),mc_kernel_code.length()});
 
   // Create a program for evalDensity.
   Log::getDebug().log("Creating the evalDencity program.");
   CL_Program program;
   if (!program.create(d,sources,"eval_density")) Log::getError().log("Failed to create the program.");
 
+  // Create a program for mc.
+  Log::getDebug().log("Creating the mc program.");
+  CL_Program mc_program;
+  if (!program.create(d,sources_mc,"mc")) Log::getError().log("Failed to create the mc program.");
+
   Log::getDebug().log("Get the dimensions.");
   auto global_dim = d->getGlobalDim(TOTAL_SIZE);
   auto local_dim = d->getLocalDim();
 
-//__kernel void eval_density(__global float* base_values,
-//                                    int x_dimension,
-//                                    int y_dimension,
-//                                    int z_dimension,
-//                                    float block_size,
-//                                    float3 start_point,
-//                                    int n)
+//__kernel void mc(__global __read_only float* base_values,
+//                          __global float4* output,
+//                          __global int* counterArg,       
+//                          int x_dimension,
+//                          int y_dimension,
+//                          int z_dimension,
+//                          float block_size,
+//                          float isovalue,
+//                          int n)
 
   Log::getDebug().log("Creating kernel and setting arguments.");
   cl::make_kernel<cl::Buffer, int, int, int, float, cl_float4, int> evalDensity_kernel(cl::Kernel(*(program.getProgram()),"eval_density"));
@@ -218,10 +225,10 @@ bool MainProgram::createOpenCl()
   Log::getDebug().log("error == CL_SUCCESS => %", error == CL_SUCCESS);
   Log::getError().log("%",errorcode_toString(error));
 
-  for (int i=0; i<TOTAL_SIZE; i++)
-  {
-     Log::getDebug().log("i == % : %",i, bee[i]);
-  }
+//  for (int i=0; i<TOTAL_SIZE; i++)
+//  {
+//     Log::getDebug().log("i == % : %",i, bee[i]);
+//  }
 
   return true;
   //int x_offset = X_DIMENSION + 2;
