@@ -17,6 +17,12 @@ class Vertexbuffer
 
 	public:
 
+    Vertexbuffer(const Vertexbuffer&) = delete;
+    Vertexbuffer& operator=(const Vertexbuffer&) = delete;
+
+    Vertexbuffer(Vertexbuffer&&) = default;
+    Vertexbuffer& operator=(Vertexbuffer&&) = default;
+
     virtual void init(const GLenum target,const GLenum usage);
     void init_plain_buffer(const GLenum target,const GLenum usage);
     void bind() const;

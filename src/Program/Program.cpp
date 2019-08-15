@@ -30,9 +30,9 @@ bool MainProgram::initialize()
 
   // Create the resource manager.
   ResourceManager::getInstance();
-  createOpenCl();
-  createShaders();
-  createTextures();
+  if (!createOpenCl()) { Log::getError().log("Failed to create opencl."); return false; }
+  if (!createShaders()) { Log::getError().log("Failed to create shaders."); return false; }
+  if (!createTextures()) { Log::getError().log("Failed to create textures."); return false; } 
 }
 
 /////////////////////////////////////////////////////////////////////////////////////
@@ -59,7 +59,7 @@ void MainProgram::start()
     ic->pollEvents();
     camera.handleKeyInput();
     Window::getInstance()->swapBuffers();
-    //renderer.render(camera);
+    renderer.render(camera);
   };
 }
 
@@ -97,6 +97,7 @@ void MainProgram::createGlobalProperties()
 bool MainProgram::createTextures()
 {
   Log::getDebug().log("CREATING TEXTURES.\n");
+  return true;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////
@@ -216,6 +217,7 @@ bool MainProgram::createOpenCl()
      Log::getDebug().log("i == % : (%,%,%,%)",i, bee[i].x, bee[i].y, bee[i].z,bee[i].w);
   }
 
+  return true;
   //int x_offset = X_DIMENSION + 2;
   //int y_offset = (X_DIMENSION + 2) * (Y_DIMENSION + 2);
   //int z_offset = (X_DIMENSION + 2) * (Y_DIMENSION + 2) * (Z_DIMENSION + 2);

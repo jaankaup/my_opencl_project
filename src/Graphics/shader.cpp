@@ -5,13 +5,19 @@
 
 Shader::Shader()
 {
-  pId = glCreateProgram();
+  Log::getDebug().log("Creating shader %.",pId);
+  //pId = glCreateProgram();
 }
 
 Shader::~Shader()
 {
-  Log::getDebug().log("Tuhotaan shader.");
-  if (pId != 0) glDeleteProgram(pId);
+  if (pId != 0) { Log::getDebug().log("Deleting shader %.",pId); glDeleteProgram(pId); }
+}
+
+void Shader::init()
+{
+  pId = glCreateProgram();
+  Log::getDebug().log("Initialized shader %.",pId);
 }
 
 void Shader::setFeedback(const bool feedback, const std::string& feedbackVarying)

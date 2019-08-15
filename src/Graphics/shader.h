@@ -25,6 +25,14 @@ class Shader
 
 		Shader();
 		~Shader();
+
+    Shader(const Shader&) = delete;
+    Shader& operator=(const Shader&) = delete;
+
+    Shader(Shader&&) = default;
+    Shader& operator=(Shader&&) = default;
+
+    void init();
 		void build(const std::vector<std::string>& sources);
 		void bind() const;
 

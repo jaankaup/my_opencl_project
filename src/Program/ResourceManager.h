@@ -35,9 +35,9 @@ class ResourceManager
     template<typename T>
     T* create(const std::string& key)
     {
-      if constexpr (std::is_same<T,Shader>::value) { Shader s; pShaders[key] = std::move(s); return &pShaders[key]; }
-      if constexpr (std::is_same<T,Texture>::value) {Texture t; pTextures[key] = std::move(t); return &pTextures[key];}
-      if constexpr (std::is_same<T,Vertexbuffer>::value) { Vertexbuffer vb; pVertexBuffers[key] = std::move(vb); return &pVertexBuffers[key];}
+      if constexpr (std::is_same<T,Shader>::value) { Shader s; pShaders[key] = std::move(s); auto sh = &pShaders[key]; sh->init(); return sh; }
+      if constexpr (std::is_same<T,Texture>::value) {pTextures[key] = Texture();}
+      if constexpr (std::is_same<T,Vertexbuffer>::value) { Vertexbuffer vb; pVertexBuffers[key] = vb; return &pVertexBuffers[key];}
     }
 
     /**

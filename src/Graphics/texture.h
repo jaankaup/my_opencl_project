@@ -28,6 +28,12 @@ class Texture
         void create_tritable_texture();
         std::tuple<std::unique_ptr<float[]>,unsigned int> getTextureData();
 
+        Texture(const Texture&) = delete;
+        Texture& operator=(const Texture&) = delete;
+
+        Texture(Texture&&) = default;
+        Texture& operator=(Texture&&) = default;
+
         /// The destructor doesn't release the texture. Use dispose()
         /// memberfuction to destory texture object.
         ~Texture();
