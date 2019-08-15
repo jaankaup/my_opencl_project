@@ -2,10 +2,13 @@
 #define PROGRAM_H
 
 #include <vector>
+#include <string>
 #include <glm/glm.hpp>
 #include <SDL2/SDL.h>
 
 namespace Program {
+
+const static std::string DEFAULT_RENDERING_SHADER = "default_shader";
 
 /**
  * The main program.
@@ -37,13 +40,17 @@ class MainProgram
 
     /**
      * This methdod creates the initial textures for the program.
+     * @param return Returns true if textures was initialized, false
+     * otherwise.
      */
-    void createTextures();
+    bool createTextures();
 
     /**
-     * This methdo creates the initial shaders for the program.
+     * This method creates the initial shaders for the program.
+     * @param return Returns true if shaders was initialized, false
+     * otherwise.
      */
-    void createShaders();
+    bool createShaders();
 
     /**
      * This method creates the main window for the system.
@@ -54,7 +61,7 @@ class MainProgram
 
     /**
      * Creates a GPU_Device object for application.
-     * @param return Returns true if window created succesfully, false
+     * @param return Returns true if opencl was initialized, false
      * otherwise.
      */
     bool createOpenCl();

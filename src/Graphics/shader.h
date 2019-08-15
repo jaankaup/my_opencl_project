@@ -23,6 +23,7 @@ class Shader
 
 	public:
 
+		Shader();
 		~Shader();
 		void build(const std::vector<std::string>& sources);
 		void bind() const;
@@ -42,14 +43,13 @@ class Shader
 		bool pFeedback = false;
     std::string pFeedbackVarying;
 
-		Shader();
 
     std::string loadSource(const std::string& fileLoc);
     GLuint getShaderType(const std::string& fileLoc);
     void compileShader(const GLuint id, const std::string& source);
     bool checkShader(GLuint obj);
 
-    void init();
+    //void init();
 
     /// Releases the shader object.
     //void dispose() const;

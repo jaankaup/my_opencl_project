@@ -6,6 +6,7 @@
 #include "../Graphics/window.h"
 #include "../Graphics/camera.h"
 #include "../Graphics/renderer.h"
+#include "../Graphics/shader.h"
 #include "../OpenCL/GPU_Device.h"
 #include "../OpenCL/CL_Program.h"
 #include "../OpenCL/CL_Buffer.h"
@@ -93,16 +94,26 @@ void MainProgram::createGlobalProperties()
 
 /////////////////////////////////////////////////////////////////////////////////////
 
-void MainProgram::createTextures()
+bool MainProgram::createTextures()
 {
   Log::getDebug().log("CREATING TEXTURES.\n");
 }
 
 /////////////////////////////////////////////////////////////////////////////////////
 
-void MainProgram::createShaders()
+bool MainProgram::createShaders()
 {
   Log::getDebug().log("CREATING SHADERS.\n");
+
+  auto glob_manager = GlobalPropertyManager::getInstance();
+  auto res_manager = ResourceManager::getInstance();
+
+  /* The default rendering shader. vvvnnn. */
+  Shader* default_shader = res_manager->create<Shader>(DEFAULT_RENDERING_SHADER);
+  std::vector<std::string> src = {"shaders/default_notex.vert", "shaders/default_notex.frag"};
+  default_shader->build(src);
+
+  return true;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////

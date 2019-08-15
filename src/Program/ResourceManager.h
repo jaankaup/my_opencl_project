@@ -10,6 +10,10 @@ class Shader;
 class Texture;
 class Vertexbuffer;
 
+/**
+ * A class for storing resources. Now Shader, Texture and Vertexbuffer are
+ * supported.
+ */
 class ResourceManager
 {
   public:
@@ -20,25 +24,40 @@ class ResourceManager
     ResourceManager& operator=(ResourceManager&&) = delete;
     ~ResourceManager() {}
 
-    /// Get the instance to ResourceManager object.
     static auto* getInstance() { static ResourceManager instance; return &instance; }
 
+    /**
+     * Create a new resource with a given key. TODO: solve what happens if the
+     * resource already exists.
+     * @param key The hash key.
+     * @return A pointer to the created resource.
+     */
     template<typename T>
     T* create(const std::string& key)
     {
-      if constexpr (std::is_same<T,Shader>::value) { Shader s; pShaders[key] = s; }
-      if constexpr (std::is_same<T,Texture>::value) {Texture t; pTextures[key] = t; }
-      if constexpr (std::is_same<T,Vertexbuffer>::value) { Vertexbuffer vb; pVertexBuffers[key] = vb; }
+      if constexpr (std::is_same<T,Shader>::value) { Shader s; pShaders[key] = std::move(s); return &pShaders[key]; }
+      if constexpr (std::is_same<T,Texture>::value) {Texture t; pTextures[key] = std::move(t); return &pTextures[key];}
+      if constexpr (std::is_same<T,Vertexbuffer>::value) { Vertexbuffer vb; pVertexBuffers[key] = std::move(vb); return &pVertexBuffers[key];}
     }
 
+    /**
+     * Delete resource with a given key. 
+     * @param key The hash key to the resource.
+     */
     template<typename T>
-    T* del(const std::string& key)
+    void del(const std::string& key)
     {
       if constexpr (std::is_same<T,Shader>::value) { pShaders.erase(key); }
       if constexpr (std::is_same<T,Texture>::value) {pTextures.erase(key); }
       if constexpr (std::is_same<T,Vertexbuffer>::value) { pVertexBuffers.erase(key);}
     }
 
+    /**
+     * Get a resource with a given key. 
+     * @param key The hash key to the resource.
+     * @param return A pointer to the resource of nullptr is resource can not
+     * be found.
+     */
     template<typename T>
     T* get(const std::string& key)
     {

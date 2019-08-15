@@ -20,7 +20,6 @@ void Shader::setFeedback(const bool feedback, const std::string& feedbackVarying
   pFeedbackVarying = feedbackVarying;
 }
 
-
 void Shader::build(const std::vector<std::string>& sources)
 {
     using ShaderObjData = struct{
