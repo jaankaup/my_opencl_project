@@ -299,25 +299,6 @@ int calculate_case(float d0, float d1, float d2, float d3, float d4, float d5, f
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-//float3 interpolateV(vec4 va, vec4 vb)
-//{
-//   if (abs(isovalue - va.w) < 0.00001) { return va.xyz; }
-//   else if (abs(isovalue - vb.w) < 0.00001) { return vb.xyz; }
-//   else if (abs(va.w-vb.w) < 0.00001) { return va.xyz; }
-//   
-//   else
-//   {
-//     vec3 p;
-//     float mu = (isovalue - va.w) / (vb.w - va.w);
-//     p.x = va.x + mu * (vb.x - va.x);
-//     p.y = va.y + mu * (vb.y - va.y);
-//     p.z = va.z + mu * (vb.z - va.z);
-//     return p;
-//   }
-//}
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 float3 calculate_position(int global_id, int x_offset, int y_offset, int y_dimension, int z_dimension, float block_size)
 {
   const float x_coord = ((global_id % x_offset) - 1) * block_size;
@@ -384,159 +365,104 @@ float3 interpolateN(float3 na, float3 nb, float densityA, float densityB, float 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void createVertex(int edgeValue, struct cube c)
+void createVertex(char edgeValue, struct cube c, int arrayIndex, float isovalue, __global float4* output)
 {
-//    // EDGE NUMBER 0
-//    float iterator = 1.0 / 255.0;
-//    if (edgeValue == 0.0) // < 0.000001 )
-//    {
-//      gl_Position =  vec4(interpolateV(c.v0, c.v1),1.0);
-//
-//        // Vertex v0 and v1 creates the edge e0. See cubes in the begining of this file.
-//        // Find the actual point between v0 and v1 where the isovalue is located 
-//        // by interpolation and create the vertex for triangle. 
-//        // PHASE 5.
-//        fPosIn = interpolateV(c.v0, c.v1);   
-//        
-//        // PHASE 6.
-//        // Interpolate normales in the same way and create normal vetrex for triangle.
-//        fNormalIn = interpolateN(c.n0, c.n1, c.v0.w, c.v1.w);
-//
-//      // Create vertex.
-//      EmitVertex();
-//    }           
-//    // EDGE NUMBER 1
-//    else if (abs(edgeValue - iterator) < 0.000001)
-//    {
-//
-//      // PHASE 5.
-//      gl_Position =  vec4(interpolateV(c.v1, c.v2),1.0);
-//      fPosIn = interpolateV(c.v1, c.v2);
-//
-//      // PHASE 6.
-//      fNormalIn = interpolateN(c.n1, c.n2, c.v1.w, c.v2.w);
-//      EmitVertex();
-//    }           
-//    // EDGE NUMBER 2
-//    else if (abs(edgeValue - iterator * 2.0) < 0.000001)
-//    {
-//      gl_Position =  vec4(interpolateV(c.v2, c.v3),1.0);
-//
-//      // PHASE 5.
-//      fPosIn = interpolateV(c.v2, c.v3);
-//
-//      // PHASE 6.
-//      fNormalIn = interpolateN(c.n2, c.n3, c.v2.w, c.v3.w);
-//      EmitVertex();
-//    }           
-//    // EDGE NUMBER 3
-//    else if (abs(edgeValue - iterator * 3.0) < 0.000001)
-//    {
-//      gl_Position =  vec4(interpolateV(c.v3, c.v0),1.0);
-//
-//      // PHASE 5.
-//      fPosIn = interpolateV(c.v3, c.v0);
-//
-//      // PHASE 6.
-//      fNormalIn = interpolateN(c.n3, c.n0, c.v3.w, c.v0.w);
-//      EmitVertex();
-//    }           
-//    // EDGE NUMBER 4
-//    else if (abs(edgeValue - iterator * 4.0) < 0.000001)
-//    {
-//      gl_Position =  vec4(interpolateV(c.v4, c.v5),1.0);
-//
-//      // PHASE 5.
-//      fPosIn = interpolateV(c.v4, c.v5);
-//
-//      // PHASE 6.
-//      fNormalIn = interpolateN(c.n4, c.n5, c.v4.w, c.v5.w);
-//      EmitVertex();
-//    }           
-//    // EDGE NUMBER 5
-//    else if (abs(edgeValue - iterator * 5.0) < 0.000001)
-//    {
-//      gl_Position =  vec4(interpolateV(c.v5, c.v6),1.0);
-//
-//      // PHASE 5.
-//      fPosIn = interpolateV(c.v5, c.v6);
-//
-//      // PHASE 6.
-//      fNormalIn = interpolateN(c.n5, c.n6, c.v5.w, c.v6.w);
-//      EmitVertex();
-//    }           
-//    // EDGE NUMBER 6
-//    else if (abs(edgeValue - iterator * 6.0) < 0.000001)
-//    {
-//      gl_Position =  vec4(interpolateV(c.v6, c.v7),1.0);
-//
-//      // PHASE 5.
-//      fPosIn = interpolateV(c.v6, c.v7);
-//
-//      // PHASE 6.
-//      fNormalIn = interpolateN(c.n6, c.n7, c.v6.w, c.v7.w);
-//      EmitVertex();
-//    }           
-//    // EDGE NUMBER 7
-//    else if (abs(edgeValue - iterator * 7.0) < 0.000001)
-//    {
-//      gl_Position =  vec4(interpolateV(c.v7, c.v4),1.0);
-//
-//      // PHASE 5.
-//      fPosIn = interpolateV(c.v7, c.v4);
-//
-//      // PHASE 6.
-//      fNormalIn = interpolateN(c.n7, c.n4, c.v7.w, c.v4.w);
-//      EmitVertex();
-//    }           
-//    // EDGE NUMBER 8
-//    else if (abs(edgeValue - iterator * 8.0) < 0.000001)
-//    {
-//      gl_Position =  vec4(interpolateV(c.v0, c.v4),1.0);
-//
-//      // PHASE 5.
-//      fPosIn = interpolateV(c.v0, c.v4);
-//
-//      // PHASE 6.
-//      fNormalIn = interpolateN(c.n0, c.n4, c.v0.w, c.v4.w);
-//      EmitVertex();
-//    }           
-//    // EDGE NUMBER 9
-//    else if (abs(edgeValue - iterator * 9.0) < 0.000001)
-//    {
-//      gl_Position =  vec4(interpolateV(c.v1, c.v5),1.0);
-//
-//      // PHASE 5.
-//      fPosIn = interpolateV(c.v1, c.v5);
-//
-//      // PHASE 6.
-//      fNormalIn = interpolateN(c.n1, c.n5, c.v1.w, c.v5.w);
-//      EmitVertex();
-//    }           
-//    // EDGE NUMBER 10 
-//    else if (abs(edgeValue - iterator * 10.0) < 0.000001)
-//    {
-//      gl_Position =  vec4(interpolateV(c.v2, c.v6),1.0);
-//
-//      // PHASE 5.
-//      fPosIn = interpolateV(c.v2, c.v6);
-//
-//      // PHASE 6.
-//      fNormalIn = interpolateN(c.n2, c.n6, c.v2.w, c.v6.w);
-//      EmitVertex();
-//    }           
-//    // EDGE NUMBER 11 
-//    else if (abs(edgeValue - iterator * 11.0) < 0.000001)
-//    {
-//      gl_Position =  vec4(interpolateV(c.v3, c.v7),1.0);
-//
-//      // PHASE 5
-//      fPosIn = interpolateV(c.v3, c.v7);
-//
-//      // PHASE 6
-//      fNormalIn = interpolateN(c.n3, c.n7, c.v3.w, c.v7.w);
-//      EmitVertex();
-//    }           
+    // EDGE NUMBER 0
+    if (edgeValue == 0)
+    {
+        float4 pos = { interpolateV(c.pos0,c.pos1,isovalue) ,1.0f };
+        float4 nor = { interpolateN(c.normal0, c.normal1, c.pos0.w, c.pos1.w, isovalue), 0.0f};
+        output[arrayIndex] = pos;
+        output[arrayIndex+1] = nor;
+    }
+    // EDGE NUMBER 1
+    else if (edgeValue == 1)
+    {
+        float4 pos = { interpolateV(c.pos1,c.pos2,isovalue) ,1.0f };
+        float4 nor = { interpolateN(c.normal1, c.normal2, c.pos1.w, c.pos2.w, isovalue), 0.0f};
+        output[arrayIndex] = pos;
+        output[arrayIndex+1] = nor;
+    }           
+    // EDGE NUMBER 2
+    else if (edgeValue == 2)
+    {
+        float4 pos = { interpolateV(c.pos2,c.pos3,isovalue) ,1.0f };
+        float4 nor = { interpolateN(c.normal2, c.normal3, c.pos2.w, c.pos3.w, isovalue), 0.0f};
+        output[arrayIndex] = pos;
+        output[arrayIndex+1] = nor;
+    }           
+    // EDGE NUMBER 3
+    else if (edgeValue == 3)
+    {
+        float4 pos = { interpolateV(c.pos3,c.pos0,isovalue) ,1.0f };
+        float4 nor = { interpolateN(c.normal3, c.normal0, c.pos3.w, c.pos0.w, isovalue), 0.0f};
+        output[arrayIndex] = pos;
+        output[arrayIndex+1] = nor;
+    }           
+    // EDGE NUMBER 4
+    else if (edgeValue == 4.0)
+    {
+        float4 pos = { interpolateV(c.pos4,c.pos5,isovalue) ,1.0f };
+        float4 nor = { interpolateN(c.normal4, c.normal5, c.pos4.w, c.pos5.w, isovalue), 0.0f};
+        output[arrayIndex] = pos;
+        output[arrayIndex+1] = nor;
+    }           
+    // EDGE NUMBER 5
+    else if (edgeValue == 5)
+    {
+        float4 pos = { interpolateV(c.pos5,c.pos6,isovalue) ,1.0f };
+        float4 nor = { interpolateN(c.normal5, c.normal6, c.pos5.w, c.pos6.w, isovalue), 0.0f};
+        output[arrayIndex] = pos;
+        output[arrayIndex+1] = nor;
+    }           
+    // EDGE NUMBER 6
+    else if (edgeValue == 6)
+    {
+        float4 pos = { interpolateV(c.pos6,c.pos7,isovalue) ,1.0f };
+        float4 nor = { interpolateN(c.normal6, c.normal7, c.pos6.w, c.pos7.w, isovalue), 0.0f};
+        output[arrayIndex] = pos;
+        output[arrayIndex+1] = nor;
+    }           
+    // EDGE NUMBER 7
+    else if (edgeValue == 7)
+    {
+        float4 pos = { interpolateV(c.pos7,c.pos4,isovalue) ,1.0f };
+        float4 nor = { interpolateN(c.normal7, c.normal4, c.pos7.w, c.pos4.w, isovalue), 0.0f};
+        output[arrayIndex] = pos;
+        output[arrayIndex+1] = nor;
+    }           
+    // EDGE NUMBER 8
+    else if (edgeValue == 8.0)
+    {
+        float4 pos = { interpolateV(c.pos0,c.pos4,isovalue) ,1.0f };
+        float4 nor = { interpolateN(c.normal0, c.normal4, c.pos0.w, c.pos4.w, isovalue), 0.0f};
+        output[arrayIndex] = pos;
+        output[arrayIndex+1] = nor;
+    }           
+    // EDGE NUMBER 9
+    else if (edgeValue == 9)
+    {
+        float4 pos = { interpolateV(c.pos1,c.pos5,isovalue) ,1.0f };
+        float4 nor = { interpolateN(c.normal1, c.normal5, c.pos1.w, c.pos5.w, isovalue), 0.0f};
+        output[arrayIndex] = pos;
+        output[arrayIndex+1] = nor;
+    }           
+    // EDGE NUMBER 10 
+    else if (edgeValue == 10.0)
+    {
+        float4 pos = { interpolateV(c.pos2,c.pos6,isovalue) ,1.0f };
+        float4 nor = { interpolateN(c.normal2, c.normal6, c.pos2.w, c.pos6.w, isovalue), 0.0f};
+        output[arrayIndex] = pos;
+        output[arrayIndex+1] = nor;
+    }           
+    // EDGE NUMBER 11 
+    else if (edgeValue == 11)
+    {
+        float4 pos = { interpolateV(c.pos3,c.pos7,isovalue) ,1.0f };
+        float4 nor = { interpolateN(c.normal3, c.normal7, c.pos3.w, c.pos7.w, isovalue), 0.0f};
+        output[arrayIndex] = pos;
+        output[arrayIndex+1] = nor;
+    }           
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -648,11 +574,43 @@ __kernel void mc(__global __read_only float* base_values,
 
   char16 tri_case = triTable[cube_case];
 
-  float4 f;
-  f.x = global_id;
-  f.y = counterPtr[0];
-  f.z = 6.0;
-  f.w = 1.0;
-  int index = atomic_inc(counterPtr);
-  output[index] = f; //base_points[global_id];                 
+  // We are going to add a triable. 3 postion vertices and 3 normal vertices.
+  int index = atomic_add(counterPtr,6);
+
+  createVertex(tri_case.s0, c, index, isovalue, output);
+  createVertex(tri_case.s1, c, index, isovalue, output);
+  createVertex(tri_case.s2, c, index, isovalue, output);
+
+  if (tri_case.s3 == 255) return;
+
+  index = atomic_add(counterPtr,6);
+
+  createVertex(tri_case.s3, c, index, isovalue, output);
+  createVertex(tri_case.s4, c, index, isovalue, output);
+  createVertex(tri_case.s5, c, index, isovalue, output);
+
+  if (tri_case.s6 == 255) return;
+
+  index = atomic_add(counterPtr,6);
+
+  createVertex(tri_case.s6, c, index, isovalue, output);
+  createVertex(tri_case.s7, c, index, isovalue, output);
+  createVertex(tri_case.s8, c, index, isovalue, output);
+
+  if (tri_case.s9 == 255) return;
+
+  index = atomic_add(counterPtr,6);
+
+  createVertex(tri_case.s9, c, index, isovalue, output);
+  createVertex(tri_case.sa, c, index, isovalue, output);
+  createVertex(tri_case.sb, c, index, isovalue, output);
+
+  if (tri_case.sc == 255) return;
+
+  index = atomic_add(counterPtr,6);
+
+  createVertex(tri_case.sc, c, index, isovalue, output);
+  createVertex(tri_case.sd, c, index, isovalue, output);
+  createVertex(tri_case.se, c, index, isovalue, output);
+
 }                                                                               
