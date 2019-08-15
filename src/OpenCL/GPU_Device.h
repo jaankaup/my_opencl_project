@@ -69,7 +69,7 @@ class GPU_Device
     cl::Device* getDevice();
 
     /**
-     * Get pointer to the cl::CommandQueue.
+     * Get pointer to the cl::CommandQueue. TODO: Remove.
      * @param return Pointer to the cl::CommandQueue.
      */
     cl::CommandQueue* getCommandQueue();
@@ -95,7 +95,7 @@ class GPU_Device
     cl::NDRange getLocalDim();
 
     /**
-     * Makes the GPU_Devices CommandQueue to run the kernel.
+     * Makes the GPU_Devices CommandQueue to run the kernel. TODO: Remove.
      * @param globalDim The global dimension.
      * @param localDim The local dimension.
      * @param return Did the kernel execution succeed.
@@ -111,6 +111,7 @@ class GPU_Device
     template<typename T>
     T* create(const std::string& key)
     {
+      assert(pInitialized);
       if constexpr (std::is_same<T,cl::CommandQueue>::value) {
         cl_int error;
         cl::CommandQueue cq = cl::CommandQueue(pContext, pDevice, 0, &error);
@@ -135,6 +136,7 @@ class GPU_Device
     template<typename T>
     T* create(const std::string& key, T value)
     {
+      assert(pInitialized);
       if constexpr (std::is_same<T,cl::Buffer>::value) {
         pBuffers[key] = value;
         return &pBuffers[key];
@@ -148,6 +150,7 @@ class GPU_Device
     template<typename T>
     void del(const std::string& key)
     {
+      assert(pInitialized);
       if constexpr (std::is_same<T,cl::CommandQueue>::value) { pCommandQueues.erase(key); }
       if constexpr (std::is_same<T,cl::Buffer>::value) { pBuffers.erase(key); }
     }
@@ -160,6 +163,7 @@ class GPU_Device
     template<typename T>
     T* get(const std::string& key)
     {
+      assert(pInitialized);
       if constexpr (std::is_same<T,cl::CommandQueue>::value) { auto f =  pCommandQueues.find(key); if (f != pCommandQueues.end()) return &f->second; else return nullptr; }
     }
 
@@ -168,8 +172,8 @@ class GPU_Device
     /** The constructor. */
 		GPU_Device() {};
 
-    std::unordered_map<std::string, cl::Buffer> pBuffers;
-    std::unordered_map<std::string, cl::CommandQueue> pCommandQueues;
+    std::unordered_map<std::string, cl::Buffer> pBuffers; /**< cl::Buffers. */
+    std::unordered_map<std::string, cl::CommandQueue> pCommandQueues; /**< cl::CommandQueues. */
 
     bool pInitialized = false; /**< Indicates the initialization state. */ 
     cl::Device pDevice; /**< The cl::Device. */ 

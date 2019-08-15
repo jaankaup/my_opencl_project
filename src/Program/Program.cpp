@@ -136,34 +136,31 @@ bool MainProgram::createOpenCl()
   const static float CUBE_SIZE_LENGTH = 0.1f;
 
   //std::vector<cl_float3> base_points;
-  std::vector<cl_float3> base_points;
+  //std::vector<cl_float3> base_points;
+  std::vector<float> base_points;
 
   base_points.reserve(TOTAL_SIZE);
 
-  for (int x= -1; x<X_DIMENSION + 1; x++) {
-  for (int y= -1; y<Y_DIMENSION + 1; y++) {
-  for (int z= -1; z<Z_DIMENSION + 1; z++) {
-    base_points.push_back({float(x)*CUBE_SIZE_LENGTH,float(y)*CUBE_SIZE_LENGTH,float(z)*CUBE_SIZE_LENGTH});
-  }}};
+//  for (int x= -1; x<X_DIMENSION + 1; x++) {
+//  for (int y= -1; y<Y_DIMENSION + 1; y++) {
+//  for (int z= -1; z<Z_DIMENSION + 1; z++) {
+//    base_points.push_back({float(x)*CUBE_SIZE_LENGTH,float(y)*CUBE_SIZE_LENGTH,float(z)*CUBE_SIZE_LENGTH});
+//  }}};
 
-  cl::Buffer b_Points(*(d->getContext()),CL_MEM_READ_ONLY, sizeof(cl_float3)*TOTAL_SIZE);
-  cl::Buffer b_values(*(d->getContext()),CL_MEM_READ_WRITE, sizeof(cl_float)*TOTAL_SIZE);
+  for (int i=0 ; i<TOTAL_SIZE; i++) 
+  {
+    base_points.push_back(float(i));
+  }
+  cl::Buffer b_Points(*(d->getContext()),CL_MEM_READ_WRITE, sizeof(cl_float)*TOTAL_SIZE);
+  cl::Buffer b_values(*(d->getContext()),CL_MEM_READ_WRITE, sizeof(cl_float4)*TOTAL_SIZE);
 
   auto b_PointsPtr = d->create("b_pointsit", b_Points);
   auto b_valuesPtr = d->create("b_arvot", b_values);
 
   cl::CommandQueue* c_Queue = d->create<cl::CommandQueue>("mc1");
-  int error = c_Queue->enqueueWriteBuffer(*b_PointsPtr,CL_TRUE,0,sizeof(cl_float3)*TOTAL_SIZE,&base_points[0]);
+  int error = c_Queue->enqueueWriteBuffer(*b_PointsPtr,CL_TRUE,0,sizeof(float)*TOTAL_SIZE,&base_points[0]);
   Log::getDebug().log("error == CL_SUCCESS => %", error == CL_SUCCESS);
   Log::getError().log("%",errorcode_toString(error));
-  //CL_Buffer b_points;
-  //if (!b_points.create(d, CL_MEM_READ_ONLY, sizeof(cl_float3)*TOTAL_SIZE)) Log::getError().log("Failed to create base_points buffer."); 
- 
-  //CL_Buffer b_values;
-  //if (!b_values.create(d, CL_MEM_READ_WRITE, sizeof(cl_float)*TOTAL_SIZE)) Log::getError().log("Failed to create base_values buffer."); 
-  //int c[1] = {0};
-
-  //b_points.addData(d,true, &base_points[0] , sizeof(cl_float3)*TOTAL_SIZE);
 
   // Load the source code.
   cl::Program::Sources sources;
@@ -175,43 +172,49 @@ bool MainProgram::createOpenCl()
   CL_Program program;
   if (!program.create(d,sources,"mc")) Log::getError().log("Failed to create the program.");
 
-  
   Log::getDebug().log("Get the dimensions.");
   auto global_dim = d->getGlobalDim(TOTAL_SIZE);
   auto local_dim = d->getLocalDim();
 
+//__kernel void eval_density(__global float* base_values,
+//                                    int x_dimension,
+//                                    int y_dimension,
+//                                    int z_dimension,
+//                                    float block_size,
+//                                    float3 start_point,
+//                                    int n)
+
   Log::getDebug().log("Creating kernel and setting arguments.");
-  cl::make_kernel<cl::Buffer, cl::Buffer, int> evalDensity_kernel(cl::Kernel(*(program.getProgram()),"eval_density"));
-  //cl::make_kernel<cl::Buffer&, cl::Buffer&, int> evalDensity_kernel(cl::Kernel(*(program.getProgram()),"evalDensity"));
+  cl::make_kernel<cl::Buffer, cl::Buffer, int, int, int, float, cl_float4, int> evalDensity_kernel(cl::Kernel(*(program.getProgram()),"eval_density"));
+  //cl::make_kernel<cl::Buffer, cl::Buffer, int> evalDensity_kernel(cl::Kernel(*(program.getProgram()),"eval_density"));
   cl::EnqueueArgs eargs(*c_Queue, cl::NullRange, global_dim, local_dim);
-  evalDensity_kernel(eargs, *b_PointsPtr,*b_valuesPtr,TOTAL_SIZE); //.getInfo(CL_EVENT_COMMAND_QUEUE, *c_Queue));
 
-  //Log::getDebug().log("error == CL_SUCCESS => %", error == CL_SUCCESS);
-  //Log::getError().log("%",errorcode_toString(error));
+  Log::getDebug().log("Evaluating evalDensity.");
+  //evalDensity_kernel(eargs, *b_PointsPtr,*b_valuesPtr,TOTAL_SIZE); //.getInfo(CL_EVENT_COMMAND_QUEUE, *c_Queue));
+  Log::getDebug().log("sizeof(cl_float4) == %", sizeof(cl_float4));
+  cl_float4 base_pos = {0.0f,0.0f,0.0f,0.0f};
+  evalDensity_kernel(eargs, *b_PointsPtr,*b_valuesPtr,X_DIMENSION,Y_DIMENSION,Z_DIMENSION,0.1f,base_pos,TOTAL_SIZE); //.getInfo(CL_EVENT_COMMAND_QUEUE, *c_Queue));
 
-//  program.setArg(0,*(b_points.getBuffer()));
-//  program.setArg(1,*(b_values.getBuffer()));
-//  program.setArg(2,TOTAL_SIZE);
-
-
-//  d->runKernel(&program, global_dim, local_dim);
-
-  cl_float bee[TOTAL_SIZE];
-  //b_values.getData(d,true,&bee, sizeof(cl_float)*TOTAL_SIZE);
-  error = c_Queue->enqueueReadBuffer(*b_valuesPtr,CL_TRUE,0,sizeof(cl_float)*TOTAL_SIZE,bee);
+  cl_float4 bee[TOTAL_SIZE];
+  error = c_Queue->enqueueReadBuffer(*b_valuesPtr,CL_TRUE,0,sizeof(cl_float4)*TOTAL_SIZE,bee);
   Log::getDebug().log("error == CL_SUCCESS => %", error == CL_SUCCESS);
   Log::getError().log("%",errorcode_toString(error));
 
-  int x_offset = X_DIMENSION + 2;
-  int y_offset = (X_DIMENSION + 2) * (Y_DIMENSION + 2);
-  int z_offset = (X_DIMENSION + 2) * (Y_DIMENSION + 2) * (Z_DIMENSION + 2);
-   for (int i=0; i<TOTAL_SIZE ; i++)
-   {
-     auto x_coord = (i % x_offset) - 1;
-     auto y_coord = ((i / x_offset) % (Y_DIMENSION + 2)) - 1;
-     auto z_coord = ((i / y_offset) % (Z_DIMENSION + 2)) - 1;
-     Log::getDebug().log("f(%,%,%) = : %", x_coord, y_coord, z_coord , bee[i]);
+  for (int i=0; i<TOTAL_SIZE; i++)
+  {
+     Log::getDebug().log("i == % : (%,%,%,%)",i, bee[i].x, bee[i].y, bee[i].z,bee[i].w);
   }
+
+  //int x_offset = X_DIMENSION + 2;
+  //int y_offset = (X_DIMENSION + 2) * (Y_DIMENSION + 2);
+  //int z_offset = (X_DIMENSION + 2) * (Y_DIMENSION + 2) * (Z_DIMENSION + 2);
+  // for (int i=0; i<TOTAL_SIZE ; i++)
+  // {
+  //   auto x_coord = (i % x_offset) - 1;
+  //   auto y_coord = ((i / x_offset) % (Y_DIMENSION + 2)) - 1;
+  //   auto z_coord = ((i / y_offset) % (Z_DIMENSION + 2)) - 1;
+  //   Log::getDebug().log("f(%,%,%) = : %", x_coord, y_coord, z_coord , bee[i]);
+  //}
 
 ////
 ////  // Create a buffers.
