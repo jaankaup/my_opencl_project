@@ -140,9 +140,9 @@ bool MainProgram::createOpenCl()
   auto d = GPU_Device::getInstance();
   if (!d->init()) return false;
 
-  const static int X_DIMENSION = 5;
-  const static int Y_DIMENSION = 5;
-  const static int Z_DIMENSION = 5;
+  const static int X_DIMENSION = 30;
+  const static int Y_DIMENSION = 30;
+  const static int Z_DIMENSION = 30;
   const static int TOTAL_SIZE = (X_DIMENSION + 2) * (Y_DIMENSION + 2) * (Z_DIMENSION + 2);
   const static float ISOVALUE = 0.0f;
   const static float CUBE_SIZE_LENGTH = 0.1f;
@@ -164,25 +164,32 @@ bool MainProgram::createOpenCl()
     base_points.push_back(float(i));
   }
   cl::Buffer b_Points(*(d->getContext()),CL_MEM_READ_WRITE, sizeof(cl_float)*TOTAL_SIZE);
-  cl::Buffer b_values(*(d->getContext()),CL_MEM_READ_WRITE, sizeof(cl_float4)*TOTAL_SIZE);
+  //cl::Buffer b_values(*(d->getContext()),CL_MEM_READ_WRITE, sizeof(cl_float4)*TOTAL_SIZE);
 
   auto b_PointsPtr = d->create("b_pointsit", b_Points);
-  auto b_valuesPtr = d->create("b_arvot", b_values);
+  //auto b_valuesPtr = d->create("b_arvot", b_values);
 
   cl::CommandQueue* c_Queue = d->create<cl::CommandQueue>("mc1");
+  cl::CommandQueue* c_Queue_pass2 = d->create<cl::CommandQueue>("mc2");
+
   int error = c_Queue->enqueueWriteBuffer(*b_PointsPtr,CL_TRUE,0,sizeof(float)*TOTAL_SIZE,&base_points[0]);
   Log::getDebug().log("error == CL_SUCCESS => %", error == CL_SUCCESS);
   Log::getError().log("%",errorcode_toString(error));
 
-  // Load the source code.
+  // Load and compile the source code for evalDensity.cl.
   cl::Program::Sources sources;
   std::string kernel_code = Helper::loadSource("shaders/evalDencity.cl"); 
   sources.push_back({kernel_code.c_str(),kernel_code.length()});
 
-  // Create a program
-  Log::getDebug().log("Creating the program.");
+  // Load and compile the source code for mc.cl.
+  cl::Program::Sources sources_mc;
+  std::string mc_kernel_code = Helper::loadSource("shaders/mc.cl"); 
+  sources.push_back({mc_kernel_code.c_str(),mc_kernel_code.length()});
+
+  // Create a program for evalDensity.
+  Log::getDebug().log("Creating the evalDencity program.");
   CL_Program program;
-  if (!program.create(d,sources,"mc")) Log::getError().log("Failed to create the program.");
+  if (!program.create(d,sources,"eval_density")) Log::getError().log("Failed to create the program.");
 
   Log::getDebug().log("Get the dimensions.");
   auto global_dim = d->getGlobalDim(TOTAL_SIZE);
@@ -197,24 +204,23 @@ bool MainProgram::createOpenCl()
 //                                    int n)
 
   Log::getDebug().log("Creating kernel and setting arguments.");
-  cl::make_kernel<cl::Buffer, cl::Buffer, int, int, int, float, cl_float4, int> evalDensity_kernel(cl::Kernel(*(program.getProgram()),"eval_density"));
+  cl::make_kernel<cl::Buffer, int, int, int, float, cl_float4, int> evalDensity_kernel(cl::Kernel(*(program.getProgram()),"eval_density"));
   //cl::make_kernel<cl::Buffer, cl::Buffer, int> evalDensity_kernel(cl::Kernel(*(program.getProgram()),"eval_density"));
   cl::EnqueueArgs eargs(*c_Queue, cl::NullRange, global_dim, local_dim);
 
   Log::getDebug().log("Evaluating evalDensity.");
   //evalDensity_kernel(eargs, *b_PointsPtr,*b_valuesPtr,TOTAL_SIZE); //.getInfo(CL_EVENT_COMMAND_QUEUE, *c_Queue));
-  Log::getDebug().log("sizeof(cl_float4) == %", sizeof(cl_float4));
   cl_float4 base_pos = {0.0f,0.0f,0.0f,0.0f};
-  evalDensity_kernel(eargs, *b_PointsPtr,*b_valuesPtr,X_DIMENSION,Y_DIMENSION,Z_DIMENSION,0.1f,base_pos,TOTAL_SIZE); //.getInfo(CL_EVENT_COMMAND_QUEUE, *c_Queue));
+  evalDensity_kernel(eargs, *b_PointsPtr,X_DIMENSION,Y_DIMENSION,Z_DIMENSION,0.1f,base_pos,TOTAL_SIZE); //.getInfo(CL_EVENT_COMMAND_QUEUE, *c_Queue));
 
-  cl_float4 bee[TOTAL_SIZE];
-  error = c_Queue->enqueueReadBuffer(*b_valuesPtr,CL_TRUE,0,sizeof(cl_float4)*TOTAL_SIZE,bee);
+  float bee[TOTAL_SIZE];
+  error = c_Queue->enqueueReadBuffer(*b_PointsPtr,CL_TRUE,0,sizeof(float)*TOTAL_SIZE,bee);
   Log::getDebug().log("error == CL_SUCCESS => %", error == CL_SUCCESS);
   Log::getError().log("%",errorcode_toString(error));
 
   for (int i=0; i<TOTAL_SIZE; i++)
   {
-     Log::getDebug().log("i == % : (%,%,%,%)",i, bee[i].x, bee[i].y, bee[i].z,bee[i].w);
+     Log::getDebug().log("i == % : %",i, bee[i]);
   }
 
   return true;
