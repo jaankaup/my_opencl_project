@@ -106,7 +106,8 @@ size_t GPU_Device::getMaxGroupSize() const
   size_t max_size;
   cl_int error;
 
-  pDevice.getInfo(CL_DEVICE_MAX_WORK_GROUP_SIZE, &max_size);
+  //pDevice.getInfo(CL_DEVICE_MAX_WORK_GROUP_SIZE, &max_size);
+  //pDevice.getInfo(CL_KERNEL_PREFERRED_GROUP_SIZE_MULTIPLE, &max_size);
 
   if (error != CL_SUCCESS)
   {
@@ -114,7 +115,8 @@ size_t GPU_Device::getMaxGroupSize() const
     return 0;
   }
 
-  return max_size;
+  //return max_size;
+  return 256;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////

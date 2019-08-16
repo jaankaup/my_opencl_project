@@ -146,6 +146,7 @@ bool MainProgram::createOpenCl()
   const static int TOTAL_SIZE = (X_DIMENSION + 2) * (Y_DIMENSION + 2) * (Z_DIMENSION + 2);
   const static float ISOVALUE = 0.0f;
   const static float CUBE_SIZE_LENGTH = 0.1f;
+  const static int OUTPUT_SIZE = TOTAL_SIZE*16;
 
   //std::vector<cl_float3> base_points;
   //std::vector<cl_float3> base_points;
@@ -164,9 +165,9 @@ bool MainProgram::createOpenCl()
     base_points.push_back(float(i));
   }
 
-  int c[] = {0};
+  int c[] = {3};
   cl::Buffer b_Points(*(d->getContext()),CL_MEM_READ_WRITE, sizeof(cl_float)*TOTAL_SIZE);
-  cl::Buffer mc_output(*(d->getContext()),CL_MEM_READ_WRITE, sizeof(float)*TOTAL_SIZE*10);
+  cl::Buffer mc_output(*(d->getContext()),CL_MEM_READ_WRITE, sizeof(float)*OUTPUT_SIZE);
   cl::Buffer counter(*(d->getContext()),CL_MEM_READ_WRITE, sizeof(int));
 
   auto b_PointsPtr = d->create("b_pointsit", b_Points);
@@ -186,7 +187,7 @@ bool MainProgram::createOpenCl()
   // Load and compile the source code for evalDensity.cl and mc.cl.
   cl::Program::Sources sources;
   std::string kernel_code = Helper::loadSource("shaders/evalDencity.cl"); 
-//  sources.push_back({kernel_code.c_str(),kernel_code.length()});
+  sources.push_back({kernel_code.c_str(),kernel_code.length()});
   std::string mc_kernel_code = Helper::loadSource("shaders/mc.cl"); 
   sources.push_back({mc_kernel_code.c_str(),mc_kernel_code.length()});
 
@@ -202,8 +203,11 @@ bool MainProgram::createOpenCl()
   auto global_dim = d->getGlobalDim(TOTAL_SIZE);
   auto local_dim = d->getLocalDim();
 
+  // EVAL_DENSITY
   Log::getDebug().log("Creating kernel and setting arguments.");
-  cl::make_kernel<cl::Buffer, int, int, int, float, cl_float4, int> evalDensity_kernel(*program.getProgram(),"eval_density");
+  cl::make_kernel<cl::Buffer, int, int, int, float, cl_float4, int> evalDensity_kernel(*program.getProgram(),"eval_density",&error);
+  Log::getDebug().log("Creating eval_density :: error == CL_SUCCESS => %", error == CL_SUCCESS);
+  Log::getError().log("%",errorcode_toString(error));
   cl::EnqueueArgs eargs(*c_Queue, cl::NullRange, global_dim, local_dim);
 
   cl::make_kernel<cl::Buffer, cl::Buffer, cl::Buffer, int, int, int, float, float, int> mc_kernel(*program.getProgram(),"mc");
@@ -212,6 +216,14 @@ bool MainProgram::createOpenCl()
   cl_float4 base_pos = {0.0f,0.0f,0.0f,0.0f};
   evalDensity_kernel(eargs, *b_PointsPtr,X_DIMENSION,Y_DIMENSION,Z_DIMENSION,0.1f,base_pos,TOTAL_SIZE); //.getInfo(CL_EVENT_COMMAND_QUEUE, *c_Queue));
 
+//  float eval_result[TOTAL_SIZE];
+//  error = c_Queue->enqueueReadBuffer(*b_PointsPtr,CL_TRUE,0,sizeof(float)*TOTAL_SIZE,eval_result);
+
+//  for (int i=0; i<TOTAL_SIZE; i++)
+//  {
+//     Log::getDebug().log("i == % : % ", i, eval_result[i]);
+//  }
+
   // MC
   Log::getDebug().log("Creating MC kernel and setting arguments.");
   //cl::make_kernel<cl::Buffer, cl::Buffer, cl::Buffer, int, int, int, float, float, int> mc_kernel(*program.getProgram(),"mc");
@@ -219,7 +231,7 @@ bool MainProgram::createOpenCl()
   cl::EnqueueArgs eargs2(*c_Queue, cl::NullRange, global_dim, local_dim);
 
   Log::getDebug().log("Evaluating MC!.");
-  mc_kernel(eargs2, *b_PointsPtr,mc_output, counter, X_DIMENSION,Y_DIMENSION,Z_DIMENSION,0.1f,0.0f,TOTAL_SIZE); //.getInfo(CL_EVENT_COMMAND_QUEUE, *c_Queue));
+  mc_kernel(eargs2, *b_PointsPtr,mc_output, counter, X_DIMENSION,Y_DIMENSION,Z_DIMENSION,0.1f,0.0f,TOTAL_SIZE).wait(); //.getInfo(CL_EVENT_COMMAND_QUEUE, *c_Queue));
   Log::getDebug().log("Evaluating MC done!.");
 
   int lkm[1] = {6};
@@ -227,22 +239,33 @@ bool MainProgram::createOpenCl()
   Log::getDebug().log("error == CL_SUCCESS => %", error == CL_SUCCESS);
   Log::getError().log("%",errorcode_toString(error));
 
-  float bee[TOTAL_SIZE*10];
-  error = c_Queue->enqueueReadBuffer(mc_output,CL_TRUE,0,sizeof(float)*TOTAL_SIZE*4,bee);
+  float bee[OUTPUT_SIZE];
+  error = c_Queue->enqueueReadBuffer(mc_output,CL_TRUE,0,sizeof(glm::vec4)*(lkm[0]+1),bee);
   Log::getDebug().log("error == CL_SUCCESS => %", error == CL_SUCCESS);
   Log::getError().log("%",errorcode_toString(error));
 
 
-  Log::getError().log("lkm == %",lkm[0]);
+  Log::getError().log("lkm == %",lkm[0]+1);
 
-//  for (int i=0; i<TOTAL_SIZE/4; i++)
-//  {
-//     int off = i*4;
-//     glm::vec4 pos(bee[off],bee[off+1],bee[off+2],bee[off+3]);
-//     //glm::vec3 nor(bee[off+3],bee[off+4],bee[off+5]);
-//     //Log::getDebug().log("i == % : % : %", i, pos, nor);
-//     Log::getDebug().log("i == % : % ", i, pos);
-//  }
+  for (int i=0; i<(lkm[0]+1)/2; i++)
+  {
+     int off = i*8;
+     glm::vec4 pos(bee[off],bee[off+1],bee[off+2],bee[off+3]);
+     glm::vec4 pos1(bee[off+4],bee[off+5],bee[off+6],bee[off+7]);
+//     glm::vec4 pos2(bee[off+8],bee[off+9],bee[off+10],bee[off+11]);
+//     glm::vec4 pos3(bee[off+12],bee[off+13],bee[off+14],bee[off+15]);
+     //glm::vec3 nor(bee[off+3],bee[off+4],bee[off+5]);
+     //Log::getDebug().log("i == % : % : %", i, pos, nor);
+     Log::getDebug().log("i == % : % ", i, pos);
+     Log::getDebug().log("i == % : % ", i, pos1);
+//     Log::getDebug().log("i == % : % ", i, pos2);
+//     Log::getDebug().log("i == % : % ", i, pos3);
+//     Log::getDebug().log("i == % : % ", i, pos4);
+//     Log::getDebug().log("i == % : % ", i, pos5);
+//     Log::getDebug().log("i == % : % ", i, pos6);
+//     Log::getDebug().log("i == % : % ", i, pos7);
+     Log::getDebug().log("*******************************");
+  }
 
   return true;
   //int x_offset = X_DIMENSION + 2;

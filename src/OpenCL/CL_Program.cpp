@@ -22,7 +22,8 @@ bool CL_Program::create(GPU_Device* device, const cl::Program::Sources& src, con
     return false;
   }
 
-  error = pProgram.build({*(device->getDevice())},0);
+  error = pProgram.build({*(device->getDevice())});
+  //error = pProgram.build({*(device->getDevice())},"-cl-opt-disable");
 
   if (error != CL_SUCCESS)
   {
