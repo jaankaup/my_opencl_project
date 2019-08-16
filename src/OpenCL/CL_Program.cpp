@@ -3,7 +3,7 @@
 
 /////////////////////////////////////////////////////////////////////////////////////
 
-bool CL_Program::create(GPU_Device* device, const cl::Program::Sources& src, const std::string kernel_name)
+bool CL_Program::create(GPU_Device* device, const cl::Program::Sources& src, const std::string kernel_name) // REMOVE kernel_name.
 {
   assert(device != nullptr);
   

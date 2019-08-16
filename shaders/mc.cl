@@ -259,7 +259,6 @@ __constant char16 triTable[256] = {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
 typedef struct cube
 {
   float4 pos0;
@@ -280,6 +279,8 @@ typedef struct cube
   float3 normal6;
   float3 normal7;
 };
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int calculate_case(float d0, float d1, float d2, float d3, float d4, float d5, float d6, float d7 , float isovalue)
 {
@@ -365,122 +366,99 @@ float3 interpolateN(float3 na, float3 nb, float densityA, float densityB, float 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void createVertex(char edgeValue, struct cube c, int arrayIndex, float isovalue, __global float4* output)
+void createVertex(char edgeValue, struct cube c, int arrayIndex, float isovalue, __global float3* output)
 {
     // EDGE NUMBER 0
     if (edgeValue == 0)
     {
-        float4 pos = { interpolateV(c.pos0,c.pos1,isovalue) ,1.0f };
-        float4 nor = { interpolateN(c.normal0, c.normal1, c.pos0.w, c.pos1.w, isovalue), 0.0f};
-        output[arrayIndex] = pos;
-        output[arrayIndex+1] = nor;
+        output[arrayIndex] = interpolateV(c.pos0,c.pos1,isovalue);
+        output[arrayIndex+1] = interpolateN(c.normal0, c.normal1, c.pos0.w, c.pos1.w, isovalue);
     }
     // EDGE NUMBER 1
     else if (edgeValue == 1)
     {
-        float4 pos = { interpolateV(c.pos1,c.pos2,isovalue) ,1.0f };
-        float4 nor = { interpolateN(c.normal1, c.normal2, c.pos1.w, c.pos2.w, isovalue), 0.0f};
-        output[arrayIndex] = pos;
-        output[arrayIndex+1] = nor;
+        output[arrayIndex] = interpolateV(c.pos1,c.pos2,isovalue);
+        output[arrayIndex+1] = interpolateN(c.normal1, c.normal2, c.pos1.w, c.pos2.w, isovalue);
     }           
     // EDGE NUMBER 2
     else if (edgeValue == 2)
     {
-        float4 pos = { interpolateV(c.pos2,c.pos3,isovalue) ,1.0f };
-        float4 nor = { interpolateN(c.normal2, c.normal3, c.pos2.w, c.pos3.w, isovalue), 0.0f};
-        output[arrayIndex] = pos;
-        output[arrayIndex+1] = nor;
+        output[arrayIndex] = interpolateV(c.pos2,c.pos3,isovalue);
+        output[arrayIndex+1] = interpolateN(c.normal2, c.normal3, c.pos2.w, c.pos3.w, isovalue);
     }           
     // EDGE NUMBER 3
     else if (edgeValue == 3)
     {
-        float4 pos = { interpolateV(c.pos3,c.pos0,isovalue) ,1.0f };
-        float4 nor = { interpolateN(c.normal3, c.normal0, c.pos3.w, c.pos0.w, isovalue), 0.0f};
-        output[arrayIndex] = pos;
-        output[arrayIndex+1] = nor;
+        output[arrayIndex] = interpolateV(c.pos3,c.pos0,isovalue);
+        output[arrayIndex+1] = interpolateN(c.normal3, c.normal0, c.pos3.w, c.pos0.w, isovalue);
     }           
     // EDGE NUMBER 4
     else if (edgeValue == 4.0)
     {
-        float4 pos = { interpolateV(c.pos4,c.pos5,isovalue) ,1.0f };
-        float4 nor = { interpolateN(c.normal4, c.normal5, c.pos4.w, c.pos5.w, isovalue), 0.0f};
-        output[arrayIndex] = pos;
-        output[arrayIndex+1] = nor;
+        output[arrayIndex] = interpolateV(c.pos4,c.pos5,isovalue);
+        output[arrayIndex+1] = interpolateN(c.normal4, c.normal5, c.pos4.w, c.pos5.w, isovalue);
     }           
     // EDGE NUMBER 5
     else if (edgeValue == 5)
     {
-        float4 pos = { interpolateV(c.pos5,c.pos6,isovalue) ,1.0f };
-        float4 nor = { interpolateN(c.normal5, c.normal6, c.pos5.w, c.pos6.w, isovalue), 0.0f};
-        output[arrayIndex] = pos;
-        output[arrayIndex+1] = nor;
+        output[arrayIndex] = interpolateV(c.pos5,c.pos6,isovalue);
+        output[arrayIndex+1] = interpolateN(c.normal5, c.normal6, c.pos5.w, c.pos6.w, isovalue);
     }           
     // EDGE NUMBER 6
     else if (edgeValue == 6)
     {
-        float4 pos = { interpolateV(c.pos6,c.pos7,isovalue) ,1.0f };
-        float4 nor = { interpolateN(c.normal6, c.normal7, c.pos6.w, c.pos7.w, isovalue), 0.0f};
-        output[arrayIndex] = pos;
-        output[arrayIndex+1] = nor;
+        output[arrayIndex] = interpolateV(c.pos6,c.pos7,isovalue);
+        output[arrayIndex+1] = interpolateN(c.normal6, c.normal7, c.pos6.w, c.pos7.w, isovalue);
     }           
     // EDGE NUMBER 7
     else if (edgeValue == 7)
     {
-        float4 pos = { interpolateV(c.pos7,c.pos4,isovalue) ,1.0f };
-        float4 nor = { interpolateN(c.normal7, c.normal4, c.pos7.w, c.pos4.w, isovalue), 0.0f};
-        output[arrayIndex] = pos;
-        output[arrayIndex+1] = nor;
+        output[arrayIndex] = interpolateV(c.pos7,c.pos4,isovalue);
+        output[arrayIndex+1] = interpolateN(c.normal7, c.normal4, c.pos7.w, c.pos4.w, isovalue);
     }           
     // EDGE NUMBER 8
     else if (edgeValue == 8.0)
     {
-        float4 pos = { interpolateV(c.pos0,c.pos4,isovalue) ,1.0f };
-        float4 nor = { interpolateN(c.normal0, c.normal4, c.pos0.w, c.pos4.w, isovalue), 0.0f};
-        output[arrayIndex] = pos;
-        output[arrayIndex+1] = nor;
+        output[arrayIndex] = interpolateV(c.pos0,c.pos4,isovalue);
+        output[arrayIndex+1] = interpolateN(c.normal0, c.normal4, c.pos0.w, c.pos4.w, isovalue);
     }           
     // EDGE NUMBER 9
     else if (edgeValue == 9)
     {
-        float4 pos = { interpolateV(c.pos1,c.pos5,isovalue) ,1.0f };
-        float4 nor = { interpolateN(c.normal1, c.normal5, c.pos1.w, c.pos5.w, isovalue), 0.0f};
-        output[arrayIndex] = pos;
-        output[arrayIndex+1] = nor;
+        output[arrayIndex] = interpolateV(c.pos1,c.pos5,isovalue);
+        output[arrayIndex+1] = interpolateN(c.normal1, c.normal5, c.pos1.w, c.pos5.w, isovalue);
     }           
     // EDGE NUMBER 10 
     else if (edgeValue == 10.0)
     {
-        float4 pos = { interpolateV(c.pos2,c.pos6,isovalue) ,1.0f };
-        float4 nor = { interpolateN(c.normal2, c.normal6, c.pos2.w, c.pos6.w, isovalue), 0.0f};
-        output[arrayIndex] = pos;
-        output[arrayIndex+1] = nor;
+        output[arrayIndex] = interpolateV(c.pos2,c.pos6,isovalue) ;
+        output[arrayIndex+1] = interpolateN(c.normal2, c.normal6, c.pos2.w, c.pos6.w, isovalue);
     }           
     // EDGE NUMBER 11 
     else if (edgeValue == 11)
     {
-        float4 pos = { interpolateV(c.pos3,c.pos7,isovalue) ,1.0f };
-        float4 nor = { interpolateN(c.normal3, c.normal7, c.pos3.w, c.pos7.w, isovalue), 0.0f};
-        output[arrayIndex] = pos;
-        output[arrayIndex+1] = nor;
+        output[arrayIndex] = interpolateV(c.pos3,c.pos7,isovalue);
+        output[arrayIndex+1] = interpolateN(c.normal3, c.normal7, c.pos3.w, c.pos7.w, isovalue);
     }           
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-__kernel void mc(__global __read_only float* base_values,
-                          __global float4* output,
-                          __global int* counterArg,       
-                          int x_dimension,
-                          int y_dimension,
-                          int z_dimension,
-                          float block_size,
-                          float isovalue,
-                          int n)
+__kernel void mc(__global float* base_values,
+                 __global float3* output,
+                 __global int* counterArg,       
+                 int x_dimension,
+                 int y_dimension,
+                 int z_dimension,
+                 float block_size,
+                 float isovalue,
+                 int n)
 {
   const int global_id = get_global_id(0);
   volatile __global int* counterPtr = counterArg;
 
   if (global_id >= n) return;  
-  
+   atomic_add(counterPtr,2);
+
   const int x_offset = x_dimension + 2;
   const int y_offset = x_offset * (y_dimension + 2);
 
@@ -575,7 +553,7 @@ __kernel void mc(__global __read_only float* base_values,
   char16 tri_case = triTable[cube_case];
 
   // We are going to add a triable. 3 postion vertices and 3 normal vertices.
-  int index = atomic_add(counterPtr,6);
+  int index = atomic_add(counterPtr,2);
 
   createVertex(tri_case.s0, c, index, isovalue, output);
   createVertex(tri_case.s1, c, index, isovalue, output);
@@ -583,7 +561,7 @@ __kernel void mc(__global __read_only float* base_values,
 
   if (tri_case.s3 == 255) return;
 
-  index = atomic_add(counterPtr,6);
+  index = atomic_add(counterPtr,2);
 
   createVertex(tri_case.s3, c, index, isovalue, output);
   createVertex(tri_case.s4, c, index, isovalue, output);
@@ -591,7 +569,7 @@ __kernel void mc(__global __read_only float* base_values,
 
   if (tri_case.s6 == 255) return;
 
-  index = atomic_add(counterPtr,6);
+  index = atomic_add(counterPtr,2);
 
   createVertex(tri_case.s6, c, index, isovalue, output);
   createVertex(tri_case.s7, c, index, isovalue, output);
@@ -599,7 +577,7 @@ __kernel void mc(__global __read_only float* base_values,
 
   if (tri_case.s9 == 255) return;
 
-  index = atomic_add(counterPtr,6);
+  index = atomic_add(counterPtr,2);
 
   createVertex(tri_case.s9, c, index, isovalue, output);
   createVertex(tri_case.sa, c, index, isovalue, output);
@@ -607,7 +585,7 @@ __kernel void mc(__global __read_only float* base_values,
 
   if (tri_case.sc == 255) return;
 
-  index = atomic_add(counterPtr,6);
+  index = atomic_add(counterPtr,2);
 
   createVertex(tri_case.sc, c, index, isovalue, output);
   createVertex(tri_case.sd, c, index, isovalue, output);
