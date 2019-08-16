@@ -37,6 +37,6 @@ __kernel void eval_density(__global float* base_values,
      
      //base_values[global_id] = base_points[global_id];      
      float4 result = { x_coord, y_coord, z_coord, 0.0f };
-     base_values[global_id] = ball(result, b_center, 0.3f);      
+     base_values[global_id] = ball(result, b_center, 1.3f);      
   }
 }                                                                               

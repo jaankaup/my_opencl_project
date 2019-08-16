@@ -13,9 +13,11 @@
 // TODO: erillinen piirto-purkuri ja tavallinen data-puskuri periyttamalla.
 class Vertexbuffer
 {
-    friend class ResourceManager;
+    //friend class ResourceManager;
 
 	public:
+
+		Vertexbuffer();
 
     Vertexbuffer(const Vertexbuffer&) = delete;
     Vertexbuffer& operator=(const Vertexbuffer&) = delete;
@@ -63,17 +65,15 @@ class Vertexbuffer
 
 		virtual ~Vertexbuffer();
 
-  protected:
+	private:
     GLuint pId = 0;
     GLuint pVAO = 0;
     GLenum pTarget;
     GLenum pUsage;
     std::vector<float> pData;
     int pDataCount = 0;
-		Vertexbuffer();
     unsigned int pData_size = 0;
 
-	private:
 };
 
 #endif // VERTEXBUFFER_H
