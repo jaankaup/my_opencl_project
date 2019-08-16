@@ -444,7 +444,7 @@ void createVertex(char edgeValue, struct cube c, int arrayIndex, float isovalue,
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 __kernel void mc(__global float* base_values,
-                 __global float3* output,
+                 __global float4* output,
                  __global int* counterArg,       
                  int x_dimension,
                  int y_dimension,
@@ -456,139 +456,141 @@ __kernel void mc(__global float* base_values,
   const int global_id = get_global_id(0);
   volatile __global int* counterPtr = counterArg;
 
-  if (global_id >= n) return;  
-   atomic_add(counterPtr,2);
+  int a = atomic_inc(counterPtr);
+  output[global_id] = (float4){global_id,1.0f,a,1.5f};
 
-  const int x_offset = x_dimension + 2;
-  const int y_offset = x_offset * (y_dimension + 2);
-
-  float4 pos = (float4) {calculate_position(global_id, x_offset, y_offset, y_dimension, z_dimension, block_size), base_values[global_id]};
-
-  // Check if the cube is in it's boundaries.
-  if (!(pos.x < 0 || pos.x > x_dimension || pos.y < 0 || pos.y > y_dimension || pos.z  < 0 || pos.z  > z_dimension)) return;
-
-  // Create the cube.
-  //        v5                        v6
-  //         +------------------------+
-  //        /|                       /|
-  //       / |                      / |
-  //      /  |                     /  |
-  //     /   |                    /   |  
-  //    /    |                   /    |
-  //v1 +------------------------+ v2  |
-  //   |     |                  |     |
-  //   |     |                  |     |
-  //   |     |                  |     |
-  //   |  v4 +------------------|-----+ v7
-  //   |    /                   |    /
-  //   |   /                    |   /
-  //   |  /                     |  /    
-  //   | /                      | /
-  //   |/                       |/
-  //   +------------------------+
-  //  v0                       v3
-
-  //float8 cube;
-  //cube.s0 = base_values[global_id]; //v0
-  //cube.s1 = base_values[global_id+x_offset]; //v1
-  //cube.s2 = base_values[global_id+x_offset+1]; //v2
-  //cube.s3 = base_values[global_id+1]; //v3
-  //cube.s4 = base_values[global_id+y_offset]; //v4
-  //cube.s5 = base_values[global_id+x_offset+y_offset]; //v5
-  //cube.s6 = base_values[global_id+x_offset+y_offset+1]; //v6
-  //cube.s7 = base_values[global_id+y_offset+1]; //v7
-
-
-  int index1 = global_id+x_offset;
-  int index2 = global_id+x_offset+1;
-  int index3 = global_id+1;
-  int index4 = global_id+y_offset;
-  int index5 = global_id+x_offset+y_offset;
-  int index6 = global_id+x_offset+y_offset+1;
-  int index7 = global_id+y_offset+1;
-
-  float v0_density = base_values[global_id]; //v0
-  float v1_density = base_values[index1]; //v1
-  float v2_density = base_values[index2]; //v2
-  float v3_density = base_values[index3]; //v3
-  float v4_density = base_values[index4]; //v4
-  float v5_density = base_values[index5]; //v5
-  float v6_density = base_values[index6]; //v6
-  float v7_density = base_values[index7]; //v7
-
-  // Calculate the cube case number.
-  int cube_case = calculate_case(v0_density,
-                                 v1_density,
-                                 v2_density,
-                                 v3_density,
-                                 v4_density,
-                                 v5_density,
-                                 v6_density,
-                                 v7_density,
-                                 isovalue);
-
-  // The cube doesn't produce any geometry.
-  if (cube_case == 0 || cube_case == 255) return;
-
-  struct cube c;
-
-  c.pos0 = pos;  
-  c.pos1 = (float4){ calculate_position(index1, x_offset, y_offset, y_dimension, z_dimension, block_size), v1_density}; 
-  c.pos2 = (float4){ calculate_position(index2, x_offset, y_offset, y_dimension, z_dimension, block_size), v2_density}; 
-  c.pos3 = (float4){ calculate_position(index3, x_offset, y_offset, y_dimension, z_dimension, block_size), v3_density}; 
-  c.pos4 = (float4){ calculate_position(index4, x_offset, y_offset, y_dimension, z_dimension, block_size), v4_density}; 
-  c.pos5 = (float4){ calculate_position(index5, x_offset, y_offset, y_dimension, z_dimension, block_size), v5_density}; 
-  c.pos6 = (float4){ calculate_position(index6, x_offset, y_offset, y_dimension, z_dimension, block_size), v6_density}; 
-  c.pos7 = (float4){ calculate_position(index7, x_offset, y_offset, y_dimension, z_dimension, block_size), v7_density}; 
-
-  c.normal0 = calculate_normal(global_id, x_offset, y_offset, base_values);  
-  c.normal1 = calculate_normal(index1, x_offset, y_offset, base_values); 
-  c.normal2 = calculate_normal(index2, x_offset, y_offset, base_values); 
-  c.normal3 = calculate_normal(index3, x_offset, y_offset, base_values); 
-  c.normal4 = calculate_normal(index4, x_offset, y_offset, base_values); 
-  c.normal5 = calculate_normal(index5, x_offset, y_offset, base_values); 
-  c.normal6 = calculate_normal(index6, x_offset, y_offset, base_values); 
-  c.normal7 = calculate_normal(index7, x_offset, y_offset, base_values); 
-
-  char16 tri_case = triTable[cube_case];
-
-  // We are going to add a triable. 3 postion vertices and 3 normal vertices.
-  int index = atomic_add(counterPtr,2);
-
-  createVertex(tri_case.s0, c, index, isovalue, output);
-  createVertex(tri_case.s1, c, index, isovalue, output);
-  createVertex(tri_case.s2, c, index, isovalue, output);
-
-  if (tri_case.s3 == 255) return;
-
-  index = atomic_add(counterPtr,2);
-
-  createVertex(tri_case.s3, c, index, isovalue, output);
-  createVertex(tri_case.s4, c, index, isovalue, output);
-  createVertex(tri_case.s5, c, index, isovalue, output);
-
-  if (tri_case.s6 == 255) return;
-
-  index = atomic_add(counterPtr,2);
-
-  createVertex(tri_case.s6, c, index, isovalue, output);
-  createVertex(tri_case.s7, c, index, isovalue, output);
-  createVertex(tri_case.s8, c, index, isovalue, output);
-
-  if (tri_case.s9 == 255) return;
-
-  index = atomic_add(counterPtr,2);
-
-  createVertex(tri_case.s9, c, index, isovalue, output);
-  createVertex(tri_case.sa, c, index, isovalue, output);
-  createVertex(tri_case.sb, c, index, isovalue, output);
-
-  if (tri_case.sc == 255) return;
-
-  index = atomic_add(counterPtr,2);
-
-  createVertex(tri_case.sc, c, index, isovalue, output);
-  createVertex(tri_case.sd, c, index, isovalue, output);
-  createVertex(tri_case.se, c, index, isovalue, output);
+////  if (global_id >= n) return;  
+////
+////  const int x_offset = x_dimension + 2;
+////  const int y_offset = x_offset * (y_dimension + 2);
+////
+////  float4 pos = (float4) {calculate_position(global_id, x_offset, y_offset, y_dimension, z_dimension, block_size), base_values[global_id]};
+////
+////  // Check if the cube is in it's boundaries.
+////  if (!(pos.x < 0 || pos.x > x_dimension || pos.y < 0 || pos.y > y_dimension || pos.z  < 0 || pos.z  > z_dimension)) return;
+////
+////  // Create the cube.
+////  //        v5                        v6
+////  //         +------------------------+
+////  //        /|                       /|
+////  //       / |                      / |
+////  //      /  |                     /  |
+////  //     /   |                    /   |  
+////  //    /    |                   /    |
+////  //v1 +------------------------+ v2  |
+////  //   |     |                  |     |
+////  //   |     |                  |     |
+////  //   |     |                  |     |
+////  //   |  v4 +------------------|-----+ v7
+////  //   |    /                   |    /
+////  //   |   /                    |   /
+////  //   |  /                     |  /    
+////  //   | /                      | /
+////  //   |/                       |/
+////  //   +------------------------+
+////  //  v0                       v3
+////
+////  //float8 cube;
+////  //cube.s0 = base_values[global_id]; //v0
+////  //cube.s1 = base_values[global_id+x_offset]; //v1
+////  //cube.s2 = base_values[global_id+x_offset+1]; //v2
+////  //cube.s3 = base_values[global_id+1]; //v3
+////  //cube.s4 = base_values[global_id+y_offset]; //v4
+////  //cube.s5 = base_values[global_id+x_offset+y_offset]; //v5
+////  //cube.s6 = base_values[global_id+x_offset+y_offset+1]; //v6
+////  //cube.s7 = base_values[global_id+y_offset+1]; //v7
+////
+////
+////  int index1 = global_id+x_offset;
+////  int index2 = global_id+x_offset+1;
+////  int index3 = global_id+1;
+////  int index4 = global_id+y_offset;
+////  int index5 = global_id+x_offset+y_offset;
+////  int index6 = global_id+x_offset+y_offset+1;
+////  int index7 = global_id+y_offset+1;
+////
+////  float v0_density = base_values[global_id]; //v0
+////  float v1_density = base_values[index1]; //v1
+////  float v2_density = base_values[index2]; //v2
+////  float v3_density = base_values[index3]; //v3
+////  float v4_density = base_values[index4]; //v4
+////  float v5_density = base_values[index5]; //v5
+////  float v6_density = base_values[index6]; //v6
+////  float v7_density = base_values[index7]; //v7
+////
+////  // Calculate the cube case number.
+////  int cube_case = calculate_case(v0_density,
+////                                 v1_density,
+////                                 v2_density,
+////                                 v3_density,
+////                                 v4_density,
+////                                 v5_density,
+////                                 v6_density,
+////                                 v7_density,
+////                                 isovalue);
+////
+////  // The cube doesn't produce any geometry.
+////  if (cube_case == 0 || cube_case == 255) return;
+////
+////  struct cube c;
+////
+////  c.pos0 = pos;  
+////  c.pos1 = (float4){ calculate_position(index1, x_offset, y_offset, y_dimension, z_dimension, block_size), v1_density}; 
+////  c.pos2 = (float4){ calculate_position(index2, x_offset, y_offset, y_dimension, z_dimension, block_size), v2_density}; 
+////  c.pos3 = (float4){ calculate_position(index3, x_offset, y_offset, y_dimension, z_dimension, block_size), v3_density}; 
+////  c.pos4 = (float4){ calculate_position(index4, x_offset, y_offset, y_dimension, z_dimension, block_size), v4_density}; 
+////  c.pos5 = (float4){ calculate_position(index5, x_offset, y_offset, y_dimension, z_dimension, block_size), v5_density}; 
+////  c.pos6 = (float4){ calculate_position(index6, x_offset, y_offset, y_dimension, z_dimension, block_size), v6_density}; 
+////  c.pos7 = (float4){ calculate_position(index7, x_offset, y_offset, y_dimension, z_dimension, block_size), v7_density}; 
+////
+////  c.normal0 = calculate_normal(global_id, x_offset, y_offset, base_values);  
+////  c.normal1 = calculate_normal(index1, x_offset, y_offset, base_values); 
+////  c.normal2 = calculate_normal(index2, x_offset, y_offset, base_values); 
+////  c.normal3 = calculate_normal(index3, x_offset, y_offset, base_values); 
+////  c.normal4 = calculate_normal(index4, x_offset, y_offset, base_values); 
+////  c.normal5 = calculate_normal(index5, x_offset, y_offset, base_values); 
+////  c.normal6 = calculate_normal(index6, x_offset, y_offset, base_values); 
+////  c.normal7 = calculate_normal(index7, x_offset, y_offset, base_values); 
+////
+////  char16 tri_case = triTable[cube_case];
+////
+////  // We are going to add a triable. 3 postion vertices and 3 normal vertices.
+////  int index = atomic_add(counterPtr,2);
+////
+////  createVertex(tri_case.s0, c, index, isovalue, output);
+////  createVertex(tri_case.s1, c, index, isovalue, output);
+////  createVertex(tri_case.s2, c, index, isovalue, output);
+////
+////  if (tri_case.s3 == 255) return;
+////
+////  index = atomic_add(counterPtr,2);
+////
+////  createVertex(tri_case.s3, c, index, isovalue, output);
+////  createVertex(tri_case.s4, c, index, isovalue, output);
+////  createVertex(tri_case.s5, c, index, isovalue, output);
+////
+////  if (tri_case.s6 == 255) return;
+////
+////  index = atomic_add(counterPtr,2);
+////
+////  createVertex(tri_case.s6, c, index, isovalue, output);
+////  createVertex(tri_case.s7, c, index, isovalue, output);
+////  createVertex(tri_case.s8, c, index, isovalue, output);
+////
+////  if (tri_case.s9 == 255) return;
+////
+////  index = atomic_add(counterPtr,2);
+////
+////  createVertex(tri_case.s9, c, index, isovalue, output);
+////  createVertex(tri_case.sa, c, index, isovalue, output);
+////  createVertex(tri_case.sb, c, index, isovalue, output);
+////
+////  if (tri_case.sc == 255) return;
+////
+////  index = atomic_add(counterPtr,2);
+////
+////  createVertex(tri_case.sc, c, index, isovalue, output);
+////  createVertex(tri_case.sd, c, index, isovalue, output);
+////  createVertex(tri_case.se, c, index, isovalue, output);
 
 }                                                                               

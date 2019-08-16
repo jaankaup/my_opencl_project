@@ -202,75 +202,47 @@ bool MainProgram::createOpenCl()
   auto global_dim = d->getGlobalDim(TOTAL_SIZE);
   auto local_dim = d->getLocalDim();
 
-//__kernel void mc(__global __read_only float* base_values,
-//                          __global float4* output,
-//                          __global int* counterArg,       
-//                          int x_dimension,
-//                          int y_dimension,
-//                          int z_dimension,
-//                          float block_size,
-//                          float isovalue,
-//                          int n)
-
   Log::getDebug().log("Creating kernel and setting arguments.");
   cl::make_kernel<cl::Buffer, int, int, int, float, cl_float4, int> evalDensity_kernel(*program.getProgram(),"eval_density");
-//////  //cl::make_kernel<cl::Buffer, cl::Buffer, int> evalDensity_kernel(cl::Kernel(*(program.getProgram()),"eval_density"));
   cl::EnqueueArgs eargs(*c_Queue, cl::NullRange, global_dim, local_dim);
 
-  Log::getDebug().log("PHIUUUUUH!!!!.");
+  cl::make_kernel<cl::Buffer, cl::Buffer, cl::Buffer, int, int, int, float, float, int> mc_kernel(*program.getProgram(),"mc");
 
-//  cl::make_kernel<cl::Buffer, cl::Buffer, int> evalDensity_kernel(cl::Kernel(*(program.getProgram()),"eval_density"));
   Log::getDebug().log("Evaluating evalDensity.");
-  //evalDensity_kernel(eargs, *b_PointsPtr,*b_valuesPtr,TOTAL_SIZE); //.getInfo(CL_EVENT_COMMAND_QUEUE, *c_Queue));
   cl_float4 base_pos = {0.0f,0.0f,0.0f,0.0f};
   evalDensity_kernel(eargs, *b_PointsPtr,X_DIMENSION,Y_DIMENSION,Z_DIMENSION,0.1f,base_pos,TOTAL_SIZE); //.getInfo(CL_EVENT_COMMAND_QUEUE, *c_Queue));
 
-  // Create a program for mc.
-//  Log::getDebug().log("Creating the mc program.");
-//  CL_Program mc_program;
-//  if (!program.create(d,sources_mc,"mc")) Log::getError().log("Failed to create the mc program.");
-
+  // MC
   Log::getDebug().log("Creating MC kernel and setting arguments.");
-  cl::make_kernel<cl::Buffer, cl::Buffer, cl::Buffer, int, int, int, float, float, int> mc_kernel(*program.getProgram(),"mc");
-  //cl::make_kernel<int> mc_kernel(cl::Kernel(*(program.getProgram()),"mc"));
-  //cl::make_kernel<int> mc_kernel(*program.getProgram(),"bee",&error);
-  Log::getDebug().log("Creatin mc_kernel: error == CL_SUCCESS => %", error == CL_SUCCESS);
-  Log::getError().log("%",errorcode_toString(error));
-  Log::getDebug().log("blaaAAAAAAH.");
-//  cl::EnqueueArgs eargs_mc(*c_Queue, cl::NullRange, global_dim, local_dim);
+  //cl::make_kernel<cl::Buffer, cl::Buffer, cl::Buffer, int, int, int, float, float, int> mc_kernel(*program.getProgram(),"mc");
 
-//__kernel void mc(__global float* base_values,
-//                 __global float3* output,
-//                 __global int* counterArg,       
-//                 int x_dimension,
-//                 int y_dimension,
-//                 int z_dimension,
-//                 float block_size,
-//                 float isovalue,
-//                 int n)
+  cl::EnqueueArgs eargs2(*c_Queue, cl::NullRange, global_dim, local_dim);
+
   Log::getDebug().log("Evaluating MC!.");
-  mc_kernel(eargs, *b_PointsPtr,mc_output, counter, X_DIMENSION,Y_DIMENSION,Z_DIMENSION,0.1f,0.0f,TOTAL_SIZE); //.getInfo(CL_EVENT_COMMAND_QUEUE, *c_Queue));
+  mc_kernel(eargs2, *b_PointsPtr,mc_output, counter, X_DIMENSION,Y_DIMENSION,Z_DIMENSION,0.1f,0.0f,TOTAL_SIZE); //.getInfo(CL_EVENT_COMMAND_QUEUE, *c_Queue));
   Log::getDebug().log("Evaluating MC done!.");
 
-  float bee[TOTAL_SIZE*10];
-  error = c_Queue->enqueueReadBuffer(mc_output,CL_TRUE,0,sizeof(float)*TOTAL_SIZE*10,bee);
-  Log::getDebug().log("error == CL_SUCCESS => %", error == CL_SUCCESS);
-  Log::getError().log("%",errorcode_toString(error));
-
-  int lkm[1];
+  int lkm[1] = {6};
   error = c_Queue->enqueueReadBuffer(counter,CL_TRUE,0,sizeof(int),lkm);
   Log::getDebug().log("error == CL_SUCCESS => %", error == CL_SUCCESS);
   Log::getError().log("%",errorcode_toString(error));
 
+  float bee[TOTAL_SIZE*10];
+  error = c_Queue->enqueueReadBuffer(mc_output,CL_TRUE,0,sizeof(float)*TOTAL_SIZE*4,bee);
+  Log::getDebug().log("error == CL_SUCCESS => %", error == CL_SUCCESS);
+  Log::getError().log("%",errorcode_toString(error));
+
+
   Log::getError().log("lkm == %",lkm[0]);
 
-  for (int i=0; i<TOTAL_SIZE*10/6; i++)
-  {
-     int off = i*6;
-     glm::vec3 pos(bee[off],bee[off+1],bee[off+2]);
-     glm::vec3 nor(bee[off+3],bee[off+4],bee[off+5]);
-     Log::getDebug().log("i == % : % : %", i, pos, nor);
-  }
+//  for (int i=0; i<TOTAL_SIZE/4; i++)
+//  {
+//     int off = i*4;
+//     glm::vec4 pos(bee[off],bee[off+1],bee[off+2],bee[off+3]);
+//     //glm::vec3 nor(bee[off+3],bee[off+4],bee[off+5]);
+//     //Log::getDebug().log("i == % : % : %", i, pos, nor);
+//     Log::getDebug().log("i == % : % ", i, pos);
+//  }
 
   return true;
   //int x_offset = X_DIMENSION + 2;
