@@ -49,7 +49,7 @@ void Renderer::render(const Camera& camera) {
 
   auto vb = rm->get<Vertexbuffer>("hah");
   vb->bind();
-  glDrawArrays(GL_TRIANGLES, 0, vb->getCount()*6);
+  glDrawArrays(GL_TRIANGLES, 0, vb->getCount());
 }
 
 void Renderer::renderModels(const Camera& camera)

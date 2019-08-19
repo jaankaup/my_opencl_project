@@ -106,7 +106,7 @@ size_t GPU_Device::getMaxGroupSize() const
   size_t max_size;
   cl_int error;
 
-  //pDevice.getInfo(CL_DEVICE_MAX_WORK_GROUP_SIZE, &max_size);
+  pDevice.getInfo(CL_DEVICE_MAX_WORK_GROUP_SIZE, &max_size);
   //pDevice.getInfo(CL_KERNEL_PREFERRED_GROUP_SIZE_MULTIPLE, &max_size);
 
   if (error != CL_SUCCESS)
@@ -115,8 +115,7 @@ size_t GPU_Device::getMaxGroupSize() const
     return 0;
   }
 
-  //return max_size;
-  return 256;
+  return max_size;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////
@@ -161,4 +160,53 @@ bool GPU_Device::runKernel(CL_Program* program, cl::NDRange globalDim, cl::NDRan
   }
 
   return true;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////
+
+cl::Buffer* GPU_Device::createBuffer(const std::string& key, size_t size, cl_mem_flags flags)
+{
+  cl_int error = 0;
+  std::unique_ptr<cl::Buffer> b(new cl::Buffer(pContext, flags , size, &error));
+  if (error != CL_SUCCESS)
+  {
+    Log::getDebug().log("GPU_Device::create(%,%,%)",key,size,flags);
+    print_cl_error(error);
+    return nullptr;
+  }
+  pBuffers[key] = std::move(b);
+  return pBuffers[key].get();
+}
+
+/////////////////////////////////////////////////////////////////////////////////////
+
+cl::Program* GPU_Device::createProgram(const std::string& key, cl::Program::Sources& sources) 
+{
+
+  cl_int error = CL_SUCCESS;
+
+  std::unique_ptr<cl::Program> program(new cl::Program(pContext, sources, &error));  
+  //cl::Program program  = cl::Program({*(d->getDevice())}, sources, &error);  
+  //cl::Program program  = pProgram.build({*(device->getDevice())},"-cl-opt-disable");
+
+  if (error != CL_SUCCESS)
+  {
+    Log::getError().log("GPU_Device::createProgram: failed to create program with error code (%)", error);
+    print_cl_error(error);
+    return nullptr;
+  }
+
+  error = program.get()->build({pDevice});
+  //error = program.build({*(d->getDevice())},"-cl-opt-disable");
+
+  if (error != CL_SUCCESS)
+  {
+    Log::getError().log("GPU_Device::createProgram: Program build failed.");
+    print_cl_error(error);
+    Log::getError().log("%", program.get()->getBuildInfo<CL_PROGRAM_BUILD_LOG>(pDevice));
+    return nullptr;
+  }
+  
+  pPrograms[key] = std::move(program);
+  return pPrograms[key].get();
 }

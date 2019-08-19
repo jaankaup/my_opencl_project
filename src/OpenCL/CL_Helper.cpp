@@ -1,4 +1,76 @@
 #include "CL_Helper.h"
+#include "GPU_Device.h"
+
+cl::Buffer createBuffer(size_t size, cl_mem_flags flags)
+{
+  GPU_Device* d = GPU_Device::getInstance();
+  cl_int error = 0;
+  cl::Buffer buffer(*(d->getContext()),CL_MEM_READ_ONLY, sizeof(int)*8, &error);
+  if (error != CL_SUCCESS)
+  {
+    Log::getDebug().log("CL_Helper::createBuffer(%,%)",size,flags);
+    print_cl_error(error);
+  }
+  return buffer;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////7
+
+bool writeToBuffer(cl::CommandQueue& commandQueue, cl::Buffer& buffer, bool blocking, size_t size, void* data)
+{
+  cl_int error = commandQueue.enqueueWriteBuffer(buffer,blocking,0,size,data);
+  if (error != CL_SUCCESS)
+  {
+    Log::getDebug().log("CL_Helper::writeToBuffer()");
+    print_cl_error(error);
+    return false;
+  }
+  return true;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////7
+
+// TODO: Optional
+cl::Program createProgram(cl::Program::Sources& sources)
+{
+  GPU_Device* d = GPU_Device::getInstance();
+
+  auto context_ptr = d->getContext();
+  assert(context_ptr != nullptr);
+
+  cl_int error = CL_SUCCESS;
+
+  cl::Program program = cl::Program(*context_ptr, sources, &error);  
+  //cl::Program program  = cl::Program({*(d->getDevice())}, sources, &error);  
+  //cl::Program program  = pProgram.build({*(device->getDevice())},"-cl-opt-disable");
+
+  if (error != CL_SUCCESS)
+  {
+    Log::getError().log("CL_Helper::createProgram: failed to create program with error code (%)", error);
+    print_cl_error(error);
+    return program;
+  }
+
+  error = program.build({*(d->getDevice())});
+  //error = program.build({*(d->getDevice())},"-cl-opt-disable");
+
+  if (error != CL_SUCCESS)
+  {
+    Log::getError().log("CL_Helper::createProgram: Program build failed.");
+    print_cl_error(error);
+    Log::getError().log("%", program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(*(d->getDevice())));
+    return program;
+  }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////7
+
+void print_cl_error(cl_int error)
+{
+  Log::getError().log("%",errorcode_toString(error));
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////7
 
 std::string errorcode_toString(const cl_int errorCode)
 {

@@ -42,6 +42,7 @@ set(util_src
 set(program_src 
       ${program_dir}/Program.cpp
       ${program_dir}/InputCache.cpp
+      ${program_dir}/Marching_Cubes_data.cpp
       #      ${util_dir}/GlobalPropertyManager.cpp
       )
 

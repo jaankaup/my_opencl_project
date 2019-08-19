@@ -6,6 +6,7 @@
 
 #include <vector>
 #include <unordered_map>
+#include <memory>
 //#include <CL/cl2.hpp>
 #include <CL/cl.hpp>
 #include "../Utils/log.h"
@@ -102,6 +103,9 @@ class GPU_Device
      */
     bool runKernel(CL_Program* kernel, cl::NDRange globalDim, cl::NDRange localDim);
 
+    cl::Buffer* createBuffer(const std::string& name, size_t size, cl_mem_flags); 
+
+    cl::Program* createProgram(const std::string& name, cl::Program::Sources& sources); 
     /**
      * Create a new resource (gl::CommandQueue).
      * @param key A key for getting and deleting the resource.
@@ -114,34 +118,43 @@ class GPU_Device
       assert(pInitialized);
       if constexpr (std::is_same<T,cl::CommandQueue>::value) {
         cl_int error;
-        cl::CommandQueue cq = cl::CommandQueue(pContext, pDevice, 0, &error);
+        std::unique_ptr<cl::CommandQueue> c(new cl::CommandQueue(pContext, pDevice, 0, &error));
         if (error != CL_SUCCESS)
         {
           Log::getError().log("GPU:Device::create(): Failed to create CommmandQueue.");     
           Log::getError().log("%",errorcode_toString(error));
           return nullptr;
         }
-        pCommandQueues[key] = cq;
-        return &pCommandQueues[key];
+        pCommandQueues[key] = std::move(c);
+        return pCommandQueues[key].get();
       }
     }
 
-    /**
-     * Create a new resource (gl::Buffer).
-     * @param key A key for getting and deleting the resource.
-     * @param value The resource.
-     * @param return A pointer to the created resource. TODO: how to react if
-     * key already existst?
-     */
-    template<typename T>
-    T* create(const std::string& key, T value)
-    {
-      assert(pInitialized);
-      if constexpr (std::is_same<T,cl::Buffer>::value) {
-        pBuffers[key] = value;
-        return &pBuffers[key];
-      }
-    }
+//    /**
+//     * Create a new resource (gl::Program).
+//     * @param key A key for getting and deleting the resource.
+//     * @param value The resource.
+//     * @param return A pointer to the created resource. TODO: how to react if
+//     * key already existst?
+//     */
+//    template<typename T>
+//    T* create(const std::string& key, T value)
+//    {
+//      assert(pInitialized);
+////      if constexpr (std::is_same<T,std::unique_ptr<cl::Buffer>>::value) {
+////        pBuffers[key] = std::move(value);
+////        return pBuffers[key].get();
+////      }
+////      if constexpr (std::is_same<T,std::unique_ptr<cl::CommandQueue>>::value) {
+////
+////        pCommandQueues[key] = std::move(value);
+////        return pCommandQueues[key].get();
+////      }
+//      if constexpr (std::is_same<T,std::unique_ptr<cl::Program>>::value) {
+//        pPrograms[key] = std::move(value);
+//        return pPrograms[key].get();
+//      }
+//    }
 
     /**
      * Delete a resource.
@@ -153,6 +166,7 @@ class GPU_Device
       assert(pInitialized);
       if constexpr (std::is_same<T,cl::CommandQueue>::value) { pCommandQueues.erase(key); }
       if constexpr (std::is_same<T,cl::Buffer>::value) { pBuffers.erase(key); }
+      if constexpr (std::is_same<T,cl::Program>::value) { pPrograms.erase(key); }
     }
 
     /**
@@ -164,7 +178,9 @@ class GPU_Device
     T* get(const std::string& key)
     {
       assert(pInitialized);
-      if constexpr (std::is_same<T,cl::CommandQueue>::value) { auto f =  pCommandQueues.find(key); if (f != pCommandQueues.end()) return &f->second; else return nullptr; }
+      if constexpr (std::is_same<T,cl::CommandQueue>::value) { auto f =  pCommandQueues.find(key); if (f != pCommandQueues.end()) return f->second.get(); else return nullptr; }
+      if constexpr (std::is_same<T,cl::Buffer>::value) { auto f =  pBuffers.find(key); if (f != pBuffers.end()) return f->second.get(); else return nullptr; }
+      if constexpr (std::is_same<T,cl::Program>::value) { auto f =  pPrograms.find(key); if (f != pPrograms.end()) return f->second.get(); else return nullptr; }
     }
 
 	private:
@@ -172,8 +188,9 @@ class GPU_Device
     /** The constructor. */
 		GPU_Device() {};
 
-    std::unordered_map<std::string, cl::Buffer> pBuffers; /**< cl::Buffers. */
-    std::unordered_map<std::string, cl::CommandQueue> pCommandQueues; /**< cl::CommandQueues. */
+    std::unordered_map<std::string, std::unique_ptr<cl::Buffer>> pBuffers; /**< cl::Buffers. */
+    std::unordered_map<std::string, std::unique_ptr<cl::CommandQueue>> pCommandQueues; /**< cl::CommandQueues. */
+    std::unordered_map<std::string, std::unique_ptr<cl::Program>> pPrograms; /**< cl::Programs. */
 
     bool pInitialized = false; /**< Indicates the initialization state. */ 
     cl::Device pDevice; /**< The cl::Device. */ 

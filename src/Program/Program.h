@@ -8,6 +8,7 @@
 
 namespace Program {
 
+
 const static std::string DEFAULT_RENDERING_SHADER = "default_shader";
 
 /**
