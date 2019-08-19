@@ -110,7 +110,7 @@ std::unique_ptr<glm::vec4[]> Marching_Cubes_Data::create(const std::string& prog
   Log::getDebug().log("YEAH2.3.");
   // THE KERNEL CREATION.
   //cl::make_kernel<cl::Buffer&, cl::Buffer&, cl::Buffer&, cl::Buffer&> evalDensity_kernel(*program,"mc",&error);
-  cl::make_kernel<cl::Buffer, cl::Buffer, cl::Buffer> evalDensity_kernel(*program,"mc",&error);
+  cl::make_kernel<cl::Buffer, cl::Buffer, cl::Buffer, cl::Buffer> evalDensity_kernel(*program,"mc",&error);
   if (error != CL_SUCCESS) print_cl_error(error);
 
   Log::getDebug().log("YEAH2.4.");
@@ -122,7 +122,7 @@ std::unique_ptr<glm::vec4[]> Marching_Cubes_Data::create(const std::string& prog
   Log::getDebug().log("YEAH2.5.");
   // THE EXECUTION.
   //evalDensity_kernel(eargs, constants, fConstants, mc_output, counter).wait();
-  evalDensity_kernel(eargs, *constants, *mc_output, *counter).wait();
+  evalDensity_kernel(eargs, *constants, *fConstants, *mc_output, *counter).wait();
 
 //  float eval_result[TOTAL_SIZE];
 //  error = c_Queue->enqueueReadBuffer(*b_PointsPtr,CL_TRUE,0,sizeof(float)*TOTAL_SIZE,eval_result);
@@ -136,23 +136,23 @@ std::unique_ptr<glm::vec4[]> Marching_Cubes_Data::create(const std::string& prog
 
   Log::getDebug().log("YEAH3.");
   int lkm[1] = {6};
-//  error = command->enqueueReadBuffer(counter,CL_TRUE,0,sizeof(int),lkm);
-//  if (error != CL_SUCCESS) { print_cl_error(error); }
+  error = command->enqueueReadBuffer(*counter,CL_TRUE,0,sizeof(int),lkm);
+  if (error != CL_SUCCESS) { print_cl_error(error); }
 
   Log::getDebug().log("lkm[0] == %", lkm[0]);
 
   auto result = std::make_unique<glm::vec4[]>(lkm[0]);
 //  glm::vec4 bee[lkm];
 
-  glm::vec4 joo[lkm[0]];
+  glm::vec4 joo[lkm[0]+1];
   joo[0] = glm::vec4(1.1f,2.2f,3.3f,4.4f);
-  error = command->enqueueReadBuffer(*mc_output,CL_TRUE,0,sizeof(glm::vec4)*3, joo); //result.get());
+  error = command->enqueueReadBuffer(*mc_output,CL_TRUE,0,sizeof(glm::vec4)*lkm[0], joo); //result.get());
 ////  error = command->enqueueReadBuffer(mc_output,CL_TRUE,0,sizeof(glm::vec4)*lkm[0], result.get());
 //  if (error != CL_SUCCESS) { print_cl_error(error); }
 //
 ////
   Log::getDebug().log("YEAH4.");
-  for (int i=0; i< 3/* lkm[0]*/; i++)
+  for (int i=0; i< lkm[0]; i++)
   {
      Log::getDebug().log("i == % : % ", i, joo[i]); // result.get()[i]);
   }
