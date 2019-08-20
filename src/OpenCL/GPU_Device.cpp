@@ -187,7 +187,6 @@ cl::Program* GPU_Device::createProgram(const std::string& key, cl::Program::Sour
 
   std::unique_ptr<cl::Program> program(new cl::Program(pContext, sources, &error));  
   //cl::Program program  = cl::Program({*(d->getDevice())}, sources, &error);  
-  //cl::Program program  = pProgram.build({*(device->getDevice())},"-cl-opt-disable");
 
   if (error != CL_SUCCESS)
   {
@@ -197,6 +196,8 @@ cl::Program* GPU_Device::createProgram(const std::string& key, cl::Program::Sour
   }
 
   error = program.get()->build({pDevice});
+  //error = program.get()->build({pDevice},"-cl-opt-disable");
+  //cl::Program program  = pProgram.build({*(device->getDevice())},"-cl-opt-disable");
   //error = program.build({*(d->getDevice())},"-cl-opt-disable");
 
   if (error != CL_SUCCESS)

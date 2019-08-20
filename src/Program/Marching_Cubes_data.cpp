@@ -8,7 +8,8 @@ std::unique_ptr<glm::vec4[]> Marching_Cubes_Data::create(const std::string& prog
                                                    int dimensionZ,
                                                    float block_size,
                                                    float isovalue,
-                                                   glm::vec4 base_position)
+                                                   glm::vec4 base_position,
+                                                   int* total_count)
 {
 
   bool succeed = true;
@@ -54,7 +55,7 @@ std::unique_ptr<glm::vec4[]> Marching_Cubes_Data::create(const std::string& prog
   Log::getDebug().log("local[%],local[%],local[%]",local[0],local[1],local[2]);
 
   // The maximum size of elements that marching cubes array can hold. 
-  int theSIZE = global[0] * global[1] * global[2];
+  int theSIZE = global[0] * global[1] * global[2] * 4;
 
   Log::getDebug().log("YEAH1.");
   // The initial value for counter. This is the value for stored vec4 values
@@ -126,7 +127,7 @@ std::unique_ptr<glm::vec4[]> Marching_Cubes_Data::create(const std::string& prog
   evalDensity_kernel(eargs, *constants, *fConstants, *density_output);
 
   // Execute marching cubes.
-  mc_kernel(eargs, *constants, *fConstants, *density_output, *mc_output, *counter);
+  mc_kernel(eargs, *constants, *fConstants, *density_output, *mc_output, *counter).wait();
 
 //  float eval_result[theSIZE];
 //  error = command->enqueueReadBuffer(*density_output,CL_TRUE,0,sizeof(float)*theSIZE,eval_result);
@@ -148,18 +149,18 @@ std::unique_ptr<glm::vec4[]> Marching_Cubes_Data::create(const std::string& prog
     auto result = std::make_unique<glm::vec4[]>(lkm[0]);
 //  glm::vec4 bee[lkm];
 
-  glm::vec4 joo[lkm[0]+1];
-  joo[0] = glm::vec4(1.1f,2.2f,3.3f,4.4f);
-  error = command->enqueueReadBuffer(*mc_output,CL_TRUE,0,sizeof(glm::vec4)*lkm[0], joo); //result.get());
+//  glm::vec4 joo[lkm[0]+1];
+//  joo[0] = glm::vec4(1.1f,2.2f,3.3f,4.4f);
+  error = command->enqueueReadBuffer(*mc_output,CL_TRUE,0,sizeof(glm::vec4)*lkm[0], result.get());
 //////  error = command->enqueueReadBuffer(mc_output,CL_TRUE,0,sizeof(glm::vec4)*lkm[0], result.get());
 ////  if (error != CL_SUCCESS) { print_cl_error(error); }
 ////
 //////
 //  Log::getDebug().log("YEAH4.");
-  for (int i=0; i< lkm[0]; i++)
-  {
-     Log::getDebug().log("i == % : % ", i, joo[i]); // result.get()[i]);
-  }
+//  for (int i=0; i< lkm[0]; i++)
+//  {
+//     Log::getDebug().log("i == % : % ", i, result.get()[i]); // result.get()[i]);
+//  }
 //
 ////  auto vb = ResourceManager::getInstance()->create<Vertexbuffer>("hah");
 ////  vb->init(GL_ARRAY_BUFFER,GL_STATIC_DRAW);
@@ -170,7 +171,7 @@ std::unique_ptr<glm::vec4[]> Marching_Cubes_Data::create(const std::string& prog
 ////  delete[] bee;
 
 
-
+  *total_count = lkm[0];
   Log::getDebug().log("Before return");
   return std::move(result);
 }

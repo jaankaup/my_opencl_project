@@ -60,7 +60,7 @@ void MainProgram::start()
     ic->pollEvents();
     camera.handleKeyInput();
     Window::getInstance()->swapBuffers();
-    //renderer.render(camera);
+    renderer.render(camera);
   };
 }
 
@@ -151,13 +151,21 @@ bool MainProgram::createOpenCl()
   d->createProgram("mc_program", sources);
 
   Marching_Cubes_Data mcd;
+  int lkm = 0;
   std::unique_ptr<glm::vec4[]> result  = mcd.create("mc_program",
                                                 2,
                                                 2,
                                                 2,
                                                 0.2f,
-                                                0.5f,
-                                                glm::vec4(0.0f,0.0f,0.0f,0.0f));
+                                                1.5f,
+                                                glm::vec4(0.0f,0.0f,0.0f,0.0f),
+                                                &lkm);
+//  Log::getDebug().log("LLLKKKMMM == %", lkm);
+  auto vb = ResourceManager::getInstance()->create<Vertexbuffer>("hah");
+  vb->init(GL_ARRAY_BUFFER,GL_STATIC_DRAW);
+  std::vector<std::string> types = {"4f","4f"};
+  vb->addData(result.get(),sizeof(glm::vec4)*lkm,types);
+  vb->setCount(lkm);
 
 ////  const static int X_DIMENSION = 3;
 ////  const static int Y_DIMENSION = 3;

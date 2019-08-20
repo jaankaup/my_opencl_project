@@ -23,6 +23,8 @@ class Marching_Cubes_Data {
      * @param block_size Must be a positive float. This specifies the cube side length.
      * @param isovalue The isovalue for mc.
      * @param base_position The left-bottom point of the marching cubes area.
+     * @param total_count Pointer to a int value. The total count of data if
+     * to this location.
      * @param return The result of marching cubes algorighm.
      */
     std::unique_ptr<glm::vec4[]> create(const std::string& program_name,
@@ -31,7 +33,8 @@ class Marching_Cubes_Data {
                                   int dimensionZ,
                                   float block_size,
                                   float isovalue,
-                                  glm::vec4 base_position);
+                                  glm::vec4 base_position,
+                                  int* total_count);
 
   private:
 

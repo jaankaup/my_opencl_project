@@ -1,5 +1,5 @@
 // The tritable.
-__constant char16 triTable[256] = {
+__constant uint16 triTable[256] = {
  {255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255},
  {  0 ,    8 ,    3 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255},
  {  0 ,    1 ,    9 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255},
@@ -300,16 +300,35 @@ int calculate_case(float d0, float d1, float d2, float d3, float d4, float d5, f
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-float4 calculate_normal(int index, int y_offset, int z_offset, __global float* base_values)
+//        v5                        v6
+//         +------------------------+
+//        /|                       /|
+//       / |                      / |
+//      /  |                     /  |
+//     /   |                    /   |  
+//    /    |                   /    |
+//v1 +------------------------+ v2  |
+//   |     |                  |     |
+//   |     |                  |     |
+//   |     |                  |     |
+//   |  v4 +------------------|-----+ v7
+//   |    /                   |    /
+//   |   /                    |   /
+//   |  /                     |  /    
+//   | /                      | /
+//   |/                       |/
+//   +------------------------+
+//  v0                       v3
+
+float4 calculate_normal(int index, int x_offset, int y_offset, __global float* density_values)
 {
-  //float d = 1.0 / voxels_per_block;
   float3 grad;
-  float right = base_values[index-1]; 
-  float left = base_values[index+1]; 
-  float up = base_values[index+y_offset]; 
-  float down = base_values[index-y_offset]; 
-  float z = base_values[index+z_offset]; 
-  float z_minus = base_values[index-z_offset]; 
+  float right = density_values[index-1];
+  float left = density_values[index+1]; 
+  float up = density_values[index+x_offset]; 
+  float down = density_values[index-x_offset]; 
+  float z = density_values[index+x_offset*y_offset]; 
+  float z_minus = density_values[index-x_offset*y_offset]; 
   grad.x = right - left;
   grad.y = up - down;
   grad.z = z - z_minus;
@@ -356,7 +375,7 @@ float4 interpolateN(float4 na, float4 nb, float densityA, float densityB, float 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void createVertex(char edgeValue,
+void createVertex(uint edgeValue,
                   float4 pos0,
                   float4 pos1,
                   float4 pos2,
@@ -449,7 +468,15 @@ void createVertex(char edgeValue,
         output[arrayIndex] = interpolateV(pos3,pos7,isovalue);
         output[arrayIndex+1] = interpolateN(normal3, normal7, pos3.w, pos7.w, isovalue);
     }    
+    else
+    {
+        output[arrayIndex] = (float4){666,555,777,edgeValue};
+        output[arrayIndex+1] = (float4){666,555,777,666.666};
+
+    }
 }
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 float4 translate_point(float4 point, float block_size, float4 base_point)
 {
@@ -473,8 +500,22 @@ __kernel void mc(__constant int* iConstants, __constant float* fConstants, __glo
   const int global_id_x = get_global_id(0);
   const int global_id_y = get_global_id(1);
   const int global_id_z = get_global_id(2);
+ 
+  const int x_offset = iConstants[0];
+  const int y_offset = iConstants[1];
+  const int z_offset = iConstants[2];
+  const float block_size = fConstants[3];
+  const float isovalue = 2.5f; // fConstants[4];
 
-  atomic_inc(counterPtr);
+  //atomic_inc(counterPtr);
+
+  // We won't create cubes that are outside the cube-area. 
+  if (global_id_x == x_offset-1 ||
+      global_id_x == 0 ||
+      global_id_y == y_offset-1 ||
+      global_id_y == 0 ||
+      global_id_z == z_offset-1 ||
+      global_id_z == 0) return;
 
   // The base point of the whole marching cubes area.
   const float4 base_point = (float4){fConstants[0],fConstants[1],fConstants[2], 0.0};
@@ -482,9 +523,9 @@ __kernel void mc(__constant int* iConstants, __constant float* fConstants, __glo
   // This point translated and scaled to the marching cubes area.
   const float4 this_point_global = translate_point((float4){global_id_x,global_id_y,global_id_z,0.0},fConstants[4],base_point);
 
-  const int finalID = globalIndex(global_id_x,global_id_y,global_id_z, iConstants[0],iConstants[1]); 
+  const int finalID = globalIndex(global_id_x,global_id_y,global_id_z, x_offset,y_offset); 
 
-  output[finalID] = (float4) {this_point_global.xyz, 123.0};
+  //output[finalID] = (float4) {this_point_global.xyz, 123.0};
 
 
 //        v5                        v6
@@ -509,109 +550,96 @@ __kernel void mc(__constant int* iConstants, __constant float* fConstants, __glo
 
 
   // The local indices of cube corner points. TODO: finish
-//  const int index1 = global_id+y_offset;
-//  const int index2 = global_id+y_offset+1;
-//  const int index3 = global_id+1;
-//  const int index4 = global_id+z_offset;
-//  const int index5 = global_id+y_offset+z_offset;
-//  const int index6 = global_id+y_offset+z_offset+1;
-//  const int index7 = global_id+z_offset+1;
-///  
-///  const float v0_density = base_values[global_id]; //v0
-///  const float v1_density = base_values[index1]; //v1
-///  const float v2_density = base_values[index2]; //v2
-///  const float v3_density = base_values[index3]; //v3
-///  const float v4_density = base_values[index4]; //v4
-///  const float v5_density = base_values[index5]; //v5
-///  const float v6_density = base_values[index6]; //v6
-///  const float v7_density = base_values[index7]; //v7
-///
-///// Calculate the cube case number.
-///const int cube_case = calculate_case(v0_density,
-///                                     v1_density,
-///                                     v2_density,
-///                                     v3_density,
-///                                     v4_density,
-///                                     v5_density,
-///                                     v6_density,
-///                                     v7_density,
-///                                     isovalue);
-///
-///// The cube doesn't produce any geometry.
-///if (cube_case == 0 || cube_case == 255) return;
-///
-///  //output[global_id] = (float4){global_id,1.3f,cube_case,1.7f};
-///
-/////  float16 cube;
-///float4 p0 = (float4){calculate_position(global_id, y_offset, z_offset, y_dimension, z_dimension, block_size).xyz, v0_density}; //(float4){12.0f,13.0f,14.0f,15.0f}; //(float4){pos};  
-///float4 p1 = (float4){calculate_position(   index1, y_offset, z_offset, y_dimension, z_dimension, block_size).xyz, v1_density}; 
-///float4 p2 = (float4){calculate_position(   index2, y_offset, z_offset, y_dimension, z_dimension, block_size).xyz, v2_density}; 
-///float4 p3 = (float4){calculate_position(   index3, y_offset, z_offset, y_dimension, z_dimension, block_size).xyz, v3_density}; 
-///float4 p4 = (float4){calculate_position(   index4, y_offset, z_offset, y_dimension, z_dimension, block_size).xyz, v4_density}; 
-///float4 p5 = (float4){calculate_position(   index5, y_offset, z_offset, y_dimension, z_dimension, block_size).xyz, v5_density}; 
-///float4 p6 = (float4){calculate_position(   index6, y_offset, z_offset, y_dimension, z_dimension, block_size).xyz, v6_density}; 
-///float4 p7 = (float4){calculate_position(   index7, y_offset, z_offset, y_dimension, z_dimension, block_size).xyz, v7_density}; 
-///
-/////
-///float4 n0 = calculate_normal(global_id, y_offset, z_offset, base_values);  
-///float4 n1 = calculate_normal(index1, y_offset, z_offset, base_values); 
-///float4 n2 = calculate_normal(index2, y_offset, z_offset, base_values); 
-///float4 n3 = calculate_normal(index3, y_offset, z_offset, base_values); 
-///float4 n4 = calculate_normal(index4, y_offset, z_offset, base_values); 
-///float4 n5 = calculate_normal(index5, y_offset, z_offset, base_values); 
-///float4 n6 = calculate_normal(index6, y_offset, z_offset, base_values); 
-///float4 n7 = calculate_normal(index7, y_offset, z_offset, base_values); 
-///
-///  char16 tri_case = triTable[cube_case];
-///
-///  // We are going to add a triable. 3 postion vertices and 3 normal vertices.
-///  int index = atomic_add(counterPtr,6);
-///
-///  createVertex(tri_case.s0, p0,p1,p2,p3,p4,p5,p6,p7,n0,n1,n2,n3,n4,n5,n6,n7, index, isovalue, output);
-///  createVertex(tri_case.s1, p0,p1,p2,p3,p4,p5,p6,p7,n0,n1,n2,n3,n4,n5,n6,n7, index+2, isovalue, output);
-///  createVertex(tri_case.s2, p0,p1,p2,p3,p4,p5,p6,p7,n0,n1,n2,n3,n4,n5,n6,n7, index+4, isovalue, output);
-///
-///  if (tri_case.s3 == 255) return;
-///
-///  index = atomic_add(counterPtr,6);
-///
-///  createVertex(tri_case.s3, p0,p1,p2,p3,p4,p5,p6,p7,n0,n1,n2,n3,n4,n5,n6,n7, index, isovalue, output);
-///  createVertex(tri_case.s4, p0,p1,p2,p3,p4,p5,p6,p7,n0,n1,n2,n3,n4,n5,n6,n7, index+2, isovalue, output);
-///  createVertex(tri_case.s5, p0,p1,p2,p3,p4,p5,p6,p7,n0,n1,n2,n3,n4,n5,n6,n7, index+4, isovalue, output);
-///  //createVertex(tri_case.s3, c, index, isovalue, output);
-///  //createVertex(tri_case.s4, c, index, isovalue, output);
-///  //createVertex(tri_case.s5, c, index, isovalue, output);
-///
-///  if (tri_case.s6 == 255) return;
-///
-///  index = atomic_add(counterPtr,6);
-///
-///  createVertex(tri_case.s6, p0,p1,p2,p3,p4,p5,p6,p7,n0,n1,n2,n3,n4,n5,n6,n7, index, isovalue, output);
-///  createVertex(tri_case.s7, p0,p1,p2,p3,p4,p5,p6,p7,n0,n1,n2,n3,n4,n5,n6,n7, index+2, isovalue, output);
-///  createVertex(tri_case.s8, p0,p1,p2,p3,p4,p5,p6,p7,n0,n1,n2,n3,n4,n5,n6,n7, index+4, isovalue, output);
-///  //createVertex(tri_case.s6, c, index, isovalue, output);
-///  //createVertex(tri_case.s7, c, index, isovalue, output);
-///  //createVertex(tri_case.s8, c, index, isovalue, output);
-///
-///  if (tri_case.s9 == 255) return;
-///
-///  index = atomic_add(counterPtr,6);
-///
-///  createVertex(tri_case.s9, p0,p1,p2,p3,p4,p5,p6,p7,n0,n1,n2,n3,n4,n5,n6,n7, index, isovalue, output);
-///  createVertex(tri_case.sa, p0,p1,p2,p3,p4,p5,p6,p7,n0,n1,n2,n3,n4,n5,n6,n7, index+2, isovalue, output);
-///  createVertex(tri_case.sb, p0,p1,p2,p3,p4,p5,p6,p7,n0,n1,n2,n3,n4,n5,n6,n7, index+4, isovalue, output);
-///  //createVertex(tri_case.s9, c, index, isovalue, output);
-///  //createVertex(tri_case.sa, c, index, isovalue, output);
-///  //createVertex(tri_case.sb, c, index, isovalue, output);
-///
-///  if (tri_case.sc == 255) return;
-///
-///  index = atomic_add(counterPtr,6);
-///  createVertex(tri_case.sc, p0,p1,p2,p3,p4,p5,p6,p7,n0,n1,n2,n3,n4,n5,n6,n7, index, isovalue, output);
-///  createVertex(tri_case.sd, p0,p1,p2,p3,p4,p5,p6,p7,n0,n1,n2,n3,n4,n5,n6,n7, index+2, isovalue, output);
-///  createVertex(tri_case.se, p0,p1,p2,p3,p4,p5,p6,p7,n0,n1,n2,n3,n4,n5,n6,n7, index+4, isovalue, output);
-///  //createVertex(tri_case.sc, c, index, isovalue, output);
-///  //createVertex(tri_case.sd, c, index, isovalue, output);
-///  //createVertex(tri_case.se, c, index, isovalue, output);
-///////  }
+  const int index1 = finalID+x_offset;
+  const int index2 = finalID+x_offset+1;
+  const int index3 = finalID+1;
+  const int index4 = finalID+x_offset*y_offset;
+  const int index5 = finalID+x_offset+x_offset*y_offset;
+  const int index6 = finalID+x_offset+x_offset*y_offset+1;
+  const int index7 = finalID+x_offset*y_offset+1;
+     
+  const float v0_density = density_values[finalID]; //v0
+  const float v1_density = density_values[index1]; //v1
+  const float v2_density = density_values[index2]; //v2
+  const float v3_density = density_values[index3]; //v3
+  const float v4_density = density_values[index4]; //v4
+  const float v5_density = density_values[index5]; //v5
+  const float v6_density = density_values[index6]; //v6
+  const float v7_density = density_values[index7]; //v7
+   
+  // Calculate the cube case number.
+  const int cube_case = calculate_case(v0_density,
+                                       v1_density,
+                                       v2_density,
+                                       v3_density,
+                                       v4_density,
+                                       v5_density,
+                                       v6_density,
+                                       v7_density,
+                                       isovalue);
+
+
+  // The cube doesn't produce any geometry.
+  if (cube_case == 0 || cube_case == 255) return;
+
+//  int bbb = atomic_inc(counterPtr);
+//  output[bbb] = (float4){global_id_x, global_id_y, global_id_z, cube_case};
+
+  float4 p0 = (float4){translate_point((float4){global_id_x,   global_id_y,   global_id_z,   0.0}, block_size, base_point).xyz, v0_density}; 
+  float4 p1 = (float4){translate_point((float4){global_id_x,   global_id_y+1, global_id_z,   0.0}, block_size, base_point).xyz, v1_density}; 
+  float4 p2 = (float4){translate_point((float4){global_id_x+1, global_id_y+1, global_id_z,   0.0}, block_size, base_point).xyz, v2_density}; 
+  float4 p3 = (float4){translate_point((float4){global_id_x+1, global_id_y,   global_id_z,   0.0}, block_size, base_point).xyz, v3_density}; 
+  float4 p4 = (float4){translate_point((float4){global_id_x,   global_id_y,   global_id_z+1, 0.0}, block_size, base_point).xyz, v4_density}; 
+  float4 p5 = (float4){translate_point((float4){global_id_x,   global_id_y+1, global_id_z+1, 0.0}, block_size, base_point).xyz, v5_density}; 
+  float4 p6 = (float4){translate_point((float4){global_id_x+1, global_id_y+1, global_id_z+1, 0.0}, block_size, base_point).xyz, v6_density}; 
+  float4 p7 = (float4){translate_point((float4){global_id_x+1, global_id_y,   global_id_z+1, 0.0}, block_size, base_point).xyz, v7_density}; 
+     
+  float4 n0 = calculate_normal(finalID, x_offset, y_offset, density_values);  
+  float4 n1 = calculate_normal(index1,  x_offset, y_offset, density_values); 
+  float4 n2 = calculate_normal(index2,  x_offset, y_offset, density_values); 
+  float4 n3 = calculate_normal(index3,  x_offset, y_offset, density_values); 
+  float4 n4 = calculate_normal(index4,  x_offset, y_offset, density_values); 
+  float4 n5 = calculate_normal(index5,  x_offset, y_offset, density_values); 
+  float4 n6 = calculate_normal(index6,  x_offset, y_offset, density_values); 
+  float4 n7 = calculate_normal(index7,  x_offset, y_offset, density_values); 
+
+  uint16 tri_case = triTable[cube_case];
+
+  // We are going to add a triable. 3 postion vertices and 3 normal vertices.
+  int index = atomic_add(counterPtr,6);
+
+  createVertex(tri_case.s0, p0,p1,p2,p3,p4,p5,p6,p7,n0,n1,n2,n3,n4,n5,n6,n7, index, isovalue, output);
+  createVertex(tri_case.s1, p0,p1,p2,p3,p4,p5,p6,p7,n0,n1,n2,n3,n4,n5,n6,n7, index+2, isovalue, output);
+  createVertex(tri_case.s2, p0,p1,p2,p3,p4,p5,p6,p7,n0,n1,n2,n3,n4,n5,n6,n7, index+4, isovalue, output);
+
+  if (tri_case.s3 == 255) return;
+
+  int index_2 = atomic_add(counterPtr,6);
+
+  createVertex(tri_case.s3, p0,p1,p2,p3,p4,p5,p6,p7,n0,n1,n2,n3,n4,n5,n6,n7, index_2, isovalue, output);
+  createVertex(tri_case.s4, p0,p1,p2,p3,p4,p5,p6,p7,n0,n1,n2,n3,n4,n5,n6,n7, index_2+2, isovalue, output);
+  createVertex(tri_case.s5, p0,p1,p2,p3,p4,p5,p6,p7,n0,n1,n2,n3,n4,n5,n6,n7, index_2+4, isovalue, output);
+
+  if (tri_case.s6 == 255) return;
+
+  int index_3 = atomic_add(counterPtr,6);
+
+  createVertex(tri_case.s6, p0,p1,p2,p3,p4,p5,p6,p7,n0,n1,n2,n3,n4,n5,n6,n7, index_3, isovalue, output);
+  createVertex(tri_case.s7, p0,p1,p2,p3,p4,p5,p6,p7,n0,n1,n2,n3,n4,n5,n6,n7, index_3+2, isovalue, output);
+  createVertex(tri_case.s8, p0,p1,p2,p3,p4,p5,p6,p7,n0,n1,n2,n3,n4,n5,n6,n7, index_3+4, isovalue, output);
+
+  if (tri_case.s9 == 255) return;
+
+  int index_4 = atomic_add(counterPtr,6);
+
+  createVertex(tri_case.s9, p0,p1,p2,p3,p4,p5,p6,p7,n0,n1,n2,n3,n4,n5,n6,n7, index_4, isovalue, output);
+  createVertex(tri_case.sa, p0,p1,p2,p3,p4,p5,p6,p7,n0,n1,n2,n3,n4,n5,n6,n7, index_4+2, isovalue, output);
+  createVertex(tri_case.sb, p0,p1,p2,p3,p4,p5,p6,p7,n0,n1,n2,n3,n4,n5,n6,n7, index_4+4, isovalue, output);
+
+  if (tri_case.sc == 255) return;
+
+  int index_5 = atomic_add(counterPtr,6);
+  createVertex(tri_case.sc, p0,p1,p2,p3,p4,p5,p6,p7,n0,n1,n2,n3,n4,n5,n6,n7, index_5, isovalue, output);
+  createVertex(tri_case.sd, p0,p1,p2,p3,p4,p5,p6,p7,n0,n1,n2,n3,n4,n5,n6,n7, index_5+2, isovalue, output);
+  createVertex(tri_case.se, p0,p1,p2,p3,p4,p5,p6,p7,n0,n1,n2,n3,n4,n5,n6,n7, index_5+4, isovalue, output);
 }                                                                               
