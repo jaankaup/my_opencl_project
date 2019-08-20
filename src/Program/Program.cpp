@@ -143,29 +143,31 @@ bool MainProgram::createOpenCl()
 
   // Load the sources for marching cubes program.
   cl::Program::Sources sources;
+//  std::string src_noise = Helper::loadSource("shaders/Noise.cl"); 
   std::string src_mc = Helper::loadSource("shaders/mc.cl"); 
   std::string src_eval = Helper::loadSource("shaders/evalDencity.cl"); 
   sources.push_back({src_mc.c_str(),src_mc.length()});
   sources.push_back({src_eval.c_str(),src_eval.length()});
+//  sources.push_back({src_noise.c_str(),src_noise.length()});
 
   d->createProgram("mc_program", sources);
 
   Marching_Cubes_Data mcd;
   int lkm = 0;
   std::unique_ptr<glm::vec4[]> result  = mcd.create("mc_program",
-                                                2,
-                                                2,
-                                                2,
-                                                0.2f,
+                                                64,
+                                                64,
+                                                64,
+                                                0.01f,
                                                 1.5f,
-                                                glm::vec4(0.0f,0.0f,0.0f,0.0f),
+                                                glm::vec4(0.0f,-8.5f,0.0f,0.0f),
                                                 &lkm);
 //  Log::getDebug().log("LLLKKKMMM == %", lkm);
   auto vb = ResourceManager::getInstance()->create<Vertexbuffer>("hah");
   vb->init(GL_ARRAY_BUFFER,GL_STATIC_DRAW);
   std::vector<std::string> types = {"4f","4f"};
   vb->addData(result.get(),sizeof(glm::vec4)*lkm,types);
-  vb->setCount(lkm);
+  vb->setCount(lkm/2);
 
 ////  const static int X_DIMENSION = 3;
 ////  const static int Y_DIMENSION = 3;

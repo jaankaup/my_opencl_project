@@ -505,7 +505,7 @@ __kernel void mc(__constant int* iConstants, __constant float* fConstants, __glo
   const int y_offset = iConstants[1];
   const int z_offset = iConstants[2];
   const float block_size = fConstants[3];
-  const float isovalue = 2.5f; // fConstants[4];
+  const float isovalue = fConstants[4];
 
   //atomic_inc(counterPtr);
 

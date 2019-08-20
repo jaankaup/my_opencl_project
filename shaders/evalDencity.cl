@@ -1,3 +1,5 @@
+#include "shaders/Noise.cl"
+
 // futhark
 // Density-function example.
 float ball(float4 f_pos, float4 ball_center, float radius)
@@ -7,7 +9,9 @@ float ball(float4 f_pos, float4 ball_center, float radius)
 
 float planeY(float4 f_pos)
 {
-  return f_pos.y;
+	float value =  Noise_3d(f_pos.x*0.1, f_pos.y*0.1, f_pos.z*0.1); 
+  return f_pos.y + sin(f_pos.x)*3 - 5*cos(f_pos.z) + 8*value;
+	//return map256( value );
 }
 
 /**
@@ -37,5 +41,5 @@ __kernel void evalDensity(__constant int* iConstants, __constant float* fConstan
   const finalID = global_id_x + iConstants[0] * global_id_y + iConstants[0] * iConstants[1] * global_id_z; 
 
   //output[finalID] = (float4) {this_point_global.xyz, this_point_global.y};
-  output[finalID] = this_point_global.y;
+  output[finalID] = planeY(this_point_global);
 }                                                                               

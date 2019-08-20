@@ -26,7 +26,7 @@ void Renderer::init()
 
 void Renderer::render(const Camera& camera) {
   //Log::getDebug().log("camera % .",camera.getMatrix());
-  glClearColor(0.3f,0.0f,0.0f,1.0f);
+  glClearColor(0.0f,0.0f,0.0f,1.0f);
   glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
   glm::mat4 projection = glm::perspective(glm::radians(45.0f), 16.0f / 9.0f, 0.001f, 1000.0f);
