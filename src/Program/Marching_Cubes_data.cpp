@@ -81,77 +81,81 @@ std::unique_ptr<glm::vec4[]> Marching_Cubes_Data::create(const std::string& prog
   // The buffer for the counter.
   cl::Buffer* counter = d->createBuffer("counter",sizeof(int), CL_MEM_READ_WRITE);
 
-  // The buffer for the output.
-//  cl::Buffer mc_output = createBuffer(sizeof(glm::vec4)*theSIZE, CL_MEM_READ_WRITE);
+  // The buffer for the density values {f0 f1 f2 , .... }
+  cl::Buffer* density_output = d->createBuffer("density_values",sizeof(float)*theSIZE,CL_MEM_READ_WRITE);
+
+  // The buffer for the marching cubes output {vvvvnnnn vvvvnnn ..... }
   cl::Buffer* mc_output = d->createBuffer("mc_output",sizeof(glm::vec4)*theSIZE,CL_MEM_READ_WRITE);
 
   // Create the command queue for marching cubes.
   auto command = d->get<cl::CommandQueue>("command");
   if (command == nullptr) command = d->create<cl::CommandQueue>("command");
-  Log::getDebug().log("command == nullptr :: %", command == nullptr);
 
-  Log::getDebug().log("YEAH2.");
+  // Write 0 to the atomic counter.
   writeToBuffer(*command, *counter, true, sizeof(int), &c);
-//  error = c_Queue->enqueueWriteBuffer(counter,CL_TRUE,0,sizeof(int),&c);
 
-  Log::getDebug().log("YEAH2.1.");
+  // Write the integer contant data.
   writeToBuffer(*command, *constants, true, sizeof(int)*8,&iConstants_data);
 
-  Log::getDebug().log("YEAH2.2.");
+  // Write the float contant data.
   writeToBuffer(*command, *fConstants, true, sizeof(float)*8,&fConstants_data);
-//  error = c_Queue->enqueueWriteBuffer(constants,CL_TRUE,0,sizeof(int)*8,&constants_data);
 
-
-  Log::getDebug().log("Creating kernel and setting arguments.");
+  Log::getDebug().log("Creating kernels and setting arguments.");
 
   cl_int error = CL_SUCCESS;
 
 
-  Log::getDebug().log("YEAH2.3.");
   // THE KERNEL CREATION.
-  //cl::make_kernel<cl::Buffer&, cl::Buffer&, cl::Buffer&, cl::Buffer&> evalDensity_kernel(*program,"mc",&error);
-  cl::make_kernel<cl::Buffer, cl::Buffer, cl::Buffer, cl::Buffer> evalDensity_kernel(*program,"mc",&error);
+
+  // The evalDentity kernel.
+  cl::make_kernel<cl::Buffer, cl::Buffer, cl::Buffer> evalDensity_kernel(*program,"evalDensity",&error);
   if (error != CL_SUCCESS) print_cl_error(error);
 
-  Log::getDebug().log("YEAH2.4.");
-  // THE INDICES.
+  // The marching cubes kernel.
+  cl::make_kernel<cl::Buffer, cl::Buffer, cl::Buffer, cl::Buffer, cl::Buffer> mc_kernel(*program,"mc",&error);
+  if (error != CL_SUCCESS) print_cl_error(error);
+
+  // THE INDICES for both evalDensity and mc.
   cl::EnqueueArgs eargs(*command, global, local);
 
   Log::getDebug().log("theSIZE == %",theSIZE);
 
-  Log::getDebug().log("YEAH2.5.");
   // THE EXECUTION.
-  //evalDensity_kernel(eargs, constants, fConstants, mc_output, counter).wait();
-  evalDensity_kernel(eargs, *constants, *fConstants, *mc_output, *counter).wait();
 
-//  float eval_result[TOTAL_SIZE];
-//  error = c_Queue->enqueueReadBuffer(*b_PointsPtr,CL_TRUE,0,sizeof(float)*TOTAL_SIZE,eval_result);
+  // Execute evalDensity
+  evalDensity_kernel(eargs, *constants, *fConstants, *density_output);
+
+  // Execute marching cubes.
+  mc_kernel(eargs, *constants, *fConstants, *density_output, *mc_output, *counter);
+
+//  float eval_result[theSIZE];
+//  error = command->enqueueReadBuffer(*density_output,CL_TRUE,0,sizeof(float)*theSIZE,eval_result);
 //
-//  for (int i=0; i<TOTAL_SIZE; i++)
+//  for (int i=0; i<theSIZE; i++)
 //  {
 //     Log::getDebug().log("i == % : % ", i, eval_result[i]);
 //  }
 
   // MC
-
-  Log::getDebug().log("YEAH3.");
+//  Log::getDebug().log("YEAH3.");
   int lkm[1] = {6};
   error = command->enqueueReadBuffer(*counter,CL_TRUE,0,sizeof(int),lkm);
   if (error != CL_SUCCESS) { print_cl_error(error); }
-
+//
   Log::getDebug().log("lkm[0] == %", lkm[0]);
-
-  auto result = std::make_unique<glm::vec4[]>(lkm[0]);
+//
+//  auto result = std::make_unique<glm::vec4[]>(1);
+    auto result = std::make_unique<glm::vec4[]>(lkm[0]);
 //  glm::vec4 bee[lkm];
 
   glm::vec4 joo[lkm[0]+1];
   joo[0] = glm::vec4(1.1f,2.2f,3.3f,4.4f);
   error = command->enqueueReadBuffer(*mc_output,CL_TRUE,0,sizeof(glm::vec4)*lkm[0], joo); //result.get());
-////  error = command->enqueueReadBuffer(mc_output,CL_TRUE,0,sizeof(glm::vec4)*lkm[0], result.get());
-//  if (error != CL_SUCCESS) { print_cl_error(error); }
-//
+//////  error = command->enqueueReadBuffer(mc_output,CL_TRUE,0,sizeof(glm::vec4)*lkm[0], result.get());
+////  if (error != CL_SUCCESS) { print_cl_error(error); }
 ////
-  Log::getDebug().log("YEAH4.");
+//////
+//  Log::getDebug().log("YEAH4.");
   for (int i=0; i< lkm[0]; i++)
   {
      Log::getDebug().log("i == % : % ", i, joo[i]); // result.get()[i]);

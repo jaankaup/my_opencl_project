@@ -451,30 +451,28 @@ void createVertex(char edgeValue,
     }    
 }
 
-//inline void addToPrkl(float4 val, int index, __global float4* output)
-//{
-//  output[index] = val; 
-//}
+float4 translate_point(float4 point, float block_size, float4 base_point)
+{
+  return (float4){point.x,point.y,point.z,0.0}*block_size + base_point;
+}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-__kernel void mc(__constant int* iConstants, __constant float* fConstants,  __global float4* output, __global int* counterArg)
-//__kernel void mc(__constant int* iConstants, __global float4* output, __global int* counterArg)
+int globalIndex(int global_x, int global_y, int global_z, int x_offset, int y_offset) 
+{
+  return global_x + x_offset * global_y + x_offset * y_offset * global_z;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+__kernel void mc(__constant int* iConstants, __constant float* fConstants, __global float* density_values, __global float4* output, __global int* counterArg)
 {
   volatile __global int* counterPtr = counterArg;
 
-  // LOCAL DENSITY VALUES.
-  __local float buff[512];
-//
   // The global position.
   const int global_id_x = get_global_id(0);
   const int global_id_y = get_global_id(1);
   const int global_id_z = get_global_id(2);
-
-  // The local position.
-  const int local_id_x = get_local_id(0);
-  const int local_id_y = get_local_id(1);
-  const int local_id_z = get_local_id(2);
 
   atomic_inc(counterPtr);
 
@@ -482,23 +480,11 @@ __kernel void mc(__constant int* iConstants, __constant float* fConstants,  __gl
   const float4 base_point = (float4){fConstants[0],fConstants[1],fConstants[2], 0.0};
 
   // This point translated and scaled to the marching cubes area.
-  const float4 this_point_global = (float4){global_id_x,global_id_y,global_id_z,0.0}*fConstants[4] + base_point;
+  const float4 this_point_global = translate_point((float4){global_id_x,global_id_y,global_id_z,0.0},fConstants[4],base_point);
 
-  // This points index in the local buff array.
-  const int localID = local_id_x + iConstants[3] * local_id_y + iConstants[3] * iConstants[4] * local_id_z; 
-  
-  // Save the y-coordinate value of this point.
-  //buff[localID] = this_point_global.y;
+  const int finalID = globalIndex(global_id_x,global_id_y,global_id_z, iConstants[0],iConstants[1]); 
 
-  // Wait until all group thread has saved their value value to the local buff.
-  //barrier(CLK_LOCAL_MEM_FENCE);
-
-  const finalID = global_id_x + iConstants[0] * global_id_y + iConstants[0] * iConstants[1] * global_id_z; 
-  //output[finalID] = (float4) {this_point_global.xyz, buff[localID]};
-  //output[0] = (float4){111,222,333,444}; // (float4) {this_point_global.xyz, buff[localID]};
-  output[finalID] = (float4){localID,finalID,333,444}; // (float4) {this_point_global.xyz, buff[localID]};
-
-  // const float4 local_position = (float4){local_id_x,local_id_y,local_id_z}; 
+  output[finalID] = (float4) {this_point_global.xyz, 123.0};
 
 
 //        v5                        v6
@@ -522,13 +508,14 @@ __kernel void mc(__constant int* iConstants, __constant float* fConstants,  __gl
 //  v0                       v3
 
 
-///  const int index1 = global_id+y_offset;
-///  const int index2 = global_id+y_offset+1;
-///  const int index3 = global_id+1;
-///  const int index4 = global_id+z_offset;
-///  const int index5 = global_id+y_offset+z_offset;
-///  const int index6 = global_id+y_offset+z_offset+1;
-///  const int index7 = global_id+z_offset+1;
+  // The local indices of cube corner points. TODO: finish
+//  const int index1 = global_id+y_offset;
+//  const int index2 = global_id+y_offset+1;
+//  const int index3 = global_id+1;
+//  const int index4 = global_id+z_offset;
+//  const int index5 = global_id+y_offset+z_offset;
+//  const int index6 = global_id+y_offset+z_offset+1;
+//  const int index7 = global_id+z_offset+1;
 ///  
 ///  const float v0_density = base_values[global_id]; //v0
 ///  const float v1_density = base_values[index1]; //v1

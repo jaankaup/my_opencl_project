@@ -143,11 +143,10 @@ bool MainProgram::createOpenCl()
 
   // Load the sources for marching cubes program.
   cl::Program::Sources sources;
-  std::string kernel_code = Helper::loadSource("shaders/mc.cl"); 
-  sources.push_back({kernel_code.c_str(),kernel_code.length()});
-
-  // Create a program for marching cubes.
-//  cl::Program p = createProgram(sources);
+  std::string src_mc = Helper::loadSource("shaders/mc.cl"); 
+  std::string src_eval = Helper::loadSource("shaders/evalDencity.cl"); 
+  sources.push_back({src_mc.c_str(),src_mc.length()});
+  sources.push_back({src_eval.c_str(),src_eval.length()});
 
   d->createProgram("mc_program", sources);
 
