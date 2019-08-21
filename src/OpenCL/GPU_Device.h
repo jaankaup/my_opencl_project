@@ -10,7 +10,6 @@
 //#include <CL/cl2.hpp>
 #include <CL/cl.hpp>
 #include "../Utils/log.h"
-#include "CL_Program.h"
 #include "CL_Helper.h"
 
 class CL_Program;
@@ -69,11 +68,11 @@ class GPU_Device
      */
     cl::Device* getDevice();
 
-    /**
-     * Get pointer to the cl::CommandQueue. TODO: Remove.
-     * @param return Pointer to the cl::CommandQueue.
-     */
-    cl::CommandQueue* getCommandQueue();
+//    /**
+//     * Get pointer to the cl::CommandQueue. TODO: Remove.
+//     * @param return Pointer to the cl::CommandQueue.
+//     */
+//    cl::CommandQueue* getCommandQueue();
 
     /**
      * Get the maximum group size.
@@ -95,17 +94,18 @@ class GPU_Device
      */
     cl::NDRange getLocalDim();
 
-    /**
-     * Makes the GPU_Devices CommandQueue to run the kernel. TODO: Remove.
-     * @param globalDim The global dimension.
-     * @param localDim The local dimension.
-     * @param return Did the kernel execution succeed.
-     */
-    bool runKernel(CL_Program* kernel, cl::NDRange globalDim, cl::NDRange localDim);
+//    /**
+//     * Makes the GPU_Devices CommandQueue to run the kernel. TODO: Remove.
+//     * @param globalDim The global dimension.
+//     * @param localDim The local dimension.
+//     * @param return Did the kernel execution succeed.
+//     */
+//    bool runKernel(CL_Program* kernel, cl::NDRange globalDim, cl::NDRange localDim);
 
     cl::Buffer* createBuffer(const std::string& name, size_t size, cl_mem_flags); 
 
     cl::Program* createProgram(const std::string& name, cl::Program::Sources& sources); 
+
     /**
      * Create a new resource (gl::CommandQueue).
      * @param key A key for getting and deleting the resource.
@@ -129,32 +129,6 @@ class GPU_Device
         return pCommandQueues[key].get();
       }
     }
-
-//    /**
-//     * Create a new resource (gl::Program).
-//     * @param key A key for getting and deleting the resource.
-//     * @param value The resource.
-//     * @param return A pointer to the created resource. TODO: how to react if
-//     * key already existst?
-//     */
-//    template<typename T>
-//    T* create(const std::string& key, T value)
-//    {
-//      assert(pInitialized);
-////      if constexpr (std::is_same<T,std::unique_ptr<cl::Buffer>>::value) {
-////        pBuffers[key] = std::move(value);
-////        return pBuffers[key].get();
-////      }
-////      if constexpr (std::is_same<T,std::unique_ptr<cl::CommandQueue>>::value) {
-////
-////        pCommandQueues[key] = std::move(value);
-////        return pCommandQueues[key].get();
-////      }
-//      if constexpr (std::is_same<T,std::unique_ptr<cl::Program>>::value) {
-//        pPrograms[key] = std::move(value);
-//        return pPrograms[key].get();
-//      }
-//    }
 
     /**
      * Delete a resource.

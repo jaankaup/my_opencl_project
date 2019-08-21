@@ -9,8 +9,6 @@
 #include "../Graphics/shader.h"
 #include "../Graphics/texture.h"
 #include "../OpenCL/GPU_Device.h"
-#include "../OpenCL/CL_Program.h"
-#include "../OpenCL/CL_Buffer.h"
 #include "../OpenCL/CL_Helper.h"
 #include "Marching_Cubes_data.h"
 

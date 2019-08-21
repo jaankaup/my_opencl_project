@@ -93,11 +93,11 @@ cl::Device* GPU_Device::getDevice()
 
 /////////////////////////////////////////////////////////////////////////////////////
 
-cl::CommandQueue* GPU_Device::getCommandQueue()
-{
-  if (!pInitialized) return nullptr;
-  return &pQueue;
-}
+//cl::CommandQueue* GPU_Device::getCommandQueue()
+//{
+//  if (!pInitialized) return nullptr;
+//  return &pQueue;
+//}
 
 /////////////////////////////////////////////////////////////////////////////////////
 
@@ -146,21 +146,21 @@ cl::NDRange GPU_Device::getLocalDim()
 
 /////////////////////////////////////////////////////////////////////////////////////
 
-bool GPU_Device::runKernel(CL_Program* program, cl::NDRange globalDim, cl::NDRange localDim)
-{
-  assert(program != nullptr);
-  cl_int error;
-
-  pQueue.enqueueNDRangeKernel(*(program->getKernel()), cl::NullRange, globalDim, localDim, 0, 0);
-
-  if (error != CL_SUCCESS)
-  {
-    Log::getError().log("GPU_Device::runKernel(): Failed to run the kernel with error code %.",error);     
-    return false;
-  }
-
-  return true;
-}
+//bool GPU_Device::runKernel(CL_Program* program, cl::NDRange globalDim, cl::NDRange localDim)
+//{
+//  assert(program != nullptr);
+//  cl_int error;
+//
+//  pQueue.enqueueNDRangeKernel(*(program->getKernel()), cl::NullRange, globalDim, localDim, 0, 0);
+//
+//  if (error != CL_SUCCESS)
+//  {
+//    Log::getError().log("GPU_Device::runKernel(): Failed to run the kernel with error code %.",error);     
+//    return false;
+//  }
+//
+//  return true;
+//}
 
 /////////////////////////////////////////////////////////////////////////////////////
 

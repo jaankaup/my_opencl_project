@@ -68,16 +68,12 @@ __kernel void evalDensity(__global float* output, int x_offset, int y_offset, fl
   //  const int local_id_y = get_local_id(1);
   //  const int local_id_z = get_local_id(2);
 
-  // The base point of the whole marching cubes area.
-//  const float4 base_point = (float4){fConstants[0],fConstants[1],fConstants[2], 0.0};
-
   // This point translated and scaled to the marching cubes area.
   const float4 this_point_global = (float4){global_id_x,global_id_y,global_id_z,0.0}*block_size + base_point;
 
   const finalID = global_id_x + x_offset * global_id_y + x_offset * y_offset * global_id_z; 
 
-  //output[finalID] = (float4) {this_point_global.xyz, this_point_global.y};
-  //output[finalID] = ball(this_point_global, (float4){0.0,0.0,0.0,0.0}, 150.0);//  planeY(this_point_global);
+  // Save the density value to the output.
   output[finalID] = outoLaatikko(this_point_global) + maasto(this_point_global) + 15 + ball(this_point_global, (float4){0.0,0.0,0.0,0.0}, 15.0);
   //output[finalID] = maasto(this_point_global);
 }                                                                               
