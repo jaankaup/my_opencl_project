@@ -53,7 +53,7 @@ float outoLaatikko(float4 f_pos)
 /**
  *  Maching cubes pass1. Calculate all f(x,y,z) = v values for each position and save values to @output.
  */
-__kernel void evalDensity(__constant int* iConstants, __constant float* fConstants,  __global float* output)
+__kernel void evalDensity(__global float* output, int x_offset, int y_offset, float block_size, float4 base_point)
 {
 
   const int global_id = get_global_id(0);
@@ -63,18 +63,18 @@ __kernel void evalDensity(__constant int* iConstants, __constant float* fConstan
   const int global_id_y = get_global_id(1);
   const int global_id_z = get_global_id(2);
 
-  // The local position.
-  const int local_id_x = get_local_id(0);
-  const int local_id_y = get_local_id(1);
-  const int local_id_z = get_local_id(2);
+  // The local position. We don't need these values now.
+  //  const int local_id_x = get_local_id(0);
+  //  const int local_id_y = get_local_id(1);
+  //  const int local_id_z = get_local_id(2);
 
   // The base point of the whole marching cubes area.
-  const float4 base_point = (float4){fConstants[0],fConstants[1],fConstants[2], 0.0};
+//  const float4 base_point = (float4){fConstants[0],fConstants[1],fConstants[2], 0.0};
 
   // This point translated and scaled to the marching cubes area.
-  const float4 this_point_global = (float4){global_id_x,global_id_y,global_id_z,0.0}*fConstants[4] + base_point;
+  const float4 this_point_global = (float4){global_id_x,global_id_y,global_id_z,0.0}*block_size + base_point;
 
-  const finalID = global_id_x + iConstants[0] * global_id_y + iConstants[0] * iConstants[1] * global_id_z; 
+  const finalID = global_id_x + x_offset * global_id_y + x_offset * y_offset * global_id_z; 
 
   //output[finalID] = (float4) {this_point_global.xyz, this_point_global.y};
   //output[finalID] = ball(this_point_global, (float4){0.0,0.0,0.0,0.0}, 150.0);//  planeY(this_point_global);

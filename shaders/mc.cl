@@ -607,9 +607,8 @@ __kernel void mc(__global float* density_values,
   // The cube doesn't produce any geometry.
   if (cube_case == 0 || cube_case == 255) return;
 
-//  int bbb = atomic_inc(counterPtr);
-//  output[bbb] = (float4){global_id_x, global_id_y, global_id_z, cube_case};
 
+  // Calculate the world coordinates of each cube corner point and add to w-component the corresponding density value.
   float4 p0 = (float4){translate_point((float4){global_id_x,   global_id_y,   global_id_z,   0.0}, block_size, base_point).xyz, v0_density}; 
   float4 p1 = (float4){translate_point((float4){global_id_x,   global_id_y+1, global_id_z,   0.0}, block_size, base_point).xyz, v1_density}; 
   float4 p2 = (float4){translate_point((float4){global_id_x+1, global_id_y+1, global_id_z,   0.0}, block_size, base_point).xyz, v2_density}; 
@@ -619,6 +618,7 @@ __kernel void mc(__global float* density_values,
   float4 p6 = (float4){translate_point((float4){global_id_x+1, global_id_y+1, global_id_z+1, 0.0}, block_size, base_point).xyz, v6_density}; 
   float4 p7 = (float4){translate_point((float4){global_id_x+1, global_id_y,   global_id_z+1, 0.0}, block_size, base_point).xyz, v7_density}; 
      
+  // Calculate normals for each cube corners.
   float4 n0 = calculate_normal(finalID, x_offset, y_offset, density_values);  
   float4 n1 = calculate_normal(index1,  x_offset, y_offset, density_values); 
   float4 n2 = calculate_normal(index2,  x_offset, y_offset, density_values); 
@@ -628,15 +628,18 @@ __kernel void mc(__global float* density_values,
   float4 n6 = calculate_normal(index6,  x_offset, y_offset, density_values); 
   float4 n7 = calculate_normal(index7,  x_offset, y_offset, density_values); 
 
+  // Get the right edge-array from the triTable.
   uint16 tri_case = triTable[cube_case];
 
-  // We are going to add a triable. 3 postion vertices and 3 normal vertices.
+  // We are going to add a triable. 3 postion vertices and 3 normal vertices (vvvnnn).
+  // Reserve the next 6 indices from the output arrary for this triangle.
   int index = atomic_add(counterPtr,6);
 
   createVertex(tri_case.s0, p0,p1,p2,p3,p4,p5,p6,p7,n0,n1,n2,n3,n4,n5,n6,n7, index, isovalue, output);
   createVertex(tri_case.s1, p0,p1,p2,p3,p4,p5,p6,p7,n0,n1,n2,n3,n4,n5,n6,n7, index+2, isovalue, output);
   createVertex(tri_case.s2, p0,p1,p2,p3,p4,p5,p6,p7,n0,n1,n2,n3,n4,n5,n6,n7, index+4, isovalue, output);
 
+  // If this is true, this case won't produce any more geometry.
   if (tri_case.s3 == 255) return;
 
   int index_2 = atomic_add(counterPtr,6);

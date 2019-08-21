@@ -110,19 +110,17 @@ std::unique_ptr<glm::vec4[]> Marching_Cubes_Data::create(const std::string& prog
 
   // THE KERNEL CREATION.
 
+  cl_float4 b_pos;
+  b_pos.x = base_position.x;
+  b_pos.y = base_position.y;
+  b_pos.z = base_position.z;
+  b_pos.w = base_position.w;
+
   // The evalDentity kernel.
-  cl::make_kernel<cl::Buffer, cl::Buffer, cl::Buffer> evalDensity_kernel(*program,"evalDensity",&error);
+  cl::make_kernel<cl::Buffer, int, int, float, cl_float4> evalDensity_kernel(*program,"evalDensity",&error);
   if (error != CL_SUCCESS) print_cl_error(error);
 
-//__kernel void mc(__global float* density_values,
-//                 __global float4* output,
-//                 __global int* counterArg,
-//                 int x_offset,
-//                 int y_offset,
-//                 int z_offset,
-//                 float block_size,
-//                 float isovalue,
-//                 float4 base_point)
+//__kernel void evalDensity(__global float* output, int x_offset, int y_offset, float block_size, float4 base_position)
 
   // The marching cubes kernel.
   cl::make_kernel<cl::Buffer, cl::Buffer, cl::Buffer, int, int, int, float, float, cl_float4> mc_kernel(*program,"mc",&error);
@@ -136,14 +134,9 @@ std::unique_ptr<glm::vec4[]> Marching_Cubes_Data::create(const std::string& prog
   // THE EXECUTION.
 
   // Execute evalDensity
-  evalDensity_kernel(eargs, *constants, *fConstants, *density_output);
+  evalDensity_kernel(eargs, *density_output, int(global[0]), int(global[1]), block_size, b_pos);
 
   // Execute marching cubes.
-  cl_float4 b_pos;
-  b_pos.x = base_position.x;
-  b_pos.y = base_position.y;
-  b_pos.z = base_position.z;
-  b_pos.w = base_position.w;
   mc_kernel(eargs, *density_output, *mc_output, *counter, int(global[0]), int(global[1]), int(global[2]), block_size, isovalue, b_pos).wait();
 
 //  float eval_result[theSIZE];
