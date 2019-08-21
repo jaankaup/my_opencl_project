@@ -18,6 +18,8 @@ class Texture
       friend class ResourceManager;
     public:
 
+        /// Default constructors.
+        Texture();
         /// Uses the texture object. Texture object must be initialized 
         /// before the use method. @param unit is the texture unit to use.
         void use(const GLuint unit) const;
@@ -49,8 +51,6 @@ class Texture
         /// Current texture unit.
         ///GLuint pUnit;
 
-        /// Default constructors.
-        Texture();
 
         unsigned int pTextureSize = 0;
 

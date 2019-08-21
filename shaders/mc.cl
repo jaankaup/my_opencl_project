@@ -1,4 +1,7 @@
-// The tritable.
+// The tritable. ubsan
+
+#define INTERPOLATE
+
 __constant uint16 triTable[256] = {
  {255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255},
  {  0 ,    8 ,    3 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255},
@@ -339,38 +342,48 @@ float4 calculate_normal(int index, int x_offset, int y_offset, __global float* d
 
 float4 interpolateV(float4 va, float4 vb, float isovalue)
 {
-   if (fabs(isovalue - va.w) < 0.00001f) { return va; }
-   else if (fabs(isovalue - vb.w) < 0.00001f) { return vb; }
-   else if (fabs(va.w-vb.w) < 0.00001f) { return va; }
-   
-   else
-   {
-     float3 p;
-     float mu = (isovalue - va.w) / (vb.w - va.w);
-     p.x = va.x + mu * (vb.x - va.x);
-     p.y = va.y + mu * (vb.y - va.y);
-     p.z = va.z + mu * (vb.z - va.z);
-     return (float4){p,0.0};
-   }
+   #ifdef INTERPOLATE
+     if (fabs(isovalue - va.w) < 0.00001f) { return va; }
+     else if (fabs(isovalue - vb.w) < 0.00001f) { return vb; }
+     else if (fabs(va.w-vb.w) < 0.00001f) { return vb; }
+     
+     else
+     {
+       float4 p;
+       float mu = (isovalue - va.w) / (vb.w - va.w);
+       p.x = va.x + mu * (vb.x - va.x);
+       p.y = va.y + mu * (vb.y - va.y);
+       p.z = va.z + mu * (vb.z - va.z);
+       p.w = 0.0f;
+       return p;
+     }
+   #else
+      return (va+vb)/2.0f;
+   #endif
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 float4 interpolateN(float4 na, float4 nb, float densityA, float densityB, float isovalue)
 {
-   if (fabs(isovalue - densityA) < 0.00001) { return na; }
-   else if (fabs(isovalue - densityB) < 0.00001) { return nb; }
-   else if (fabs(densityA-densityB) < 0.00001) { return na; }
-   
-   else
-   {
-     float3 p;
-     float mu = (isovalue - densityA) / (densityB - densityA);
-     p.x = na.x + mu * (nb.x - na.x);
-     p.y = na.y + mu * (nb.y - na.y);
-     p.z = na.z + mu * (nb.z - na.z);
-     return (float4){normalize(p),0.0f};
-   }
+   #ifdef INTERPOLATE
+     if (fabs(isovalue - densityA) < 0.001) { return na; }
+     else if (fabs(isovalue - densityB) < 0.001) { return nb; }
+     else if (fabs(densityA-densityB) < 0.001) { return na; }
+     
+     else
+     {
+       float4 p;
+       float mu = (isovalue - densityA) / (densityB - densityA);
+       p.x = na.x + mu * (nb.x - na.x);
+       p.y = na.y + mu * (nb.y - na.y);
+       p.z = na.z + mu * (nb.z - na.z);
+       p.w = 0.0f;
+       return normalize(p);
+     }
+   #else
+      return normalize((na+nb)/2.0f);
+   #endif
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -399,14 +412,14 @@ void createVertex(uint edgeValue,
     // EDGE NUMBER 0
     if (edgeValue == 0)
     {
-        output[arrayIndex] = interpolateV(pos0,pos1,isovalue);
-        output[arrayIndex+1] = interpolateN(normal0, normal1, pos0.w, pos1.w, isovalue);
+          output[arrayIndex] = interpolateV(pos0,pos1,isovalue);
+          output[arrayIndex+1] = interpolateN(normal0, normal1, pos0.w, pos1.w, isovalue);
     }
     // EDGE NUMBER 1
     else if (edgeValue == 1)
     {
-        output[arrayIndex] = interpolateV(pos1,pos2,isovalue);
-        output[arrayIndex+1] = interpolateN(normal1, normal2, pos1.w, pos2.w, isovalue);
+          output[arrayIndex] = interpolateV(pos1,pos2,isovalue);
+          output[arrayIndex+1] = interpolateN(normal1, normal2, pos1.w, pos2.w, isovalue);
     }           
     // EDGE NUMBER 2
     else if (edgeValue == 2)
@@ -492,7 +505,16 @@ int globalIndex(int global_x, int global_y, int global_z, int x_offset, int y_of
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-__kernel void mc(__constant int* iConstants, __constant float* fConstants, __global float* density_values, __global float4* output, __global int* counterArg)
+//__kernel void mc(__constant int* iConstants, __constant float* fConstants, __global float* density_values, __global float4* output, __global int* counterArg)
+__kernel void mc(__global float* density_values,
+                 __global float4* output,
+                 __global int* counterArg,
+                 int x_offset,
+                 int y_offset,
+                 int z_offset,
+                 float block_size,
+                 float isovalue,
+                 float4 base_point)
 {
   volatile __global int* counterPtr = counterArg;
 
@@ -501,11 +523,14 @@ __kernel void mc(__constant int* iConstants, __constant float* fConstants, __glo
   const int global_id_y = get_global_id(1);
   const int global_id_z = get_global_id(2);
  
-  const int x_offset = iConstants[0];
-  const int y_offset = iConstants[1];
-  const int z_offset = iConstants[2];
-  const float block_size = fConstants[3];
-  const float isovalue = fConstants[4];
+//  block_size = 0.1;
+//  isovalue = 0.5;
+//  base_point = (float4){-1.2f,-1.0f,-1.2f,0.0f};
+//  const int x_offset = iConstants[0];
+//  const int y_offset = iConstants[1];
+//  const int z_offset = iConstants[2];
+//  const float block_size = fConstants[3];
+//  const float isovalue = fConstants[4];
 
   //atomic_inc(counterPtr);
 
@@ -518,10 +543,10 @@ __kernel void mc(__constant int* iConstants, __constant float* fConstants, __glo
       global_id_z == 0) return;
 
   // The base point of the whole marching cubes area.
-  const float4 base_point = (float4){fConstants[0],fConstants[1],fConstants[2], 0.0};
+  //const float4 base_point = (float4){fConstants[0],fConstants[1],fConstants[2], 0.0};
 
   // This point translated and scaled to the marching cubes area.
-  const float4 this_point_global = translate_point((float4){global_id_x,global_id_y,global_id_z,0.0},fConstants[4],base_point);
+  const float4 this_point_global = translate_point((float4){global_id_x,global_id_y,global_id_z,0.0},block_size,base_point);
 
   const int finalID = globalIndex(global_id_x,global_id_y,global_id_z, x_offset,y_offset); 
 

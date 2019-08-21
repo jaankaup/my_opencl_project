@@ -46,6 +46,7 @@ void Renderer::render(const Camera& camera) {
   shader->setUniform("lights[0].attentuationFactor", 0.00009f);
   shader->setUniform("cameraPosition", eyePosition);
   shader->setUniform("lights[0].position", glm::vec3(8.0f,8.0f,8.0f));/* eyePosition);*/
+  shader->setUniform("sampler2D", 0);
 
   auto vb = rm->get<Vertexbuffer>("hah");
   vb->bind();

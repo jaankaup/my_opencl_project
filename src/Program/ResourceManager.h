@@ -36,7 +36,7 @@ class ResourceManager
     T* create(const std::string& key)
     {
       if constexpr (std::is_same<T,Shader>::value) { Shader s; pShaders[key] = std::move(s); auto sh = &pShaders[key]; sh->init(); return sh; }
-      if constexpr (std::is_same<T,Texture>::value) {pTextures[key] = Texture();}
+      if constexpr (std::is_same<T,Texture>::value) {pTextures[key] = Texture(); return &pTextures[key];}
       if constexpr (std::is_same<T,Vertexbuffer>::value) { Vertexbuffer vb; pVertexBuffers[key] = std::move(vb); return &pVertexBuffers[key];}
     }
 

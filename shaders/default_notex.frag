@@ -15,7 +15,7 @@ struct Light {
        float attentuationFactor;
 };
 
-uniform sampler3D diffuse3DTexture;
+uniform sampler2D diffuseTexture;
 uniform mat4 M;
 uniform vec3 cameraPosition;
 uniform mat3 normalMatrix;
@@ -59,9 +59,13 @@ void main(){
         vec3 specularComponent = specularCoeffient * lights[0].materialSpecularColor * lights[0].color;
 
         // Pinnan vä.
-	//vec3 surfaceColor = texture(diffuseTexture,tFrag_in).rgb;
+        float x = vFrag_in.x;
+        float y = vFrag_in.y;
+        float z = vFrag_in.z;
+
+	//vec3 surfaceColor = texture(diffuseTexture,vec2((x+y)/2.0,(y+z)/2.0)).rgb;
 	//vec3 surfaceColor = texture(diffuse3DTexture,vFrag_in).rgb;
-	vec3 surfaceColor = vec3(0.3,0.1,0.5);
+	vec3 surfaceColor = vec3(0.1,0.4,0.1);
 
 	// Ambient vä.
         vec3 ambient = lights[0].ambientCoeffience * lights[0].color * surfaceColor;

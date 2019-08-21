@@ -7,6 +7,7 @@
 #include "../Graphics/camera.h"
 #include "../Graphics/renderer.h"
 #include "../Graphics/shader.h"
+#include "../Graphics/texture.h"
 #include "../OpenCL/GPU_Device.h"
 #include "../OpenCL/CL_Program.h"
 #include "../OpenCL/CL_Buffer.h"
@@ -50,7 +51,7 @@ void MainProgram::start()
   renderer.init();
 
   // Create the camera for this application.
-  Camera camera = Camera(glm::vec3(0.0f,0.5f,1.0f),glm::vec3(0.0f,0.0f,0.0f),glm::vec3(0.0f,1.0f,0.0f));
+  Camera camera = Camera(glm::vec3(5.0f,10.0f,10.0f),glm::vec3(0.0f,0.0f,0.0f),glm::vec3(0.0f,1.0f,0.0f));
 
   // Register q for stoppin the application.
   auto id1 = ic->register_lambda_function(EventType::KEYBOARD_MOUSE,[&](const InputCache* c) { running = !c->isKeyReleased('q'); });
@@ -98,6 +99,9 @@ void MainProgram::createGlobalProperties()
 bool MainProgram::createTextures()
 {
   Log::getDebug().log("CREATING TEXTURES.\n");
+  ResourceManager* rm = ResourceManager::getInstance();
+  Texture* t = rm->create<Texture>("kallio");
+  t->create("shaders/rock.jpg");
   return true;
 }
 
@@ -155,12 +159,12 @@ bool MainProgram::createOpenCl()
   Marching_Cubes_Data mcd;
   int lkm = 0;
   std::unique_ptr<glm::vec4[]> result  = mcd.create("mc_program",
-                                                64,
-                                                64,
-                                                64,
-                                                0.01f,
-                                                1.5f,
-                                                glm::vec4(0.0f,-8.5f,0.0f,0.0f),
+                                                128,
+                                                32,
+                                                128,
+                                                0.1f,
+                                                0.5f,
+                                                glm::vec4(-1.2f,-1.0f,-1.2f,0.0f),
                                                 &lkm);
 //  Log::getDebug().log("LLLKKKMMM == %", lkm);
   auto vb = ResourceManager::getInstance()->create<Vertexbuffer>("hah");

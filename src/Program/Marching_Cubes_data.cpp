@@ -15,6 +15,7 @@ std::unique_ptr<glm::vec4[]> Marching_Cubes_Data::create(const std::string& prog
   bool succeed = true;
   std::string errorMsg;
 
+//  Log::getDebug().log("Marching_Cubes_Data::create(%,%,%,%,%,%,%)",program_name,dimensionX,dimensionY,dimensionZ,block_size,isovalue,base_position); 
   Log::getDebug().log("Validating marching cubes data.");
 
   if (dimensionX <= 0 || dimensionY <= 0 || dimensionZ <= 0) {
@@ -48,8 +49,8 @@ std::unique_ptr<glm::vec4[]> Marching_Cubes_Data::create(const std::string& prog
 
   // The global range.
   cl::NDRange global(dimensionX*LOCAL_GROUP_SIZE.x,
-                     dimensionX*LOCAL_GROUP_SIZE.y,
-                     dimensionX*LOCAL_GROUP_SIZE.z);
+                     dimensionY*LOCAL_GROUP_SIZE.y,
+                     dimensionZ*LOCAL_GROUP_SIZE.z);
 
   Log::getDebug().log("global[%],global[%],global[%]",global[0],global[1],global[2]);
   Log::getDebug().log("local[%],local[%],local[%]",local[0],local[1],local[2]);
@@ -57,7 +58,6 @@ std::unique_ptr<glm::vec4[]> Marching_Cubes_Data::create(const std::string& prog
   // The maximum size of elements that marching cubes array can hold. 
   int theSIZE = global[0] * global[1] * global[2] * 4;
 
-  Log::getDebug().log("YEAH1.");
   // The initial value for counter. This is the value for stored vec4 values
   // after marching cubes.
   int c[] = {0};
@@ -66,12 +66,14 @@ std::unique_ptr<glm::vec4[]> Marching_Cubes_Data::create(const std::string& prog
   int iConstants_data[] = {int(global[0]),int(global[1]),int(global[2]),LOCAL_GROUP_SIZE.x,LOCAL_GROUP_SIZE.y,LOCAL_GROUP_SIZE.z,0,0};
 
   // The integer constant data.  // (base_pointX,base_pointY,base_pointZ, block_size, isovalue, 0.0f 0.0f,0.0f).
-  float fConstants_data[8] = {base_position.x,
-                              base_position.y,
-                              base_position.z,
-                              block_size,
-                              isovalue,
-                              0.0f,0.0f,0.0f};
+  float fConstants_data[] = {base_position.x,
+                             base_position.y,
+                             base_position.z,
+                             block_size,
+                             isovalue,
+                             0.0f,
+                             0.0f,
+                             0.0f};
 
   // The buffer for constant data (dimensions).
   cl::Buffer* constants = d->createBuffer("constants",sizeof(int)*8, CL_MEM_READ_ONLY);
@@ -112,8 +114,18 @@ std::unique_ptr<glm::vec4[]> Marching_Cubes_Data::create(const std::string& prog
   cl::make_kernel<cl::Buffer, cl::Buffer, cl::Buffer> evalDensity_kernel(*program,"evalDensity",&error);
   if (error != CL_SUCCESS) print_cl_error(error);
 
+//__kernel void mc(__global float* density_values,
+//                 __global float4* output,
+//                 __global int* counterArg,
+//                 int x_offset,
+//                 int y_offset,
+//                 int z_offset,
+//                 float block_size,
+//                 float isovalue,
+//                 float4 base_point)
+
   // The marching cubes kernel.
-  cl::make_kernel<cl::Buffer, cl::Buffer, cl::Buffer, cl::Buffer, cl::Buffer> mc_kernel(*program,"mc",&error);
+  cl::make_kernel<cl::Buffer, cl::Buffer, cl::Buffer, int, int, int, float, float, cl_float4> mc_kernel(*program,"mc",&error);
   if (error != CL_SUCCESS) print_cl_error(error);
 
   // THE INDICES for both evalDensity and mc.
@@ -127,7 +139,12 @@ std::unique_ptr<glm::vec4[]> Marching_Cubes_Data::create(const std::string& prog
   evalDensity_kernel(eargs, *constants, *fConstants, *density_output);
 
   // Execute marching cubes.
-  mc_kernel(eargs, *constants, *fConstants, *density_output, *mc_output, *counter).wait();
+  cl_float4 b_pos;
+  b_pos.x = base_position.x;
+  b_pos.y = base_position.y;
+  b_pos.z = base_position.z;
+  b_pos.w = base_position.w;
+  mc_kernel(eargs, *density_output, *mc_output, *counter, int(global[0]), int(global[1]), int(global[2]), block_size, isovalue, b_pos).wait();
 
 //  float eval_result[theSIZE];
 //  error = command->enqueueReadBuffer(*density_output,CL_TRUE,0,sizeof(float)*theSIZE,eval_result);

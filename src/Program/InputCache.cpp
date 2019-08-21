@@ -145,7 +145,7 @@ void InputCache::preprocess_inputs()
   // Mouse motion.
 
   // If there are more mouse motion events than one, we must fix this function.
-  if (pMouseMotionEvents.size() > 1) Log::getError().log("InputCache::preprocess_inputs: pMouseMotionEvents.size() ==  %", pMouseMotionEvents.size());
+  //if (pMouseMotionEvents.size() > 1) Log::getError().log("InputCache::preprocess_inputs: pMouseMotionEvents.size() ==  %", pMouseMotionEvents.size());
 
   for (const auto& e : pMouseMotionEvents)
   {
