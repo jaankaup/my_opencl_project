@@ -158,6 +158,11 @@ void InputCache::preprocess_inputs()
       pMouse.current_position = glm::ivec2(x,y);
     }
   }
+
+//  for (const auto& e : pWindowEvents)
+//  {
+//     e
+//  }
 }
 
 /////////////////////////////////////////////////////////////////////////////////////
@@ -264,14 +269,14 @@ void InputCache::handle_window_events()
               //        event.window.data2);
               break;
           case SDL_WINDOWEVENT_RESIZED:
-              //Log::getDebug().log("Window % resized to %x%",
-              //        event.window.windowID, event.window.data1,
-              //        event.window.data2);
+//              Log::getDebug().log("Window % resized to %x%",
+//                      event.window.windowID, event.window.data1,
+//                      event.window.data2);
               break;
           case SDL_WINDOWEVENT_SIZE_CHANGED:
-              //Log::getDebug().log("Window % size changed to %x%",
-              //        event.window.windowID, event.window.data1,
-              //        event.window.data2);
+//              Log::getDebug().log("Window % size changed to %x%",
+//                      event.window.windowID, event.window.data1,
+//                      event.window.data2);
 
               pScreenWidth = event.window.data1;
               pScreenHeight = event.window.data2; 

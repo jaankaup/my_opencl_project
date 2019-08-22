@@ -52,8 +52,8 @@ std::unique_ptr<glm::vec4[]> Marching_Cubes_Data::create(const std::string& prog
                      dimensionY*LOCAL_GROUP_SIZE.y,
                      dimensionZ*LOCAL_GROUP_SIZE.z);
 
-  Log::getDebug().log("global[%],global[%],global[%]",global[0],global[1],global[2]);
-  Log::getDebug().log("local[%],local[%],local[%]",local[0],local[1],local[2]);
+//  Log::getDebug().log("global[%],global[%],global[%]",global[0],global[1],global[2]);
+//  Log::getDebug().log("local[%],local[%],local[%]",local[0],local[1],local[2]);
 
   // The maximum size of elements that marching cubes array can hold. 
   int theSIZE = global[0] * global[1] * global[2] * 4;
@@ -62,24 +62,24 @@ std::unique_ptr<glm::vec4[]> Marching_Cubes_Data::create(const std::string& prog
   // after marching cubes.
   int c[] = {0};
 
-  // The integer constant data.  // (localX,localY,localZ,globalX,globalY_glocalZ,0,0)
-  int iConstants_data[] = {int(global[0]),int(global[1]),int(global[2]),LOCAL_GROUP_SIZE.x,LOCAL_GROUP_SIZE.y,LOCAL_GROUP_SIZE.z,0,0};
+//  // The integer constant data.  // (localX,localY,localZ,globalX,globalY_glocalZ,0,0)
+//  int iConstants_data[] = {int(global[0]),int(global[1]),int(global[2]),LOCAL_GROUP_SIZE.x,LOCAL_GROUP_SIZE.y,LOCAL_GROUP_SIZE.z,0,0};
+//
+//  // The integer constant data.  // (base_pointX,base_pointY,base_pointZ, block_size, isovalue, 0.0f 0.0f,0.0f).
+//  float fConstants_data[] = {base_position.x,
+//                             base_position.y,
+//                             base_position.z,
+//                             block_size,
+//                             isovalue,
+//                             0.0f,
+//                             0.0f,
+//                             0.0f};
 
-  // The integer constant data.  // (base_pointX,base_pointY,base_pointZ, block_size, isovalue, 0.0f 0.0f,0.0f).
-  float fConstants_data[] = {base_position.x,
-                             base_position.y,
-                             base_position.z,
-                             block_size,
-                             isovalue,
-                             0.0f,
-                             0.0f,
-                             0.0f};
-
-  // The buffer for constant data (dimensions).
-  cl::Buffer* constants = d->createBuffer("constants",sizeof(int)*8, CL_MEM_READ_ONLY);
-
-  // The buffer for float constant data.
-  cl::Buffer* fConstants = d->createBuffer("fConstants",sizeof(float)*8, CL_MEM_READ_ONLY);
+//  // The buffer for constant data (dimensions).
+//  cl::Buffer* constants = d->createBuffer("constants",sizeof(int)*8, CL_MEM_READ_ONLY);
+//
+//  // The buffer for float constant data.
+//  cl::Buffer* fConstants = d->createBuffer("fConstants",sizeof(float)*8, CL_MEM_READ_ONLY);
 
   // The buffer for the counter.
   cl::Buffer* counter = d->createBuffer("counter",sizeof(int), CL_MEM_READ_WRITE);
@@ -94,14 +94,8 @@ std::unique_ptr<glm::vec4[]> Marching_Cubes_Data::create(const std::string& prog
   auto command = d->get<cl::CommandQueue>("command");
   if (command == nullptr) command = d->create<cl::CommandQueue>("command");
 
-  // Write 0 to the atomic counter.
+  // Write initial value 0 to the atomic counter.
   writeToBuffer(*command, *counter, true, sizeof(int), &c);
-
-  // Write the integer contant data.
-  writeToBuffer(*command, *constants, true, sizeof(int)*8,&iConstants_data);
-
-  // Write the float contant data.
-  writeToBuffer(*command, *fConstants, true, sizeof(float)*8,&fConstants_data);
 
   Log::getDebug().log("Creating kernels and setting arguments.");
 
@@ -119,8 +113,6 @@ std::unique_ptr<glm::vec4[]> Marching_Cubes_Data::create(const std::string& prog
   // The evalDentity kernel.
   cl::make_kernel<cl::Buffer, int, int, float, cl_float4> evalDensity_kernel(*program,"evalDensity",&error);
   if (error != CL_SUCCESS) print_cl_error(error);
-
-//__kernel void evalDensity(__global float* output, int x_offset, int y_offset, float block_size, float4 base_position)
 
   // The marching cubes kernel.
   cl::make_kernel<cl::Buffer, cl::Buffer, cl::Buffer, int, int, int, float, float, cl_float4> mc_kernel(*program,"mc",&error);
@@ -147,41 +139,31 @@ std::unique_ptr<glm::vec4[]> Marching_Cubes_Data::create(const std::string& prog
 //     Log::getDebug().log("i == % : % ", i, eval_result[i]);
 //  }
 
-  // MC
-//  Log::getDebug().log("YEAH3.");
-  int lkm[1] = {6};
+  // The marching cubes output count. The total count of the float4 values
+  // (vvvv nnnn vvvv nnnn vvvv nnn.....) vvvv :: float4, nnnn :: float4
+  int lkm[1] = {0};
   error = command->enqueueReadBuffer(*counter,CL_TRUE,0,sizeof(int),lkm);
   if (error != CL_SUCCESS) { print_cl_error(error); }
-//
+  
   Log::getDebug().log("lkm[0] == %", lkm[0]);
-//
-//  auto result = std::make_unique<glm::vec4[]>(1);
+  
+  // Create the array for maching cubes output.
     auto result = std::make_unique<glm::vec4[]>(lkm[0]);
-//  glm::vec4 bee[lkm];
 
-//  glm::vec4 joo[lkm[0]+1];
-//  joo[0] = glm::vec4(1.1f,2.2f,3.3f,4.4f);
+  // Copy the result of marching cubes.
   error = command->enqueueReadBuffer(*mc_output,CL_TRUE,0,sizeof(glm::vec4)*lkm[0], result.get());
-//////  error = command->enqueueReadBuffer(mc_output,CL_TRUE,0,sizeof(glm::vec4)*lkm[0], result.get());
-////  if (error != CL_SUCCESS) { print_cl_error(error); }
-////
-//////
-//  Log::getDebug().log("YEAH4.");
+  if (error != CL_SUCCESS) { print_cl_error(error); }
+
 //  for (int i=0; i< lkm[0]; i++)
 //  {
 //     Log::getDebug().log("i == % : % ", i, result.get()[i]); // result.get()[i]);
 //  }
 //
-////  auto vb = ResourceManager::getInstance()->create<Vertexbuffer>("hah");
-////  vb->init(GL_ARRAY_BUFFER,GL_STATIC_DRAW);
-////  std::vector<std::string> types = {"4f","4f"};
-////  vb->addData(bee,sizeof(glm::vec4)*(lkm[0]+1),types);
-////  vb->setCount((lkm[0]+1));
-////  Log::getError().log("lkm == %",lkm[0]+1);
-////  delete[] bee;
 
-
+  // Store the output count of marching cubes. This is the count of all float4
+  // created in marching cubes shader. We need so we can store and draw 
+  // the mc output with opengl.
   *total_count = lkm[0];
-  Log::getDebug().log("Before return");
+
   return std::move(result);
 }

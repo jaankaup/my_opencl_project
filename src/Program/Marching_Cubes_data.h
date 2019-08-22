@@ -4,7 +4,7 @@
 #include <memory>
 #include <glm/glm.hpp>
 /**
- * A simple class for holding parameters for marching cubes algoritm.
+ * A simple class for executing the marching cubes algoritm.
  */
 class Marching_Cubes_Data {
 
@@ -16,13 +16,13 @@ class Marching_Cubes_Data {
     /**
      * @param program_name is the name of the opencl-progam which is used to
      * run marching cubes. Is program is not found the process will be
-     * interrupted. 
+     * interrupted. On failure, only an empty unique_ptr is returned. 
      * @param dimenxionX The x-dimension of the marhcing cubes area. Must be a positive integer. 
      * @param dimenxionY The y-dimension of the marhcing cubes area. Must be a positive integer. 
      * @param dimenxionZ The z-dimension of the marhcing cubes area. Must be a positive integer. 
      * @param block_size Must be a positive float. This specifies the cube side length.
      * @param isovalue The isovalue for mc.
-     * @param base_position The left-bottom point of the marching cubes area.
+     * @param base_position The left-bottom point of the whole marching cubes area.
      * @param total_count Pointer to a int value. The total count of data if
      * to this location.
      * @param return The result of marching cubes algorighm.

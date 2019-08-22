@@ -1,8 +1,12 @@
+// This is a file that is not included in in source because it's not my code. TODO: replace it with something else.
 #include "shaders/Noise.cl"
 
 // futhark
 // Density-function example.
 
+/**
+ * Some wierd way to create density value.
+ */
 float createCube(float4 pos, float4 a1, float4 a2, float4 b1, float4 b2)
 {
   if (pos.x < a1.x || pos.y < a1.y || pos.z > a1.z || pos.x > a2.x || pos.y > a2.y || pos.z < a2.z) return 3.0;
@@ -10,29 +14,30 @@ float createCube(float4 pos, float4 a1, float4 a2, float4 b1, float4 b2)
   else return -3.0;
 }
 
+/**
+ * Another wierd density value funcion. This won't create any ball now... 
+ */
 float ball(float4 f_pos, float4 ball_center, float radius)
 {
-  //return fmin(fmax(pow(ball_center.x - f_pos.x,2.0f + pow(ball_center.y - f_pos.y,2.0f) + pow(ball_center.z - f_pos.z,2.0f) - pow(radius, 12.0f)), 2.0f),-12.0f);  
   return fmin(2.0f,fmax(-2.0f,pow(ball_center.x - f_pos.x,2.0f + pow(ball_center.y - f_pos.y,2.0f) + pow(ball_center.z - f_pos.z,2.0f) - pow(radius, 2.0f))));  
 }
 
+/**
+ * Creates a environment which is full of bullet holes.
+ */
 float maasto(float4 f_pos)
 {
 
 	float value =  Noise_3d(f_pos.x*0.1, f_pos.y*0.1, f_pos.z*0.1); 
 	float value2 =  Noise_3d(f_pos.x*0.02, f_pos.y*0.02, f_pos.z*0.02); 
-  //float i_part = 0.0f;
-  //float f_part = modf(80.0*value2, &i_part);
-  //return f_pos.y - i_part + ball(f_pos, (float4){0.0,0.0,0.0,0.0},5.0);
-  ////return f_pos.y - ball(f_pos, (float4){0.0,0.0,0.0,0.0},45.0);
   return f_pos.y - 8*value + 20.0*value2 - 25;
-  //return f_pos.y + sin(f_pos.x)*3 - 5*cos(f_pos.z) + 28*value - 155;
-	//return map256( value );
 }
 
+/**
+ * Creates a "box".
+ */
 float outoLaatikko(float4 f_pos)
 {
-  //return createCube(f_pos,(float4){1.5,0.0,2.5,0.0},(float4){3.5,2.5,1.5,0.0});
   float4 outer = (float4){2.0,2.0,58.0,0.0};
   float4 outer2 = (float4){115.0,115.0,5.0,0.0};
   float4 inner = (float4){1.95,1.95,57.95,0.0};
@@ -63,14 +68,10 @@ __kernel void evalDensity(__global float* output, int x_offset, int y_offset, fl
   const int global_id_y = get_global_id(1);
   const int global_id_z = get_global_id(2);
 
-  // The local position. We don't need these values now.
-  //  const int local_id_x = get_local_id(0);
-  //  const int local_id_y = get_local_id(1);
-  //  const int local_id_z = get_local_id(2);
-
   // This point translated and scaled to the marching cubes area.
   const float4 this_point_global = (float4){global_id_x,global_id_y,global_id_z,0.0}*block_size + base_point;
 
+  // Calculate the corresponding index for output.
   const finalID = global_id_x + x_offset * global_id_y + x_offset * y_offset * global_id_z; 
 
   // Save the density value to the output.

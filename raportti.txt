@@ -1,0 +1,127 @@
+TIEA342 Modernien moniydinprosessoreiden optimointi, 5op, GPU-ohjelmointia, CUDA, OpenCL
+
+Tekijä: Janne Kauppinen
+Päivämäärä: 22.8.2019
+
+1. Ohjelmointityön kuvaus.
+
+Ohjelmointityön tavoitteena oli toteuttaa marching cubes opencl rajapinnan
+avulla. Isäntäkielenä on käytetty c++:aa. Tavoite näyttäisi toteutuneen siinä
+mielessä, että ohjelma näyttäisi tuottavan geometriaa annetuista
+tiheysfunktioista.
+
+Ohjelma on rakennettu niin, että opencl puskureita ja komentojonoja voi luoda,
+tallentaa, hakea ja poistaa kohtuullisen helposti. Sekä opencl että opengl
+resurssit on tallennettu key/value periaatteella, eli resurssit luodaan,
+haetaan ja tuhotaan nyt merkkijonon perusteella. Tämä on toteutettu tällä
+tavalla koska ajatuksena oli alun perin tehdä sovellus jossa voisi kohtalaisen
+helposti käyttää sekä opengl:ää että opencl:ää yhtäaikaisesti. Tämä tavoite
+saavutettiin osittain.  Nyt opencl puskurin data voidaan siirtää opengl
+puskuriin, mutta tämä joudutaan tekemään nyt isäntä-ohjelman kautta kopiomalla.
+Tarkoituksena on jossakin vaiheessa jatkaa projektia niin, että opengl ja
+opencl jakaisivat suoraan muistia ilman ylimääräistä kopiointia. 
+
+Projektin sijainti: https://yousource.it.jyu.fi/opencl_jaankaup
+
+Projektin tämän hetkinen dokumentaatio:
+http://jaankaup1.student.it.jyu.fi/~jaankaup/opencl/html/annotated.html
+
+Esimerkki video ohjelman käytöstä (firefox ei tue tätä formaattia): 
+http://jaankaup1.student.it.jyu.fi/~jaankaup/opencl/7.mp4
+
+2. Oleelliset sovelluksen luokat
+
+2.1 src/Program/Program.cpp:140 createOpenCl()
+
+Tässä funktiossa luodaan (1) GPU_Device instanssi, (2) ladataan ja käännetään
+opencl ohjelma, (3) luodaan MarchingCubesData olio ja suoritetaan sillä
+marching cubes, (4) luodaan opengl vertexbuffer olio ja kopioidaan marching
+cubesilta saatu data sinne. Itse piirtäminen tapahtuu tässä samassa Program
+luokan riveillä 58-63 sijaitsevassa main loopissa.  
+
+2.2 src/OpenCl/GPU_Device
+
+Tämä luokka pitää sisällään cl::Devicen, cl::Contextin ja toimii säiliönä
+cl::Buffer, cl::Program ja gl::CommandQueue olioille. Luokka tarjoaa rajapinnan resurssien 
+tallentamiseen, hakemiseen ja tuhoamiseen. 
+
+2.3 src/OpenCl/CL_Helper
+
+Tämä tiedosto tarjoaa muutaman apufunktion opencl resurssien hallintaan.
+
+2.4. src/Program/MarchingCubesData
+
+Tämä luokka tarjoaa tällä hetkellä vain yhden metodin: create. Metodi suorittaa
+annettujen argumenttien perusteella marching cubes algoritmin ,luo tarvittavat
+resurssit ja palauttaa marching cubes algoritmin lopputuloksen. Luokka jäi
+hieman keskeneräiseksi, mutta tätä on kuitenkin helppo laajentaa siten että se tallentaa
+kunkin marching cubes operaation tarvittavat tiedot ja resurssit siten että
+algoritmi olisi helposti kutsuttavissa uudestaan.  
+
+3. Opencl ohjelman rakenne. 
+
+Opencl ohjelma koostuu 3 tiedostosta: Noise.cl, evalDensity.cl ja mc.cl.
+
+3.1. Noise.cl
+
+Noise.cl ei ole minun kehittämäni, vaan on otettu intelin opetusmateriaalista:
+https://software.intel.com/en-us/articles/parallel-noise-and-random-functions-for-opencl-kernels.
+Sitä käytetään vain luomaan kohinaa samalla kun lasketaan tiheysarvoja.
+
+3.2. evalDensity.cl
+
+EvalDensity.cl laskee kaikki tiheysarvot valmiiksi globaaliin
+puskuriin jota sitten käytetään varsinaisessa marching cubesissa.
+
+3.3. mc.cl
+
+mc.cl suorittaa varsinaisen marching cubes algoritmin. Se hakee tiheysarvot
+globaalista taulukosta, joka laskettiin evanDensity kernel-funtiolla. Yksi säie
+laskee aina yhden kuution geometrian. Kunkin kuution peruspiste on vasen
+alakulma. Säieryhmän koko on 4*4*4 = 64. Koko marching cubes alue on siis jokin
+säieryhmän monikerta. mc kernel tallentaa globaaliin taulukkoon kolmiodataa:
+
+(vertex0, normal0, vertex1, normal1, verter2, normal2, ......). 
+
+Tämä data on sellaisenaan piirrettävissä opengl:llä.
+
+Alunperin oli tarkoituksena laskea tiheysarvot lokaaliin puskuriin, ja
+suorittaa marching cubes paikallisille pisteille. Luovuin tästä ajatuksesta
+toistaiseksi, sillä tällä tavalla olisi joutunut laskemaan tiheysarvoja useaan
+kertaan. Etenkin tiheysarvojen laskemisessa ja thread grouping ulkorajalla
+olisi joutunut laskemaan sellaisia tiheysarvoja jotka sitten lasketaan
+uudestaan seuraavassa säieryhmän kohdalla.
+
+Itse algoritmissä on paljon ehtolausekkeita, mikä ehkä huonontaa hieman
+rinnakkaistuksesta saavutettavia hyötyjä. Toisaalta laskentayksiköitä on aika
+paljon, ja kuution läpikäynti ei riipu toisista kuutioista millään tavalla.
+Toisin sanoen marching cubes on täysin rinnakkaistettavissa. 
+
+4. Havaintoja
+
+4.1. Optimointiongelma
+
+Huomasin sen, että jos thread groupin ryhmän koko valitaan huonosti, siitä ei
+tule mitään varoitusta, mutta optimoija saattaa sabotoida ohjelman. Optimoija
+rikkoi koodini siten, että se poisti agressiivisesti muuttujia, joita ei olisi
+saanut poistaa. Tämä rikkoi ohjelman toiminnan. Poistamalla optimoinnit koodi
+kääntyi ja toimi normaalisti, mutta laittamalla optimoinnin takaisin päälle koodi
+lakkasi toimimasta. Voisikohan kyseessä olla nvidian ajurin bugi?  Thread
+groupin koko oli kuitenkin laitteistosta saadun tiedon mukaan sallittu. 
+
+4.2. Opencl verio.
+
+En päässyt käyttämään opencl 2.x nvidian kortilla. Nvidia tarjoaa vain joitakin
+laajennoksia opencl:ään, mutta ei täyttä tukea. Tällä hetkellä on kehitteillä
+openclNext, johon Nvidia on luvannut panostaa (en löytänyt alkuperäistä
+viitettä tähän). Lisäksi opencl on khronos group on päättänyt liittää opencl:n
+osaksi Vulkan rajapintaan tulevaisuudessa. Aika näyttää tuleeko opencl:ään
+koskaan kunnollista tukea nvidialta. 
+
+4.3. Futhark 
+
+Lupaavan oloinen puhdas funktio-ohjelmointikieli opencl/cuda koodin luomiseksi.
+
+https://futhark-lang.org/
+
+En ehtinyt perehtymään tuohon vielä, mutta jossakin vaiheessa saatan tutustua ko. kieleen.

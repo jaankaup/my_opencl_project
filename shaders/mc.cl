@@ -505,7 +505,18 @@ int globalIndex(int global_x, int global_y, int global_z, int x_offset, int y_of
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-//__kernel void mc(__constant int* iConstants, __constant float* fConstants, __global float* density_values, __global float4* output, __global int* counterArg)
+/** 
+ * Marching cubes part2. The actual marching cubes algoritm. A single thread handles   
+ * one cube and saves the geometry to the output array.
+ * @density_values A array of all density values.
+ * @output The output array of mc. Saves interleaved pos/nor (vvvv nnnn) values.
+ * @x_offset The x-dimension of the whole marching cubes area.
+ * @y_offset The y-dimension of the whole marching cubes area.
+ * @z_offset The z-dimension of the whole marching cubes area.
+ * @block_size The length of the cube edge.
+ * @isovalue The surface value of the densityfield.
+ * @base_point The left-bottom coordinate of the whole marching cubes area.
+ */
 __kernel void mc(__global float* density_values,
                  __global float4* output,
                  __global int* counterArg,
@@ -516,6 +527,7 @@ __kernel void mc(__global float* density_values,
                  float isovalue,
                  float4 base_point)
 {
+  // This is our atomic counter used as a index when storing values to the output.
   volatile __global int* counterPtr = counterArg;
 
   // The global position.
@@ -523,17 +535,6 @@ __kernel void mc(__global float* density_values,
   const int global_id_y = get_global_id(1);
   const int global_id_z = get_global_id(2);
  
-//  block_size = 0.1;
-//  isovalue = 0.5;
-//  base_point = (float4){-1.2f,-1.0f,-1.2f,0.0f};
-//  const int x_offset = iConstants[0];
-//  const int y_offset = iConstants[1];
-//  const int z_offset = iConstants[2];
-//  const float block_size = fConstants[3];
-//  const float isovalue = fConstants[4];
-
-  //atomic_inc(counterPtr);
-
   // We won't create cubes that are outside the cube-area. 
   if (global_id_x == x_offset-1 ||
       global_id_x == 0 ||
@@ -542,15 +543,11 @@ __kernel void mc(__global float* density_values,
       global_id_z == z_offset-1 ||
       global_id_z == 0) return;
 
-  // The base point of the whole marching cubes area.
-  //const float4 base_point = (float4){fConstants[0],fConstants[1],fConstants[2], 0.0};
-
   // This point translated and scaled to the marching cubes area.
   const float4 this_point_global = translate_point((float4){global_id_x,global_id_y,global_id_z,0.0},block_size,base_point);
 
+  // The index of global array for point p0. finalID could be renamed to p0_index. 
   const int finalID = globalIndex(global_id_x,global_id_y,global_id_z, x_offset,y_offset); 
-
-  //output[finalID] = (float4) {this_point_global.xyz, 123.0};
 
 
 //        v5                        v6
@@ -574,7 +571,7 @@ __kernel void mc(__global float* density_values,
 //  v0                       v3
 
 
-  // The local indices of cube corner points. TODO: finish
+  // The global indices of cube corner points. We need this so we can get the corresponding values from the density-array.
   const int index1 = finalID+x_offset;
   const int index2 = finalID+x_offset+1;
   const int index3 = finalID+1;
@@ -583,14 +580,15 @@ __kernel void mc(__global float* density_values,
   const int index6 = finalID+x_offset+x_offset*y_offset+1;
   const int index7 = finalID+x_offset*y_offset+1;
      
-  const float v0_density = density_values[finalID]; //v0
-  const float v1_density = density_values[index1]; //v1
-  const float v2_density = density_values[index2]; //v2
-  const float v3_density = density_values[index3]; //v3
-  const float v4_density = density_values[index4]; //v4
-  const float v5_density = density_values[index5]; //v5
-  const float v6_density = density_values[index6]; //v6
-  const float v7_density = density_values[index7]; //v7
+  // The density values for cube corner points.
+  const float v0_density = density_values[finalID];
+  const float v1_density = density_values[index1];
+  const float v2_density = density_values[index2];
+  const float v3_density = density_values[index3];
+  const float v4_density = density_values[index4];
+  const float v5_density = density_values[index5];
+  const float v6_density = density_values[index6];
+  const float v7_density = density_values[index7];
    
   // Calculate the cube case number.
   const int cube_case = calculate_case(v0_density,
@@ -607,8 +605,7 @@ __kernel void mc(__global float* density_values,
   // The cube doesn't produce any geometry.
   if (cube_case == 0 || cube_case == 255) return;
 
-
-  // Calculate the world coordinates of each cube corner point and add to w-component the corresponding density value.
+  // Calculate the "world" coordinates of each cube corner point and add to w-component the corresponding density value.
   float4 p0 = (float4){translate_point((float4){global_id_x,   global_id_y,   global_id_z,   0.0}, block_size, base_point).xyz, v0_density}; 
   float4 p1 = (float4){translate_point((float4){global_id_x,   global_id_y+1, global_id_z,   0.0}, block_size, base_point).xyz, v1_density}; 
   float4 p2 = (float4){translate_point((float4){global_id_x+1, global_id_y+1, global_id_z,   0.0}, block_size, base_point).xyz, v2_density}; 
@@ -628,10 +625,10 @@ __kernel void mc(__global float* density_values,
   float4 n6 = calculate_normal(index6,  x_offset, y_offset, density_values); 
   float4 n7 = calculate_normal(index7,  x_offset, y_offset, density_values); 
 
-  // Get the right edge-array from the triTable.
+  // Get the edge-array from the triTable.
   uint16 tri_case = triTable[cube_case];
 
-  // We are going to add a triable. 3 postion vertices and 3 normal vertices (vvvnnn).
+  // We are going to save a triable to the output array. 3 postion vertices and 3 normal vertices (vvvnnn).
   // Reserve the next 6 indices from the output arrary for this triangle.
   int index = atomic_add(counterPtr,6);
 
@@ -670,4 +667,6 @@ __kernel void mc(__global float* density_values,
   createVertex(tri_case.sc, p0,p1,p2,p3,p4,p5,p6,p7,n0,n1,n2,n3,n4,n5,n6,n7, index_5, isovalue, output);
   createVertex(tri_case.sd, p0,p1,p2,p3,p4,p5,p6,p7,n0,n1,n2,n3,n4,n5,n6,n7, index_5+2, isovalue, output);
   createVertex(tri_case.se, p0,p1,p2,p3,p4,p5,p6,p7,n0,n1,n2,n3,n4,n5,n6,n7, index_5+4, isovalue, output);
+
+  // We are done with this cube.
 }                                                                               

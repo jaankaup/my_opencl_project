@@ -89,9 +89,9 @@ bool Window::init(int width, int height)
     glViewport(0, 0, width, height);
     ic->register_lambda_function(EventType::RESIZE_EVENT,
                                  [&](const InputCache* c) {  
-                                 int w = ic->get_screenWidth(); 
-                                 int h = ic->get_screenHeight();
-                                 Log::getDebug().log("Resizing (%,%).",w,h);
+                                 int w = c->get_screenWidth(); 
+                                 int h = c->get_screenHeight();
+                                 SDL_SetWindowSize(pWindow, w, h);
                                  glViewport(0, 0, w, h);
                                  });
     return true;
