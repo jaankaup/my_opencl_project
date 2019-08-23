@@ -124,3 +124,46 @@ koskaan kunnollista tukea nvidialta.
 Lupaavan oloinen puhdas funktio-ohjelmointikieli opencl/cuda koodin luomiseksi.
 
 https://futhark-lang.org/
+
+5. Arvio ajankäytöstä
+
+5.1. Ohjelman suunnittelu/toteutus
+
+Ohjelmaa suunnittelin sitä mukaan kun ymmärrykseni aihepiiristä kasvoi. Tein
+aluksi GPU_Devicen lisäksi CommandQueue, Buffer ja Program luokat. Kun ohjelman
+kehitys eteni, niin jäljelle jäi ainoastaan GPU_Device luokka. Ohjelma oli
+jatkuvan refaktoroinnin kohteena. 
+
+Karkeasti arvoioituna: suunnittelu noin 20h ja ohjelman toteutus noin 70h. Näitä
+on hieman vaikea erottaa toisestaan, mutta karkea arvio on kuitenkin tämä.
+
+5.2. Ohjelman debuggaus ja testaus
+
+Debuggaukseen ja testaukseen meni arviolta noin 30h. Etenkin debuggausta
+tarvittiin erittäin paljon. Itse varsinaisia testejä en kirjoittanut lainkaan,
+sillä aihepiiri oli itselleni melko tuntematon enkä oikein osannut kirjoittaa
+sen takia mitään järkeviä testejä. 
+
+5.3. Dokumentointi ja loppuraportti.
+
+Dodumentoinnin laadinta ja loppuraportti arviolta 15h, josta loppuraportin
+kirjoittamiseen kului 5h. Opettelin samalla doxygenin käyttöä joten sain
+dokumentaation kätevästi web-palvelimellekin. 
+
+5.4. Projektiin muu kulunut aika
+
+Lisäksi kului aikaa ohjelman event-syseemin tekemiseen tarkkailijamallia
+käyttäen ja erilaisten yleisten tietorakenteiden suunnittelu/toteutus
+(GlobalProperty, GlobalPropertyManager, InputCache, RegisteredFunction ja
+ResourceManager luokkien toteuttaminen) noin 40h. En tosin laskenut noita ajan
+käyttöön sillä ne ovat hyvin pitkälti yleisiä elämää helpottavien rakenteiden
+suunnittelua, eikä liittynyt suoraan opencl toteutukseen. Aloitin projektin
+näiden rakenteiden kehittämisellä. Toki ne olivat hyödyllisiä opencl projektin
+kannalta, mutta eivät elintärkeitä. Luulen, että niiden merkitys kasvaa
+enemmänkin jos jatkan projektin luontia eteenpäin (Opengl ja opencl
+synkronisointi). 
+
+Eli varsinaista aikaa opencl:n näkökulmasta katsottuna kului arvolta noin 135h
+eli pysyin kerrankin kutakuinkin aikataulussa. En laskenut tuohon tuota 40h
+tuntia yleisten rakenteiden suunnitteluun ja ohjelmointiin kuluvaa aikaa, sillä
+ne eivät suoraan liittyneet aihepiiriin.
