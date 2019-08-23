@@ -2,12 +2,34 @@
 
 #define INTERPOLATE
 
+/**
+ * The lookup table for edges that creates triangles.
+ *                    e5               
+ *          +------------------------+
+ *         /|                       /|
+ *        / |                      / |
+ *   e9  /  |                  e10/  |
+ *      /   |e4                  /   |e6
+ *     /    |       e1          /    |
+ *    +------------------------+     |
+ *    |     |                  |     |
+ *    |     |                  |     |
+ *    |     |        e7        |     |
+ *    |     +------------------|-----+   
+ * e0 |    /                   |e2  /
+ *    |   /                    |   /
+ *    |  / e8                  |  /  e11
+ *    | /                      | /
+ *    |/                       |/
+ *    +------------------------+
+ *               e3
+ */
 __constant uint16 triTable[256] = {
- {255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255},
- {  0 ,    8 ,    3 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255},
- {  0 ,    1 ,    9 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255},
- {  1 ,    8 ,    3 ,    9 ,    8 ,    1 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255},
- {  1 ,    2 ,   10 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255},
+ {255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255}, // Case 0
+ {  0 ,    8 ,    3 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255}, // Case 1 (0,8,3) triangles verices lies on these edges.
+ {  0 ,    1 ,    9 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255}, // Case 2
+ {  1 ,    8 ,    3 ,    9 ,    8 ,    1 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255}, // Case 3 (1,8,3) and (9,8,1). Two triangles.
+ {  1 ,    2 ,   10 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255}, // ...
  {  0 ,    8 ,    3 ,    1 ,    2 ,   10 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255},
  {  9 ,    2 ,   10 ,    0 ,    2 ,    9 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255},
  {  2 ,    8 ,    3 ,    2 ,   10 ,    8 ,   10 ,    9 ,    8 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255},
@@ -260,31 +282,12 @@ __constant uint16 triTable[256] = {
  {  0 ,    3 ,    8 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255},
  {255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255}};
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-//typedef struct _cube
-//{
-//  float4 pos0;
-//  float4 pos1;
-//  float4 pos2;
-//  float4 pos3;
-//  float4 pos4;
-//  float4 pos5;
-//  float4 pos6;
-//  float4 pos7;
-//
-//  float4 normal0;
-//  float4 normal1;
-//  float4 normal2;
-//  float4 normal3;
-//  float4 normal4;
-//  float4 normal5;
-//  float4 normal6;
-//  float4 normal7;
-//} cube;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/**
+ * Calculate the cube case based on the cube corner density values and the isovalue.
+ */
 int calculate_case(float d0, float d1, float d2, float d3, float d4, float d5, float d6, float d7 , float isovalue)
 {
   int result = 0;
@@ -322,7 +325,23 @@ int calculate_case(float d0, float d1, float d2, float d3, float d4, float d5, f
 //   |/                       |/
 //   +------------------------+
 //  v0                       v3
+//
+//
+//           P(up)  P(z)
+//              ^  /
+//              | /
+// P(left) <-- P(X) ---> P(right)
+//            / |
+//           /  |
+//  P(z_minus)  P(down)
 
+/**
+ * Calculate normal for a cube corner. A density fuction of neighbours densityvalues.
+ * @index The index for getting the density value for the cube corner.
+ * @x_offset The global width of the marching cubes area.
+ * @y_offset The global heihgt of the marching cubes area.
+ * @density_values Pointer to the density_values array.
+ */
 float4 calculate_normal(int index, int x_offset, int y_offset, __global float* density_values)
 {
   float3 grad;
@@ -335,11 +354,28 @@ float4 calculate_normal(int index, int x_offset, int y_offset, __global float* d
   grad.x = right - left;
   grad.y = up - down;
   grad.z = z - z_minus;
-  return (float4){normalize(grad),0.0f}; 
+  return (float4){normalize(grad),0.0f}; // Normalize the result. 
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+
+//
+//     A cube edge.             
+//               
+//     va-----------------------vb
+//              ^
+//              |
+//       Estimation for the isovalue 
+
+
+/**
+ * Interpolate the vertice to the estimated isovalue position. We wan't to estimate the surface point.
+ * The interpolation can be disabled by commented out the #define INTERPOLATE at the start of this file.
+ * @param va A point of a an edge. va.xyz is the positision of the point. va.w holds the denstity value. 
+ * @param vb A point of a an edge. vb.xyz is the positision of the point. vb.w holds the denstity value. 
+ * @param isovalue The suface value. 
+ */ 
 float4 interpolateV(float4 va, float4 vb, float isovalue)
 {
    #ifdef INTERPOLATE
@@ -364,6 +400,13 @@ float4 interpolateV(float4 va, float4 vb, float isovalue)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/**
+ * Interpolate the normal.
+ * The interpolation can be disabled by commented out the #define INTERPOLATE at the start of this file.
+ * @param na The normal for a edge point. 
+ * @param nb The normal for the other edge point. 
+ * @param isovalue The suface value. 
+ */ 
 float4 interpolateN(float4 na, float4 nb, float densityA, float densityB, float isovalue)
 {
    #ifdef INTERPOLATE
@@ -388,6 +431,11 @@ float4 interpolateN(float4 na, float4 nb, float densityA, float densityB, float 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/**
+ * Creates one vertex and one normal and saves the result to the output buffer.
+ * This function could have been split to 11 smaller functions. Or we could have created a 
+ * cube struct and pass it by pointer to this funktion.
+ */ 
 void createVertex(uint edgeValue,
                   float4 pos0,
                   float4 pos1,
@@ -491,6 +539,13 @@ void createVertex(uint edgeValue,
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/**
+ * Translate and scale a single vertice to the "world" coorinates.
+ * @param point The vertice.
+ * @param block_size The length of the cube edge..
+ * @param base_poinst The left-bottom position of the marching cubes area.
+ * @param return The translated/scaled vertice.
+ */
 float4 translate_point(float4 point, float block_size, float4 base_point)
 {
   return (float4){point.x,point.y,point.z,0.0}*block_size + base_point;
@@ -498,6 +553,15 @@ float4 translate_point(float4 point, float block_size, float4 base_point)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/**
+ * Map cube coordinate to the index of the density value array.
+ * @param global_x The count of total poinst in x direction.
+ * @param global_y The count of total poinst in y direction.
+ * @param global_z The count of total poinst in z direction.
+ * @param x_offset The offset for density array for y coordinates.
+ * @param y_offset The offset for density array for z coordinates.
+ * @param return The index of density value array.
+ */
 int globalIndex(int global_x, int global_y, int global_z, int x_offset, int y_offset) 
 {
   return global_x + x_offset * global_y + x_offset * y_offset * global_z;
@@ -546,7 +610,7 @@ __kernel void mc(__global float* density_values,
   // This point translated and scaled to the marching cubes area.
   const float4 this_point_global = translate_point((float4){global_id_x,global_id_y,global_id_z,0.0},block_size,base_point);
 
-  // The index of global array for point p0. finalID could be renamed to p0_index. 
+  // The index of global array for point v0. finalID could be renamed to p0_index. 
   const int finalID = globalIndex(global_id_x,global_id_y,global_id_z, x_offset,y_offset); 
 
 
@@ -572,13 +636,13 @@ __kernel void mc(__global float* density_values,
 
 
   // The global indices of cube corner points. We need this so we can get the corresponding values from the density-array.
-  const int index1 = finalID+x_offset;
-  const int index2 = finalID+x_offset+1;
-  const int index3 = finalID+1;
-  const int index4 = finalID+x_offset*y_offset;
-  const int index5 = finalID+x_offset+x_offset*y_offset;
-  const int index6 = finalID+x_offset+x_offset*y_offset+1;
-  const int index7 = finalID+x_offset*y_offset+1;
+  const int index1 = finalID+x_offset;   // v1
+  const int index2 = finalID+x_offset+1; // v2
+  const int index3 = finalID+1;          // v3
+  const int index4 = finalID+x_offset*y_offset; // v4
+  const int index5 = finalID+x_offset+x_offset*y_offset; // v5
+  const int index6 = finalID+x_offset+x_offset*y_offset+1; // v6
+  const int index7 = finalID+x_offset*y_offset+1; // v7
      
   // The density values for cube corner points.
   const float v0_density = density_values[finalID];
@@ -602,7 +666,7 @@ __kernel void mc(__global float* density_values,
                                        isovalue);
 
 
-  // The cube doesn't produce any geometry.
+  // The cube doesn't produce any geometry. There is not surface intersections in this cube.
   if (cube_case == 0 || cube_case == 255) return;
 
   // Calculate the "world" coordinates of each cube corner point and add to w-component the corresponding density value.
@@ -628,7 +692,7 @@ __kernel void mc(__global float* density_values,
   // Get the edge-array from the triTable.
   uint16 tri_case = triTable[cube_case];
 
-  // We are going to save a triable to the output array. 3 postion vertices and 3 normal vertices (vvvnnn).
+  // We are going to save a triangle to the output array. 3 postion vertices and 3 normal vertices (vvv nnn).
   // Reserve the next 6 indices from the output arrary for this triangle.
   int index = atomic_add(counterPtr,6);
 
@@ -639,6 +703,7 @@ __kernel void mc(__global float* density_values,
   // If this is true, this case won't produce any more geometry.
   if (tri_case.s3 == 255) return;
 
+  // Create another triangle and save it to the output.
   int index_2 = atomic_add(counterPtr,6);
 
   createVertex(tri_case.s3, p0,p1,p2,p3,p4,p5,p6,p7,n0,n1,n2,n3,n4,n5,n6,n7, index_2, isovalue, output);

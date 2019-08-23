@@ -66,16 +66,17 @@ Opencl ohjelma koostuu 3 tiedostosta: Noise.cl, evalDensity.cl ja mc.cl.
 
 Noise.cl ei ole minun kehittämäni, vaan on otettu intelin opetusmateriaalista:
 https://software.intel.com/en-us/articles/parallel-noise-and-random-functions-for-opencl-kernels.
-Sitä käytetään vain luomaan kohinaa samalla kun lasketaan tiheysarvoja.
+Sitä käytetään vain luomaan kohinaa samalla kun lasketaan tiheysarvoja. Tiedosto ei ole 
+tallennettu yousourceen sillä en ollut varma siitä antaako intelin lisenssi siihen lupaa.
 
 3.2. evalDensity.cl
 
-EvalDensity.cl laskee kaikki tiheysarvot valmiiksi globaaliin
+shaders/EvalDensity.cl laskee kaikki tiheysarvot valmiiksi globaaliin
 puskuriin jota sitten käytetään varsinaisessa marching cubesissa.
 
 3.3. mc.cl
 
-mc.cl suorittaa varsinaisen marching cubes algoritmin. Se hakee tiheysarvot
+shaders/mc.cl suorittaa varsinaisen marching cubes algoritmin. Se hakee tiheysarvot
 globaalista taulukosta, joka laskettiin evanDensity kernel-funtiolla. Yksi säie
 laskee aina yhden kuution geometrian. Kunkin kuution peruspiste on vasen
 alakulma. Säieryhmän koko on 4*4*4 = 64. Koko marching cubes alue on siis jokin
@@ -123,5 +124,3 @@ koskaan kunnollista tukea nvidialta.
 Lupaavan oloinen puhdas funktio-ohjelmointikieli opencl/cuda koodin luomiseksi.
 
 https://futhark-lang.org/
-
-En ehtinyt perehtymään tuohon vielä, mutta jossakin vaiheessa saatan tutustua ko. kieleen.
