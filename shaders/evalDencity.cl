@@ -9,9 +9,9 @@
  */
 float createCube(float4 pos, float4 a1, float4 a2, float4 b1, float4 b2)
 {
-  if (pos.x < a1.x || pos.y < a1.y || pos.z > a1.z || pos.x > a2.x || pos.y > a2.y || pos.z < a2.z) return 3.0;
-  if (pos.x > b1.x && pos.y > b1.y && pos.z < b1.z && pos.x < b2.x && pos.y < b2.y && pos.z > a2.z) return 0.0;
-  else return -3.0;
+  if (pos.x < a1.x || pos.y < a1.y || pos.z > a1.z || pos.x > a2.x || pos.y > a2.y || pos.z < a2.z) return 1.0;
+  // if (pos.x > b1.x && pos.y > b1.y && pos.z < b1.z && pos.x < b2.x && pos.y < b2.y && pos.z > a2.z) return 0.0;
+  else return -1.0;
 }
 
 /**
@@ -30,7 +30,7 @@ float maasto(float4 f_pos)
 
 	float value =  Noise_3d(f_pos.x*0.1, f_pos.y*0.1, f_pos.z*0.1); 
 	float value2 =  Noise_3d(f_pos.x*0.02, f_pos.y*0.02, f_pos.z*0.02); 
-  float result =  f_pos.y - 14*value + 4.0*value2 - 15;
+  float result =  f_pos.y - 8*value + 15.0*value2 - 15;
   //if (result > 0.0001)  return 1.0;
   //if (result < 0.0001)  return -1.0;
   //return 0.0;

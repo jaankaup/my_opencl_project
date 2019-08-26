@@ -1,6 +1,7 @@
 #include "renderer.h"
 #include "window.h"
 #include "../Program/Program.h"
+#include "../Program/GlobalPropertyManager.h"
 #include "../Program/ResourceManager.h"
 Renderer::Renderer()
 {
@@ -46,6 +47,9 @@ void Renderer::render(const Camera& camera) {
 //  ruohikko->use(1);
   shader->setUniform("diffuseTexture2", 1);
 
+  auto glob_manager = Program::GlobalPropertyManager::getInstance();
+  auto property = glob_manager->get<Program::BoolProperty>("flat");
+  shader->setUniform("normal_mode", property->get() ? 1.0f : 0.0f);
 //  Texture* kallio = rm->get<Texture>("kallio");
 //  kallio->use(1);
 //  shader->setUniform("diffuseTexure2", 1);

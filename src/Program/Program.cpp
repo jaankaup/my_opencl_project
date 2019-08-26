@@ -53,6 +53,13 @@ void MainProgram::start()
 
   // Register q for stoppin the application.
   auto id1 = ic->register_lambda_function(EventType::KEYBOARD_MOUSE,[&](const InputCache* c) { running = !c->isKeyReleased('q'); });
+  auto id2 = ic->register_lambda_function(EventType::KEYBOARD_MOUSE,[&](const InputCache* c) {
+         if (!c->isKeyReleased('f')) return; 
+         auto glob_manager = GlobalPropertyManager::getInstance();
+         auto property = glob_manager->get<BoolProperty>("flat");
+         property->set(!property->get());
+         Log::getDebug().log("flatttt");
+      });
 
   // Main loop.
   while (running) {
@@ -90,6 +97,12 @@ void MainProgram::createGlobalProperties()
   initial_screen_height.set(720);
   initial_screen_height.registerTest(height_filter);
   glob_manager->add("initial_screen_height",initial_screen_height);
+
+  //  .
+  BoolProperty flat;
+  initial_screen_height.set(true);
+//  initial_screen_height.registerTest(height_filter);
+  glob_manager->add("flat",flat);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////
@@ -190,7 +203,7 @@ bool MainProgram::createOpenCl()
 
 void MainProgram::registerHandlers()
 {
-
+  
 }
 
 /////////////////////////////////////////////////////////////////////////////////////
