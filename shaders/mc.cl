@@ -1,6 +1,6 @@
 // The tritable. ubsan
 
-#define INTERPOLATE
+//#define INTERPOLATE
 
 /**
  * The lookup table for edges that creates triangles.
@@ -426,6 +426,7 @@ float4 interpolateN(float4 na, float4 nb, float densityA, float densityB, float 
      }
    #else
       return normalize((na+nb)/2.0f);
+      //return normalize(na);
    #endif
 }
 
@@ -539,8 +540,35 @@ void createVertex(uint edgeValue,
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void createFlatShading(int index, __global float4* output, bool clockWise_verts)
+{
+   float4 a = (float4){output[index].xyz, 0.0}; 
+   float4 b = (float4){output[index+3].xyz, 0.0}; 
+   float4 c = (float4){output[index+6].xyz, 0.0};
+ //  float4 n_density_a = output[index+1]; 
+ //  float4 n_density_b = output[index+4]; 
+ //  float4 n_density_c = output[index+7]; 
+ //  float4 average = normalize((n_density_a+n_density_b+n_density_c)/3.0f);
+   float4 u = b - c;
+   float4 v = a - c;
+   if (clockWise_verts) {
+     float4 normal = normalize(cross(u,v));
+     output[index+2] = normal;
+     output[index+5] = normal;
+     output[index+8] = normal;
+   }
+   else {
+     float4 normal = normalize(cross(v,u)); 
+     output[index+2] = normal;
+     output[index+5] = normal;
+     output[index+8] = normal;
+  }
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 /**
- * Translate and scale a single vertice to the "world" coorinates.
+ * Translate and scale a single vertice to the "world" coordinates.
  * @param point The vertice.
  * @param block_size The length of the cube edge..
  * @param base_poinst The left-bottom position of the marching cubes area.
@@ -694,44 +722,54 @@ __kernel void mc(__global float* density_values,
 
   // We are going to save a triangle to the output array. 3 postion vertices and 3 normal vertices (vvv nnn).
   // Reserve the next 6 indices from the output arrary for this triangle.
-  int index = atomic_add(counterPtr,6);
+  int index = atomic_add(counterPtr,9);
 
   createVertex(tri_case.s0, p0,p1,p2,p3,p4,p5,p6,p7,n0,n1,n2,n3,n4,n5,n6,n7, index, isovalue, output);
-  createVertex(tri_case.s1, p0,p1,p2,p3,p4,p5,p6,p7,n0,n1,n2,n3,n4,n5,n6,n7, index+2, isovalue, output);
-  createVertex(tri_case.s2, p0,p1,p2,p3,p4,p5,p6,p7,n0,n1,n2,n3,n4,n5,n6,n7, index+4, isovalue, output);
+  createVertex(tri_case.s1, p0,p1,p2,p3,p4,p5,p6,p7,n0,n1,n2,n3,n4,n5,n6,n7, index+3, isovalue, output);
+  createVertex(tri_case.s2, p0,p1,p2,p3,p4,p5,p6,p7,n0,n1,n2,n3,n4,n5,n6,n7, index+6, isovalue, output);
+  createFlatShading(index, output, false);
+  //createFlatShading(index, output, true);
 
   // If this is true, this case won't produce any more geometry.
   if (tri_case.s3 == 255) return;
 
   // Create another triangle and save it to the output.
-  int index_2 = atomic_add(counterPtr,6);
+  int index_2 = atomic_add(counterPtr,9);
 
   createVertex(tri_case.s3, p0,p1,p2,p3,p4,p5,p6,p7,n0,n1,n2,n3,n4,n5,n6,n7, index_2, isovalue, output);
-  createVertex(tri_case.s4, p0,p1,p2,p3,p4,p5,p6,p7,n0,n1,n2,n3,n4,n5,n6,n7, index_2+2, isovalue, output);
-  createVertex(tri_case.s5, p0,p1,p2,p3,p4,p5,p6,p7,n0,n1,n2,n3,n4,n5,n6,n7, index_2+4, isovalue, output);
+  createVertex(tri_case.s4, p0,p1,p2,p3,p4,p5,p6,p7,n0,n1,n2,n3,n4,n5,n6,n7, index_2+3, isovalue, output);
+  createVertex(tri_case.s5, p0,p1,p2,p3,p4,p5,p6,p7,n0,n1,n2,n3,n4,n5,n6,n7, index_2+6, isovalue, output);
+  createFlatShading(index_2, output, false);
+  //createFlatShading(index, output, true);
 
   if (tri_case.s6 == 255) return;
 
-  int index_3 = atomic_add(counterPtr,6);
+  int index_3 = atomic_add(counterPtr,9);
 
   createVertex(tri_case.s6, p0,p1,p2,p3,p4,p5,p6,p7,n0,n1,n2,n3,n4,n5,n6,n7, index_3, isovalue, output);
-  createVertex(tri_case.s7, p0,p1,p2,p3,p4,p5,p6,p7,n0,n1,n2,n3,n4,n5,n6,n7, index_3+2, isovalue, output);
-  createVertex(tri_case.s8, p0,p1,p2,p3,p4,p5,p6,p7,n0,n1,n2,n3,n4,n5,n6,n7, index_3+4, isovalue, output);
+  createVertex(tri_case.s7, p0,p1,p2,p3,p4,p5,p6,p7,n0,n1,n2,n3,n4,n5,n6,n7, index_3+3, isovalue, output);
+  createVertex(tri_case.s8, p0,p1,p2,p3,p4,p5,p6,p7,n0,n1,n2,n3,n4,n5,n6,n7, index_3+6, isovalue, output);
+  createFlatShading(index_3, output, false);
+  //createFlatShading(index, output, true);
 
   if (tri_case.s9 == 255) return;
 
-  int index_4 = atomic_add(counterPtr,6);
+  int index_4 = atomic_add(counterPtr,9);
 
   createVertex(tri_case.s9, p0,p1,p2,p3,p4,p5,p6,p7,n0,n1,n2,n3,n4,n5,n6,n7, index_4, isovalue, output);
-  createVertex(tri_case.sa, p0,p1,p2,p3,p4,p5,p6,p7,n0,n1,n2,n3,n4,n5,n6,n7, index_4+2, isovalue, output);
-  createVertex(tri_case.sb, p0,p1,p2,p3,p4,p5,p6,p7,n0,n1,n2,n3,n4,n5,n6,n7, index_4+4, isovalue, output);
+  createVertex(tri_case.sa, p0,p1,p2,p3,p4,p5,p6,p7,n0,n1,n2,n3,n4,n5,n6,n7, index_4+3, isovalue, output);
+  createVertex(tri_case.sb, p0,p1,p2,p3,p4,p5,p6,p7,n0,n1,n2,n3,n4,n5,n6,n7, index_4+6, isovalue, output);
+  createFlatShading(index_4, output, false);
+  //createFlatShading(index, output, true);
 
   if (tri_case.sc == 255) return;
 
-  int index_5 = atomic_add(counterPtr,6);
+  int index_5 = atomic_add(counterPtr,9);
   createVertex(tri_case.sc, p0,p1,p2,p3,p4,p5,p6,p7,n0,n1,n2,n3,n4,n5,n6,n7, index_5, isovalue, output);
-  createVertex(tri_case.sd, p0,p1,p2,p3,p4,p5,p6,p7,n0,n1,n2,n3,n4,n5,n6,n7, index_5+2, isovalue, output);
-  createVertex(tri_case.se, p0,p1,p2,p3,p4,p5,p6,p7,n0,n1,n2,n3,n4,n5,n6,n7, index_5+4, isovalue, output);
+  createVertex(tri_case.sd, p0,p1,p2,p3,p4,p5,p6,p7,n0,n1,n2,n3,n4,n5,n6,n7, index_5+3, isovalue, output);
+  createVertex(tri_case.se, p0,p1,p2,p3,p4,p5,p6,p7,n0,n1,n2,n3,n4,n5,n6,n7, index_5+6, isovalue, output);
+  createFlatShading(index_5, output, false);
+  //createFlatShading(index, output, true);
 
   // We are done with this cube.
 }                                                                               

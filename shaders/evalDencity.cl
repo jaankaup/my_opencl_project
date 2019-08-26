@@ -30,7 +30,23 @@ float maasto(float4 f_pos)
 
 	float value =  Noise_3d(f_pos.x*0.1, f_pos.y*0.1, f_pos.z*0.1); 
 	float value2 =  Noise_3d(f_pos.x*0.02, f_pos.y*0.02, f_pos.z*0.02); 
-  return f_pos.y - 8*value + 20.0*value2 - 25;
+  float result =  f_pos.y - 8*value + 10.0*value2 - 15;
+  //if (result > 0.0001)  return 1.0;
+  //if (result < 0.0001)  return -1.0;
+  //return 0.0;
+  return result;
+}
+
+float anti_maasto(float4 f_pos, float4 a1, float4 a2)
+{
+  //if (f_pos.x < a1.x || f_pos.y < a1.y || f_pos.z > a1.z || f_pos.x > a2.x || f_pos.y > a2.y || f_pos.z < a2.z) return maasto(f_pos);
+  //if (f_pos.x < a1.x || f_pos.z > a1.z || f_pos.x > a2.x || f_pos.z < a2.z) return maasto(f_pos);
+  //if (f_pos.x > a1.x && f_pos.y > a1.y && f_pos.z < a1.z && f_pos.x < a2.x && f_pos.y < a2.y && f_pos.z > a2.z) return -1.0f; // f_pos.y;
+  //else f_pos.y;; // return maasto(f_pos);//f_pos.y;
+  float m = maasto(f_pos);
+  float value;
+  modf(m, &value);
+  return value;
 }
 
 /**
@@ -75,6 +91,6 @@ __kernel void evalDensity(__global float* output, int x_offset, int y_offset, fl
   const finalID = global_id_x + x_offset * global_id_y + x_offset * y_offset * global_id_z; 
 
   // Save the density value to the output.
-  output[finalID] = outoLaatikko(this_point_global) + maasto(this_point_global) + 15 + ball(this_point_global, (float4){0.0,0.0,0.0,0.0}, 15.0);
-  //output[finalID] = maasto(this_point_global);
+  //output[finalID] = outoLaatikko(this_point_global) + maasto(this_point_global) + 15 + ball(this_point_global, (float4){0.0,0.0,0.0,0.0}, 15.0);
+  output[finalID] = anti_maasto(this_point_global, (float4){0.0,0.0,0.0,0.0}, (float4){10.0,10.0,-10.0,0.0});
 }                                                                               

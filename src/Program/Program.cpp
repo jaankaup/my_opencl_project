@@ -157,20 +157,20 @@ bool MainProgram::createOpenCl()
   Marching_Cubes_Data mcd;
   int lkm = 0;
   std::unique_ptr<glm::vec4[]> result  = mcd.create("mc_program",
-                                                128,
-                                                32,
-                                                128,
-                                                0.1f,
+                                                16,
+                                                16,
+                                                16,
+                                                1.0f,
                                                 0.0f,
-                                                glm::vec4(-1.2f,-1.0f,-1.2f,0.0f),
+                                                glm::vec4(-15.2f,-15.0f,-15.2f,0.0f),
                                                 &lkm);
 
   // Create the vertex buffer for opengl and populate the marching cubes data.
   auto vb = ResourceManager::getInstance()->create<Vertexbuffer>("hah");
   vb->init(GL_ARRAY_BUFFER,GL_STATIC_DRAW);
-  std::vector<std::string> types = {"4f","4f"};
+  std::vector<std::string> types = {"4f","4f","4f"};
   vb->addData(result.get(),sizeof(glm::vec4)*lkm,types);
-  vb->setCount(lkm/2);
+  vb->setCount(lkm/3);
 
   return true;
 }
