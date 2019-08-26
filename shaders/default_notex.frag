@@ -64,8 +64,13 @@ void main(){
         float z = vFrag_in.z;
 
 	//vec3 surfaceColor = texture(diffuseTexture,vec2((x+y)/2.0,(y+z)/2.0)).rgb;
+  vec2 coord1 = vFrag_in.xy;
+  vec2 coord2 = vFrag_in.xz;
+  vec2 coord3 = vFrag_in.zz;
+	vec3 surfaceColor = texture(diffuseTexture,(coord1 + coord2 + coord3)/3.0).rgb;
+	//vec3 surfaceColor = texture(diffuseTexture,vec2((x+y)/2.0,(y+z)/2.0)).rgb;
 	//vec3 surfaceColor = texture(diffuse3DTexture,vFrag_in).rgb;
-	vec3 surfaceColor = vec3(0.1,0.4,0.1);
+	//vec3 surfaceColor = vec3(0.1,0.4,0.1);
 
 	// Ambient vä.
         vec3 ambient = lights[0].ambientCoeffience * lights[0].color * surfaceColor;

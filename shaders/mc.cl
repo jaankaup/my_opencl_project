@@ -432,6 +432,39 @@ float4 interpolateN(float4 na, float4 nb, float densityA, float densityB, float 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+// Compute barycentric coordinates (u, v, w) for
+// point p with respect to triangle (a, b, c)
+float4 barycentric(float4 p, float4 a, float4 b, float4 c)
+{
+    float4 v0 = b - a, v1 = c - a, v2 = p - a;
+    float d00 = dot(v0, v0);
+    float d01 = dot(v0, v1);
+    float d11 = dot(v1, v1);
+    float d20 = dot(v2, v0);
+    float d21 = dot(v2, v1);
+    float denom = d00 * d11 - d01 * d01;
+    float v = (d11 * d20 - d01 * d21) / denom;
+    float w = (d00 * d21 - d01 * d20) / denom;
+    float u = 1.0f - v - w;
+    return (float4){u,v,w,0.0};
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+float4 create_texturecoordinate(float4 point)
+{
+
+   float4 a = (float4){0.0,0.0,0.0,0.0};
+   float4 b = (float4){50.0,50.0,0.0,0.0};
+   float4 c = (float4){0.0,50.0,0.0,0.0};
+   
+   float4 uv = barycentric(point,a,b,c);
+   return uv;
+
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 /**
  * Creates one vertex and one normal and saves the result to the output buffer.
  * This function could have been split to 11 smaller functions. Or we could have created a 
@@ -463,6 +496,7 @@ void createVertex(uint edgeValue,
     {
           output[arrayIndex] = interpolateV(pos0,pos1,isovalue);
           output[arrayIndex+1] = interpolateN(normal0, normal1, pos0.w, pos1.w, isovalue);
+          //float 4 tex = create_texturecoordinate(output[arrayIndex]);
     }
     // EDGE NUMBER 1
     else if (edgeValue == 1)

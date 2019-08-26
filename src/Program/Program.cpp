@@ -99,7 +99,7 @@ bool MainProgram::createTextures()
   Log::getDebug().log("CREATING TEXTURES.\n");
   ResourceManager* rm = ResourceManager::getInstance();
   Texture* t = rm->create<Texture>("kallio");
-  t->create("shaders/rock.jpg");
+  t->create("textures/rock.jpg");
   return true;
 }
 
