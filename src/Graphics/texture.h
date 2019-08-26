@@ -25,10 +25,18 @@ class Texture
         void use(const GLuint unit) const;
 
         TextureType getTextureType() const;
-        void create(const std::string& fileloc);
+        void create(const std::string& fileloc, int level);
+        void create(const std::vector<std::string>& textures);
         void create3D(const TextureData& td);
         void create_tritable_texture();
         std::tuple<std::unique_ptr<float[]>,unsigned int> getTextureData();
+
+        /// Initializes the texture object.
+        void init(const TextureType t);
+
+        /// Binds the texture. Texture object must be initialized 
+        /// before the use method.
+        void bind() const;
 
         Texture(const Texture&) = delete;
         Texture& operator=(const Texture&) = delete;
@@ -54,12 +62,7 @@ class Texture
 
         unsigned int pTextureSize = 0;
 
-        /// Initializes the texture object.
-        void init(const TextureType t);
 
-        /// Binds the texture. Texture object must be initialized 
-        /// before the use method.
-        void bind() const;
 
         /// Releases the texture object.
         //void dispose() const;

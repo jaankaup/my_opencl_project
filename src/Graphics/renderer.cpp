@@ -36,6 +36,20 @@ void Renderer::render(const Camera& camera) {
   auto rm = ResourceManager::getInstance();
   auto shader = rm->get<Shader>(Program::DEFAULT_RENDERING_SHADER);
   shader->bind();
+
+  Texture* ruohikko = rm->get<Texture>("ruohikko");
+  ruohikko->use(0);
+  shader->setUniform("diffuseTexture", 0);
+
+  Texture* kallio = rm->get<Texture>("kallio");
+  kallio->use(1);
+//  ruohikko->use(1);
+  shader->setUniform("diffuseTexture2", 1);
+
+//  Texture* kallio = rm->get<Texture>("kallio");
+//  kallio->use(1);
+//  shader->setUniform("diffuseTexure2", 1);
+
   shader->setUniform("MVP", MVP);
   shader->setUniform("normalMatrix", glm::inverseTranspose(glm::mat3(1.0)));
   shader->setUniform("M", glm::mat4(1.0f));
@@ -46,7 +60,8 @@ void Renderer::render(const Camera& camera) {
   shader->setUniform("lights[0].attentuationFactor", 0.00009f);
   shader->setUniform("cameraPosition", eyePosition);
   shader->setUniform("lights[0].position", glm::vec3(8.0f,18.0f,8.0f));/* eyePosition);*/
-  shader->setUniform("sampler2D", 0);
+  shader->setUniform("diffuseTexure2", 1);
+  //shader->setUniform("sampler2D", 1);
 
   auto vb = rm->get<Vertexbuffer>("hah");
   vb->bind();

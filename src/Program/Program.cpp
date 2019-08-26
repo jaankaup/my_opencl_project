@@ -98,8 +98,19 @@ bool MainProgram::createTextures()
 {
   Log::getDebug().log("CREATING TEXTURES.\n");
   ResourceManager* rm = ResourceManager::getInstance();
-  Texture* t = rm->create<Texture>("kallio");
-  t->create("textures/rock.jpg");
+//  std::vector<std::string> texture_names;
+//  texture_names.push_back("textures/grass.png");
+//  texture_names.push_back("textures/mountain.jpg");
+  Texture* t = rm->create<Texture>("ruohikko");
+  t->init(TextureType::d2);
+  t->create("textures/grass.png",0);
+  //t->use(0);
+//  t->create(texture_names);
+
+  Texture* t2 = rm->create<Texture>("kallio");
+  t2->init(TextureType::d2);
+  t2->create("textures/mountain.jpg",1);
+  //t2->use(1);
   return true;
 }
 
@@ -157,9 +168,9 @@ bool MainProgram::createOpenCl()
   Marching_Cubes_Data mcd;
   int lkm = 0;
   std::unique_ptr<glm::vec4[]> result  = mcd.create("mc_program",
+                                                32,
                                                 16,
-                                                16,
-                                                16,
+                                                32,
                                                 1.0f,
                                                 0.0f,
                                                 glm::vec4(-15.2f,-15.0f,-15.2f,0.0f),

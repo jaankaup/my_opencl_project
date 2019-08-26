@@ -30,7 +30,7 @@ float maasto(float4 f_pos)
 
 	float value =  Noise_3d(f_pos.x*0.1, f_pos.y*0.1, f_pos.z*0.1); 
 	float value2 =  Noise_3d(f_pos.x*0.02, f_pos.y*0.02, f_pos.z*0.02); 
-  float result =  f_pos.y - 8*value + 10.0*value2 - 15;
+  float result =  f_pos.y - 14*value + 4.0*value2 - 15;
   //if (result > 0.0001)  return 1.0;
   //if (result < 0.0001)  return -1.0;
   //return 0.0;

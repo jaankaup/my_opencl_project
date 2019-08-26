@@ -1,6 +1,6 @@
 // The tritable. ubsan
 
-//#define INTERPOLATE
+#define INTERPOLATE
 
 /**
  * The lookup table for edges that creates triangles.

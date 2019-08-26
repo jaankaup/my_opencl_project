@@ -38,9 +38,16 @@ std::tuple<std::unique_ptr<float[]>,unsigned int> Texture::getTextureData()
   return std::make_tuple(std::move(result), pTextureSize);
 }
 
+void Texture::create(const std::vector<std::string>& textures)
+{
+  for (int i=0 ; i<textures.size() ; i++)
+  {
+    create(textures[i],i);
+  }
+}
 
 /* For more information: https://open.gl/textures */
-void Texture::create(const std::string& fileloc)
+void Texture::create(const std::string& fileloc, int level)
 {
     Log::getDebug().log("Texture::create(%): Creating texture from file.",fileloc);
     int width, height;
@@ -52,7 +59,7 @@ void Texture::create(const std::string& fileloc)
         Log::getError().log("%",SOIL_last_result());
     }
 
-    use(0);
+    use(level);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
