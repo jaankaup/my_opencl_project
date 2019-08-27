@@ -645,6 +645,7 @@ int globalIndex(int global_x, int global_y, int global_z, int x_offset, int y_of
  */
 __kernel void mc(__global float* density_values,
                  __global float4* output,
+                 __global float4* case_output,
                  __global int* counterArg,
                  int x_offset,
                  int y_offset,
@@ -667,7 +668,11 @@ __kernel void mc(__global float* density_values,
       global_id_y == y_offset-1 ||
       global_id_y == 0 ||
       global_id_z == z_offset-1 ||
-      global_id_z == 0) return;
+      global_id_z == 0) {
+        // Add -1 to the cube case.
+        case_output[globalIndex(global_id_x, global_id_y, global_id_z, x_offset, y_offset)] = (float4){global_id_x,global_id_y,global_id_z, -1.0}; 
+        return;
+      }
 
   // This point translated and scaled to the marching cubes area.
   const float4 this_point_global = translate_point((float4){global_id_x,global_id_y,global_id_z,0.0},block_size,base_point);
@@ -727,6 +732,8 @@ __kernel void mc(__global float* density_values,
                                        v7_density,
                                        isovalue);
 
+  // Add the cube case to the case_output buffer.
+  case_output[globalIndex(global_id_x, global_id_y, global_id_z, x_offset, y_offset)] = (float4){global_id_x,global_id_y,global_id_z, cube_case}; 
 
   // The cube doesn't produce any geometry. There is not surface intersections in this cube.
   if (cube_case == 0 || cube_case == 255) return;

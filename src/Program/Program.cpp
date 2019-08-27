@@ -14,6 +14,16 @@
 
 namespace Program {
 
+std::unique_ptr<float[]> density_values;
+std::unique_ptr<glm::vec4[]> case_values;
+int cube_now = 0;
+float cube_float = 0.0f;
+float bSIZE = 1.0f;
+int x_dim = 32;
+int y_dim = 16;
+int z_dim = 32;
+glm::vec4 bPOS = glm::vec4(-15.2f,-15.0f,-15.2f,0.0f);
+
 /////////////////////////////////////////////////////////////////////////////////////
 
 bool MainProgram::initialize()
@@ -58,7 +68,6 @@ void MainProgram::start()
          auto glob_manager = GlobalPropertyManager::getInstance();
          auto property = glob_manager->get<BoolProperty>("flat");
          property->set(!property->get());
-         Log::getDebug().log("flatttt");
       });
 
   // Main loop.
@@ -137,9 +146,13 @@ bool MainProgram::createShaders()
   auto res_manager = ResourceManager::getInstance();
 
   /* The default rendering shader. vvvnnn. */
-  Shader* default_shader = res_manager->create<Shader>(DEFAULT_RENDERING_SHADER);
-  std::vector<std::string> src = {"shaders/default_notex.vert", "shaders/default_notex.frag"};
-  default_shader->build(src);
+//  Shader* default_shader = res_manager->create<Shader>(DEFAULT_RENDERING_SHADER);
+//  std::vector<std::string> src = {"shaders/default_notex.vert", "shaders/default_notex.frag"};
+//  default_shader->build(src);
+
+  Shader* cube_wire = res_manager->create<Shader>("cube_wire");
+  std::vector<std::string> src_wire = {"shaders/cube_wire.vert", "shaders/cube_wire.geom", "shaders/cube_wire.frag"};
+  cube_wire->build(src_wire);
 
   return true;
 }
@@ -181,12 +194,12 @@ bool MainProgram::createOpenCl()
   Marching_Cubes_Data mcd;
   int lkm = 0;
   std::unique_ptr<glm::vec4[]> result  = mcd.create("mc_program",
-                                                32,
-                                                16,
-                                                32,
-                                                1.0f,
+                                                x_dim,
+                                                y_dim,
+                                                z_dim,
+                                                bSIZE,
                                                 0.0f,
-                                                glm::vec4(-15.2f,-15.0f,-15.2f,0.0f),
+                                                bPOS,
                                                 &lkm);
 
   // Create the vertex buffer for opengl and populate the marching cubes data.
@@ -196,6 +209,15 @@ bool MainProgram::createOpenCl()
   vb->addData(result.get(),sizeof(glm::vec4)*lkm,types);
   vb->setCount(lkm/3);
 
+  auto vb2 = ResourceManager::getInstance()->create<Vertexbuffer>("hopohopo");
+  vb2->init(GL_ARRAY_BUFFER,GL_STATIC_DRAW);
+  float hopohopo_data[1] = {0.0f};
+  std::vector<std::string> types2 = {"1f"};
+  vb2->addData(&hopohopo_data,sizeof(float),types2);
+  vb2->setCount(1);
+//  for (int i=0 ; i<lkm ; i++) {
+//    Log::getDebug().log("% . cube-case == % ",i, Program::case_values.get()[i]);
+//  }
   return true;
 }
 

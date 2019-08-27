@@ -2,6 +2,7 @@
 #define PROGRAM_H
 
 #include <vector>
+#include <memory>
 #include <string>
 #include <glm/glm.hpp>
 #include <SDL2/SDL.h>
@@ -10,6 +11,16 @@ namespace Program {
 
 
 const static std::string DEFAULT_RENDERING_SHADER = "default_shader";
+
+extern std::unique_ptr<float[]> density_values;
+extern std::unique_ptr<glm::vec4[]> case_values;
+extern int cube_now;
+extern float cube_float;
+extern float bSIZE;
+extern int x_dim;
+extern int y_dim;
+extern int z_dim;
+extern glm::vec4 bPOS;
 
 /**
  * The main program.
