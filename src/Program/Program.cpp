@@ -63,12 +63,7 @@ void MainProgram::start()
 
   // Register q for stoppin the application.
   auto id1 = ic->register_lambda_function(EventType::KEYBOARD_MOUSE,[&](const InputCache* c) { running = !c->isKeyReleased('q'); });
-  auto id2 = ic->register_lambda_function(EventType::KEYBOARD_MOUSE,[&](const InputCache* c) {
-         if (!c->isKeyReleased('f')) return; 
-         auto glob_manager = GlobalPropertyManager::getInstance();
-         auto property = glob_manager->get<BoolProperty>("flat");
-         property->set(!property->get());
-      });
+  registerHandlers();
 
   // Main loop.
   while (running) {
@@ -146,9 +141,9 @@ bool MainProgram::createShaders()
   auto res_manager = ResourceManager::getInstance();
 
   /* The default rendering shader. vvvnnn. */
-//  Shader* default_shader = res_manager->create<Shader>(DEFAULT_RENDERING_SHADER);
-//  std::vector<std::string> src = {"shaders/default_notex.vert", "shaders/default_notex.frag"};
-//  default_shader->build(src);
+  Shader* default_shader = res_manager->create<Shader>(DEFAULT_RENDERING_SHADER);
+  std::vector<std::string> src = {"shaders/default_notex.vert", "shaders/default_notex.frag"};
+  default_shader->build(src);
 
   Shader* cube_wire = res_manager->create<Shader>("cube_wire");
   std::vector<std::string> src_wire = {"shaders/cube_wire.vert", "shaders/cube_wire.geom", "shaders/cube_wire.frag"};
@@ -226,6 +221,91 @@ bool MainProgram::createOpenCl()
 void MainProgram::registerHandlers()
 {
   
+  Log::getDebug().log("OHHOHH");
+  auto ic = InputCache::getInstance();
+  auto id2 = ic->register_lambda_function(EventType::KEYBOARD_MOUSE,[](const InputCache* c) {
+         if (!c->isKeyReleased('f')) return; 
+         auto glob_manager = GlobalPropertyManager::getInstance();
+         auto property = glob_manager->get<BoolProperty>("flat");
+         property->set(!property->get());
+      });
+
+  auto id3 = ic->register_lambda_function(EventType::KEYBOARD_MOUSE,[](const InputCache* c) {
+         float temp;
+         auto win = Window::getInstance();
+         if (c->isKeyPressed('n'))
+         {
+           temp = Program::cube_float + 4*Program::x_dim; 
+           if (temp >= 64*Program::x_dim * Program::y_dim * Program::z_dim) return;
+           else {
+             Program::cube_float = temp;
+             glm::vec4 joop = case_values[temp];
+             win->setTitle(vec_toString(joop));
+           return;
+           }
+         } 
+         if (c->isKeyPressed('m'))
+         {
+           temp = Program::cube_float - 4*Program::x_dim; 
+           if (temp < 0) return;
+           else {
+             Program::cube_float = temp;
+             glm::vec4 joop = case_values[temp];
+             win->setTitle(vec_toString(joop));
+           return;
+           }
+           return;
+         } 
+         if (c->isKeyPressed('h'))
+         {
+           temp = Program::cube_float - 1; 
+           if (temp < 0) return;
+           else {
+             Program::cube_float = temp;
+             glm::vec4 joop = case_values[temp];
+             win->setTitle(vec_toString(joop));
+           return;
+           }
+           return;
+         } 
+         if (c->isKeyPressed('k'))
+         {
+           temp = Program::cube_float + 1; 
+           if (temp >= 64*Program::x_dim * Program::y_dim * Program::z_dim) return;
+           else {
+             Program::cube_float = temp;
+             glm::vec4 joop = case_values[temp];
+             win->setTitle(vec_toString(joop));
+           return;
+           }
+           return;
+         } 
+         if (c->isKeyPressed('j'))
+         {
+           temp = Program::cube_float + 16*Program::x_dim * Program::y_dim; 
+           if (temp >= 64*Program::x_dim * Program::y_dim * Program::z_dim) return;
+           else {
+             Program::cube_float = temp;
+             glm::vec4 joop = case_values[temp];
+             win->setTitle(vec_toString(joop));
+           return;
+           }
+           return;
+         } 
+         if (c->isKeyPressed('u'))
+         {
+           temp = Program::cube_float - 16*Program::x_dim * Program::y_dim; 
+           if (temp < 0) return;
+           else {
+             Program::cube_float = temp;
+             glm::vec4 joop = case_values[temp];
+             win->setTitle(vec_toString(joop));
+           return;
+           }
+           return;
+         } 
+      });
+  Log::getDebug().log("YHHYYYY");
 }
 
 /////////////////////////////////////////////////////////////////////////////////////

@@ -2,14 +2,15 @@
 
 layout(points) in;
 
-layout(triangle_strip, max_vertices = 30) out;
-//layout(line_strip, max_vertices = 30) out;
+//layout(triangle_strip, max_vertices = 30) out;
+layout(line_strip, max_vertices = 30) out;
 //layout(points, max_vertices = 8) out;
 
 out vec3 color_in;
 
 uniform mat4 MVP;
-uniform float block_size;
+uniform float block_size = 1.0;
+uniform vec4 base_position;
 
 //in gl_PerVertex
 //{
@@ -114,17 +115,17 @@ uniform float block_size;
 void printCube(vec3 c)
 {
   float pSize = 1.0; // block_size;
-  float d = block_size;
+  float d = 1.0; // block_size;
   vec3 theCOLOR = vec3(1.0,0.0,0.0);
 
-  vec3 p0 = gl_in[0].gl_Position.xyz*d;
-  vec3 p1 = gl_in[0].gl_Position.xyz*d + vec3(0.0,   d, 0.0);
-  vec3 p2 = gl_in[0].gl_Position.xyz*d + vec3(d  ,   d, 0.0);
-  vec3 p3 = gl_in[0].gl_Position.xyz*d + vec3(d  , 0.0, 0.0);
-  vec3 p4 = gl_in[0].gl_Position.xyz*d + vec3(0.0, 0.0,  -d);
-  vec3 p5 = gl_in[0].gl_Position.xyz*d + vec3(0.0,   d,  -d);
-  vec3 p6 = gl_in[0].gl_Position.xyz*d + vec3(d  ,   d,  -d);
-  vec3 p7 = gl_in[0].gl_Position.xyz*d + vec3(d  , 0.0,  -d);
+  vec3 p0 = c.xyz;
+  vec3 p1 = c.xyz + vec3(0.0,   d, 0.0);
+  vec3 p2 = c.xyz + vec3(d  ,   d, 0.0);
+  vec3 p3 = c.xyz + vec3(d  , 0.0, 0.0);
+  vec3 p4 = c.xyz + vec3(0.0, 0.0,  -d);
+  vec3 p5 = c.xyz + vec3(0.0,   d,  -d);
+  vec3 p6 = c.xyz + vec3(d  ,   d,  -d);
+  vec3 p7 = c.xyz + vec3(d  , 0.0,  -d);
 
     // FRONT sideFront = v0 v1 v2 v3
     gl_PointSize = pSize;
@@ -319,6 +320,7 @@ void printCube(vec3 c)
 
 
 void main(){
-  printCube(gl_in[0].gl_Position.xyz);
+  vec4 pos = vec4(gl_in[0].gl_Position.xyz * block_size + base_position.xyz, 0.0);
+  printCube(pos.xyz);
 }
 
