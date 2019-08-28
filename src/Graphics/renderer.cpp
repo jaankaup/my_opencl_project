@@ -22,7 +22,8 @@ void Renderer::init()
     glEnable(GL_MULTISAMPLE);
     glEnable(GL_PROGRAM_POINT_SIZE);
     glPointSize(3);
-    glLineWidth(3);
+    glLineWidth(5);
+//    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 }
 
 void Renderer::render(const Camera& camera) {

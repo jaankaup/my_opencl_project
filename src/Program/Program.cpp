@@ -264,7 +264,7 @@ void MainProgram::registerHandlers()
            else {
              Program::cube_float = temp;
              glm::vec4 joop = case_values[temp];
-             win->setTitle(vec_toString(joop));
+             win->setTitle(vec_toString(joop) + " : " + std::to_string(temp));
            }
          } 
          if (c->isKeyPressed('m'))
@@ -274,7 +274,7 @@ void MainProgram::registerHandlers()
            else {
              Program::cube_float = temp;
              glm::vec4 joop = case_values[temp];
-             win->setTitle(vec_toString(joop));
+             win->setTitle(vec_toString(joop) + " : " + std::to_string(temp));
            }
          } 
          if (c->isKeyPressed('k'))
@@ -284,7 +284,7 @@ void MainProgram::registerHandlers()
            else {
              Program::cube_float = temp;
              glm::vec4 joop = case_values[temp];
-             win->setTitle(vec_toString(joop));
+             win->setTitle(vec_toString(joop) + " : " + std::to_string(temp));
            }
          } 
          if (c->isKeyPressed('h'))
@@ -294,7 +294,7 @@ void MainProgram::registerHandlers()
            else {
              Program::cube_float = temp;
              glm::vec4 joop = case_values[temp];
-             win->setTitle(vec_toString(joop));
+             win->setTitle(vec_toString(joop) + " : " + std::to_string(temp));
            }
          } 
          if (c->isKeyPressed('u'))
@@ -304,7 +304,7 @@ void MainProgram::registerHandlers()
            else {
              Program::cube_float = temp;
              glm::vec4 joop = case_values[temp];
-             win->setTitle(vec_toString(joop));
+             win->setTitle(vec_toString(joop) + " : " + std::to_string(temp));
            }
          }
          if (c->isKeyPressed('j'))
@@ -314,32 +314,38 @@ void MainProgram::registerHandlers()
            else {
              Program::cube_float = temp;
              glm::vec4 joop = case_values[temp];
-             win->setTitle(vec_toString(joop));
+             win->setTitle(vec_toString(joop) + " : " + std::to_string(temp));
            }
          } 
 
          if (c->isKeyPressed('9'))
          {
-           //std::unique_ptr<float[]> density_values;
-           //Log::getDebug().log("cube_float == %, int(cube_float) == %", cube_float, int(cube_float));
- //          density_values[int(cube_float)] = -1.0f;
-           density_values[int(cube_float)] = -1.0f;
-//           density_values[int(cube_float)+1] = -1.0f;
-//           density_values[int(Program::x_dim*4 + cube_float)] = -1.0f;
-//           density_values[int(Program::x_dim*4 + cube_float + 1)] = -1.0f;
-//           density_values[int(Program::x_dim*Program::y_dim*16 + cube_float)] = -1.0f;
-//           density_values[int(Program::x_dim*Program::y_dim*16 + cube_float + 1)] = -1.0f;
+           density_values[int(cube_float) + 1] += -1.0f;
+           density_values[int(cube_float)] += -1.0f;
+           density_values[int(Program::x_dim*4 + cube_float)] += -1.0f;
+           density_values[int(Program::x_dim*4 + cube_float + 1)] += -1.0f;
+           density_values[int(cube_float + Program::x_dim * Program::y_dim*16) + 1] += -1.0f;
+           density_values[int(cube_float + Program::x_dim * Program::y_dim*16)] += -1.0f;
+           density_values[int(cube_float + Program::x_dim * 4 + Program::x_dim * Program::y_dim*16)] += -1.0f;
+           density_values[int(cube_float + Program::x_dim * 4 + Program::x_dim * Program::y_dim*16)+1] += -1.0f;
            this->updateScene();
          } 
 
          if (c->isKeyPressed('0'))
          {
-           density_values[int(cube_float)] = 1.0f;
-//           density_values[int(cube_float)+int(Program::x_dim*4)] = 1.0f;
+           density_values[int(cube_float) + 1] += 1.0f;
+           density_values[int(cube_float)] += 1.0f;
+           density_values[int(Program::x_dim*4 + cube_float)] += 1.0f;
+           density_values[int(Program::x_dim*4 + cube_float + 1)] += 1.0f;
+           density_values[int(cube_float + Program::x_dim * Program::y_dim*16) + 1] += 1.0f;
+           density_values[int(cube_float + Program::x_dim * Program::y_dim*16)] += 1.0f;
+           density_values[int(cube_float + Program::x_dim * 4 + Program::x_dim * Program::y_dim*16)] += 1.0f;
+           density_values[int(cube_float + Program::x_dim * 4 + Program::x_dim * Program::y_dim*16)+1] += 1.0f;
            this->updateScene();
          } 
 
          auto vb = ResourceManager::getInstance()->get<Vertexbuffer>("hopohopo");
+         //Log::getDebug().log("INDEX == %", temp);
          
          float hopohopo_data[1] = {Program::cube_float};
          vb->populate_data(&hopohopo_data,sizeof(float));

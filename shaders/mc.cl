@@ -381,7 +381,7 @@ float4 interpolateV(float4 va, float4 vb, float isovalue)
    #ifdef INTERPOLATE
      if (fabs(isovalue - va.w) < 0.00001f) { return va; }
      else if (fabs(isovalue - vb.w) < 0.00001f) { return vb; }
-     else if (fabs(va.w-vb.w) < 0.00001f) { return vb; }
+     else if (fabs(va.w-vb.w) < 0.00001f) { return va; }
      
      else
      {
@@ -413,9 +413,9 @@ float4 interpolateV(float4 va, float4 vb, float isovalue)
 float4 interpolateN(float4 na, float4 nb, float densityA, float densityB, float isovalue)
 {
    #ifdef INTERPOLATE
-     if (fabs(isovalue - densityA) < 0.001) { return na; }
-     else if (fabs(isovalue - densityB) < 0.001) { return nb; }
-     else if (fabs(densityA-densityB) < 0.001) { return na; }
+     if (fabs(isovalue - densityA) < 0.00001) { return na; }
+     else if (fabs(isovalue - densityB) < 0.00001) { return nb; }
+     else if (fabs(densityA-densityB) < 0.00001) { return na; }
      
      else
      {
