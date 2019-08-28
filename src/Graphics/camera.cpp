@@ -10,7 +10,7 @@ Camera::Camera(const glm::vec3& cameraPosition, const glm::vec3& cameraTarget, c
     target_ = cameraTarget;
     up_ = upVector;
 
-    rotateCamera(0,0);
+    rotateCamera(120,10);
     auto ic = InputCache::getInstance();
 //    ic->register_lambda_function(EventType::KEYBOARD_MOUSE,
 //              [&](const InputCache* c) {  

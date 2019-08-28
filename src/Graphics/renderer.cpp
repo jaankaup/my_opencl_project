@@ -80,7 +80,7 @@ void Renderer::render(const Camera& camera) {
   shader_wire->setUniform("y_offset", Program::y_dim);
   shader_wire->setUniform("z_offset", Program::z_dim);
   shader_wire->setUniform("block_size", Program::bSIZE);
-  shader_wire->setUniform("index", int(Program::cube_float));
+//  shader_wire->setUniform("index", int(Program::cube_float));
 
   auto vb_wire = rm->get<Vertexbuffer>("hopohopo");
   vb_wire->bind();

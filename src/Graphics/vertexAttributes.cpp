@@ -61,6 +61,7 @@ bool VertexAttributes::create_interleaved_attributes(const std::vector<std::stri
     }
     switch (type) {
       case 'f': size = scalar; gl_type = GL_FLOAT;  break;
+      //case 'i': size = scalar; gl_type = GL_INT;  break;
       //case 'f': size = sizeof(GL_FLOAT) * scalar; gl_type = GL_FLOAT;  break;
 
       default:

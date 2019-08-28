@@ -115,17 +115,17 @@ uniform vec4 base_position;
 void printCube(vec3 c)
 {
   float pSize = 1.0; // block_size;
-  float d = 1.0; // block_size;
+  float d = block_size; // block_size;
   vec3 theCOLOR = vec3(1.0,0.0,0.0);
 
   vec3 p0 = c.xyz;
   vec3 p1 = c.xyz + vec3(0.0,   d, 0.0);
   vec3 p2 = c.xyz + vec3(d  ,   d, 0.0);
   vec3 p3 = c.xyz + vec3(d  , 0.0, 0.0);
-  vec3 p4 = c.xyz + vec3(0.0, 0.0,  -d);
-  vec3 p5 = c.xyz + vec3(0.0,   d,  -d);
-  vec3 p6 = c.xyz + vec3(d  ,   d,  -d);
-  vec3 p7 = c.xyz + vec3(d  , 0.0,  -d);
+  vec3 p4 = c.xyz + vec3(0.0, 0.0,  d);
+  vec3 p5 = c.xyz + vec3(0.0,   d,  d);
+  vec3 p6 = c.xyz + vec3(d  ,   d,  d);
+  vec3 p7 = c.xyz + vec3(d  , 0.0,  d);
 
     // FRONT sideFront = v0 v1 v2 v3
     gl_PointSize = pSize;

@@ -86,12 +86,17 @@ std::unique_ptr<glm::vec4[]> Marching_Cubes_Data::create(const std::string& prog
   cl::Buffer* counter = d->createBuffer("counter",sizeof(int), CL_MEM_READ_WRITE);
 
   // The buffer for the density values {f0 f1 f2 , .... }
-  cl::Buffer* density_output = d->createBuffer("density_values",sizeof(float)*theSIZE,CL_MEM_READ_WRITE);
+  bool update = false;
+  cl::Buffer* density_output = d->get<cl::Buffer>("density_values");
+  if (density_output == nullptr) density_output = d->createBuffer("density_values",sizeof(float)*theSIZE,CL_MEM_READ_WRITE);
+  else update = true;
 
   // The buffer for the density values {f0 f1 f2 , .... }
+  if (update) d->del<cl::Buffer>("cube_case_output");
   cl::Buffer* cubecase_output = d->createBuffer("cube_case_output",sizeof(glm::vec4)*theSIZE,CL_MEM_READ_WRITE);
 
   // The buffer for the marching cubes output {vvvvnnnn vvvvnnn ..... }
+  if (update) d->del<cl::Buffer>("mc_output");
   cl::Buffer* mc_output = d->createBuffer("mc_output",sizeof(glm::vec4)*theSIZE,CL_MEM_READ_WRITE);
 
   // Create the command queue for marching cubes.
@@ -101,12 +106,17 @@ std::unique_ptr<glm::vec4[]> Marching_Cubes_Data::create(const std::string& prog
   // Write initial value 0 to the atomic counter.
   writeToBuffer(*command, *counter, true, sizeof(int), &c);
 
+  if (update) writeToBuffer(*command, *density_output, true, sizeof(float)*theSIZE, Program::density_values.get());
+
   Log::getDebug().log("Creating kernels and setting arguments.");
 
   cl_int error = CL_SUCCESS;
 
 
   // THE KERNEL CREATION.
+
+  // THE INDICES for both evalDensity and mc.
+  cl::EnqueueArgs eargs(*command, global, local);
 
   cl_float4 b_pos;
   b_pos.x = base_position.x;
@@ -115,22 +125,21 @@ std::unique_ptr<glm::vec4[]> Marching_Cubes_Data::create(const std::string& prog
   b_pos.w = base_position.w;
 
   // The evalDentity kernel.
-  cl::make_kernel<cl::Buffer, int, int, float, cl_float4> evalDensity_kernel(*program,"evalDensity",&error);
-  if (error != CL_SUCCESS) print_cl_error(error);
+  if (!update) {
+    cl::make_kernel<cl::Buffer, int, int, float, cl_float4> evalDensity_kernel(*program,"evalDensity",&error);
+    if (error != CL_SUCCESS) print_cl_error(error);
+
+    // Execute evalDensity
+    evalDensity_kernel(eargs, *density_output, int(global[0]), int(global[1]), block_size, b_pos).wait();
+  }
 
   // The marching cubes kernel.
   cl::make_kernel<cl::Buffer, cl::Buffer, cl::Buffer, cl::Buffer, int, int, int, float, float, cl_float4> mc_kernel(*program,"mc",&error);
   if (error != CL_SUCCESS) print_cl_error(error);
 
-  // THE INDICES for both evalDensity and mc.
-  cl::EnqueueArgs eargs(*command, global, local);
-
   Log::getDebug().log("theSIZE == %",theSIZE);
 
   // THE EXECUTION.
-
-  // Execute evalDensity
-  evalDensity_kernel(eargs, *density_output, int(global[0]), int(global[1]), block_size, b_pos);
 
   // Execute marching cubes.
   mc_kernel(eargs, *density_output, *mc_output, *cubecase_output, *counter, int(global[0]), int(global[1]), int(global[2]), block_size, isovalue, b_pos).wait();
@@ -155,10 +164,12 @@ std::unique_ptr<glm::vec4[]> Marching_Cubes_Data::create(const std::string& prog
   auto result = std::make_unique<glm::vec4[]>(lkm[0]);
 
   // Create the array for maching cubes output.
-  auto d_values = std::make_unique<float[]>(theSIZE);
-  error = command->enqueueReadBuffer(*density_output,CL_TRUE,0,sizeof(float)*theSIZE, d_values.get());
-  if (error != CL_SUCCESS) { print_cl_error(error); }
-  Program::density_values = std::move(d_values);
+  if (!update) {
+    auto d_values = std::make_unique<float[]>(theSIZE);
+    error = command->enqueueReadBuffer(*density_output,CL_TRUE,0,sizeof(float)*theSIZE, d_values.get());
+    if (error != CL_SUCCESS) { print_cl_error(error); }
+    Program::density_values = std::move(d_values);
+  }
 
   auto c_values = std::make_unique<glm::vec4[]>(theSIZE);
   error = command->enqueueReadBuffer(*cubecase_output,CL_TRUE,0,sizeof(glm::vec4)*theSIZE, c_values.get());
@@ -174,6 +185,10 @@ std::unique_ptr<glm::vec4[]> Marching_Cubes_Data::create(const std::string& prog
   //   Log::getDebug().log("i == % : % ", i, c_values.get()[i]); // result.get()[i]);
   //}
 
+//  for (int i=0; i< lkm[0]; i++)
+//  {
+//     Log::getDebug().log("i == % : % ", i, Program::density_values.get()[i]); // result.get()[i]);
+//  }
 
   // Store the output count of marching cubes. This is the count of all float4
   // created in marching cubes shader. We need so we can store and draw 

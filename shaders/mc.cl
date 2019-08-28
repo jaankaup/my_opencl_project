@@ -1,6 +1,6 @@
 // The tritable. ubsan
 
-//#define INTERPOLATE
+#define INTERPOLATE
 
 /**
  * The lookup table for edges that creates triangles.
@@ -34,7 +34,7 @@ __constant uint16 triTable[256] = {
  {  9 ,    2 ,   10 ,    0 ,    2 ,    9 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255},
  {  2 ,    8 ,    3 ,    2 ,   10 ,    8 ,   10 ,    9 ,    8 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255},
  {  3 ,   11 ,    2 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255},
- {  0 ,   11 ,    2 ,    8 ,   11 ,    0 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255},
+ {  0 ,   11 ,    2 ,    8 ,   11 ,    0 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255}, // case 9
  {  1 ,    9 ,    0 ,    2 ,    3 ,   11 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255},
  {  1 ,   11 ,    2 ,    1 ,    9 ,   11 ,    9 ,    8 ,   11 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255},
  {  3 ,   10 ,    1 ,   11 ,   10 ,    3 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255 ,  255},
@@ -394,7 +394,10 @@ float4 interpolateV(float4 va, float4 vb, float isovalue)
        return p;
      }
    #else
-      return (va+vb)/2.0f;
+      return va;
+      //return (va+vb)/2.0f;
+      //if (fabs(isovalue - va.w) >= fabs(isovalue - vb.w)) { return va; }
+      //else return vb;
    #endif
 }
 
@@ -425,8 +428,10 @@ float4 interpolateN(float4 na, float4 nb, float densityA, float densityB, float 
        return normalize(p);
      }
    #else
-      return normalize((na+nb)/2.0f);
-      //return normalize(na);
+      //return normalize((na+nb)/2.0f);
+      return normalize(na);
+      //if (fabs(isovalue - densityA) >= fabs(isovalue - densityB)) { return na; }
+      //else return nb;
    #endif
 }
 

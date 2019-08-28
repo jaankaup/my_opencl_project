@@ -45,28 +45,31 @@ GLuint Vertexbuffer::getHandle() const
 
 void Vertexbuffer::populate_data(const void* data, unsigned int size)
 {
-//  Log::getDebug().log("Vertexbuffer::populate_data: size == %.",std::to_string(size));
-
   // Eka kerta kun puskuriin laitetaan tavaraa. Luodaan tilaa puskuriin sizen
   // verran.
-  glBindBuffer(GL_ARRAY_BUFFER, pId);
   if (pData_size == 0) {
     if (data == nullptr) {
       //Log::getDebug().log("Vertexbuffer::populate_data: creating empty data.");
+      glBindBuffer(GL_ARRAY_BUFFER, pId);
       glBufferData(GL_ARRAY_BUFFER,size, NULL, pUsage);
+      glUnmapNamedBuffer(pId);
     }
     else {
       //Log::getDebug().log("Vertexbuffer::populate_data: populating data.");
+      glBindBuffer(GL_ARRAY_BUFFER, pId);
       glBufferData(GL_ARRAY_BUFFER,size, data, pUsage);
+      glUnmapNamedBuffer(pId);
     }
     pData_size = size;
     return;
   }
 
   // Jos myohemmin on tarve muokata dataa, niin taalla se kay.
-  assert(pData_size < size);
+  //assert(pData_size < size);
   glBindBuffer(GL_ARRAY_BUFFER, pId);
-  void *ptr = glMapNamedBufferRange(pId, 0, size, GL_WRITE_ONLY);
+
+  void *ptr = glMapNamedBufferRange(pId, 0, size, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT);
+
   memcpy(ptr, data, size);
   glUnmapNamedBuffer(pId);
 }

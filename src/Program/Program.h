@@ -43,6 +43,8 @@ class MainProgram
      */
     void start();
 
+    void updateScene();
+
   private:
 
     /** 

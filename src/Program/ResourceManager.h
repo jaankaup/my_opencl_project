@@ -63,7 +63,7 @@ class ResourceManager
     {
       if constexpr (std::is_same<T,Shader>::value) { auto f =  pShaders.find(key); if (f != pShaders.end()) return &f->second; else return nullptr; }
       if constexpr (std::is_same<T,Texture>::value) {auto f =  pTextures.find(key); if (f != pTextures.end()) return &f->second; else return nullptr; }
-      if constexpr (std::is_same<T,Vertexbuffer>::value) {auto f =  pVertexBuffers.find(key); if (f != pVertexBuffers.end()) return &f->second; else return nullptr; }
+      if constexpr (std::is_same<T,Vertexbuffer>::value) {auto f = pVertexBuffers.find(key); if (f != pVertexBuffers.end()) return &pVertexBuffers[key]; else return nullptr; }
     }
 
   private:

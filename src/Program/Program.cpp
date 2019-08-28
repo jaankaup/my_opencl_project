@@ -16,12 +16,12 @@ namespace Program {
 
 std::unique_ptr<float[]> density_values;
 std::unique_ptr<glm::vec4[]> case_values;
-int cube_now = 0;
-float cube_float = 0.0f;
+int cube_now = Program::x_dim * Program::y_dim *  Program::z_dim * 64;//0;
 float bSIZE = 1.0f;
-int x_dim = 32;
+int x_dim = 16;
 int y_dim = 16;
-int z_dim = 32;
+int z_dim = 16;
+float cube_float = float(x_dim * y_dim * z_dim * 64 / 3);;
 glm::vec4 bPOS = glm::vec4(-15.2f,-15.0f,-15.2f,0.0f);
 
 /////////////////////////////////////////////////////////////////////////////////////
@@ -59,7 +59,7 @@ void MainProgram::start()
   renderer.init();
 
   // Create the camera for this application.
-  Camera camera = Camera(glm::vec3(5.0f,10.0f,10.0f),glm::vec3(0.0f,0.0f,0.0f),glm::vec3(0.0f,1.0f,0.0f));
+  Camera camera = Camera(glm::vec3(5.0f,10.0f,0.0f),glm::vec3(0.0f,50.0f,-20.0f),glm::vec3(0.0f,1.0f,0.0f));
 
   // Register q for stoppin the application.
   auto id1 = ic->register_lambda_function(EventType::KEYBOARD_MOUSE,[&](const InputCache* c) { running = !c->isKeyReleased('q'); });
@@ -169,6 +169,30 @@ bool MainProgram::createWindow()
 
 /////////////////////////////////////////////////////////////////////////////////////
 
+void MainProgram::updateScene()
+{
+  Marching_Cubes_Data mcd;
+  int lkm = 0;
+  std::unique_ptr<glm::vec4[]> result  = mcd.create("mc_program",
+                                                x_dim,
+                                                y_dim,
+                                                z_dim,
+                                                bSIZE,
+                                                0.0f,
+                                                bPOS,
+                                                &lkm);
+
+  // Create the vertex buffer for opengl and populate the marching cubes data.
+  ResourceManager::getInstance()->del<Vertexbuffer>("hah");
+  auto vb = ResourceManager::getInstance()->create<Vertexbuffer>("hah");
+  vb->init(GL_ARRAY_BUFFER,GL_STATIC_DRAW);
+  std::vector<std::string> types = {"4f","4f","4f"};
+  vb->addData(result.get(),sizeof(glm::vec4)*lkm,types);
+  vb->setCount(lkm/3);
+}
+
+/////////////////////////////////////////////////////////////////////////////////////
+
 bool MainProgram::createOpenCl()
 {
   Log::getDebug().log("CREATING OPENCL DEVICE/CONTEXT. RUN THE MARCHING CUBES ALGORITHM.\n");
@@ -205,8 +229,9 @@ bool MainProgram::createOpenCl()
   vb->setCount(lkm/3);
 
   auto vb2 = ResourceManager::getInstance()->create<Vertexbuffer>("hopohopo");
-  vb2->init(GL_ARRAY_BUFFER,GL_STATIC_DRAW);
-  float hopohopo_data[1] = {0.0f};
+  //vb2->init(GL_ARRAY_BUFFER,GL_DYNAMIC_DRAW);
+  vb2->init(GL_ARRAY_BUFFER,GL_DYNAMIC_DRAW);
+  float hopohopo_data[1] = {Program::cube_float};
   std::vector<std::string> types2 = {"1f"};
   vb2->addData(&hopohopo_data,sizeof(float),types2);
   vb2->setCount(1);
@@ -221,7 +246,6 @@ bool MainProgram::createOpenCl()
 void MainProgram::registerHandlers()
 {
   
-  Log::getDebug().log("OHHOHH");
   auto ic = InputCache::getInstance();
   auto id2 = ic->register_lambda_function(EventType::KEYBOARD_MOUSE,[](const InputCache* c) {
          if (!c->isKeyReleased('f')) return; 
@@ -230,82 +254,96 @@ void MainProgram::registerHandlers()
          property->set(!property->get());
       });
 
-  auto id3 = ic->register_lambda_function(EventType::KEYBOARD_MOUSE,[](const InputCache* c) {
+  auto id3 = ic->register_lambda_function(EventType::KEYBOARD_MOUSE,[&](const InputCache* c) {
          float temp;
          auto win = Window::getInstance();
          if (c->isKeyPressed('n'))
          {
            temp = Program::cube_float + 4*Program::x_dim; 
-           if (temp >= 64*Program::x_dim * Program::y_dim * Program::z_dim) return;
+           if (temp >= 64*Program::x_dim * Program::y_dim * Program::z_dim) {}
            else {
              Program::cube_float = temp;
              glm::vec4 joop = case_values[temp];
              win->setTitle(vec_toString(joop));
-           return;
            }
          } 
          if (c->isKeyPressed('m'))
          {
            temp = Program::cube_float - 4*Program::x_dim; 
-           if (temp < 0) return;
+           if (temp < 0) {}
            else {
              Program::cube_float = temp;
              glm::vec4 joop = case_values[temp];
              win->setTitle(vec_toString(joop));
-           return;
            }
-           return;
-         } 
-         if (c->isKeyPressed('h'))
-         {
-           temp = Program::cube_float - 1; 
-           if (temp < 0) return;
-           else {
-             Program::cube_float = temp;
-             glm::vec4 joop = case_values[temp];
-             win->setTitle(vec_toString(joop));
-           return;
-           }
-           return;
          } 
          if (c->isKeyPressed('k'))
          {
-           temp = Program::cube_float + 1; 
-           if (temp >= 64*Program::x_dim * Program::y_dim * Program::z_dim) return;
+           temp = Program::cube_float - 1; 
+           if (temp < 0) {}
            else {
              Program::cube_float = temp;
              glm::vec4 joop = case_values[temp];
              win->setTitle(vec_toString(joop));
-           return;
            }
-           return;
          } 
-         if (c->isKeyPressed('j'))
+         if (c->isKeyPressed('h'))
          {
-           temp = Program::cube_float + 16*Program::x_dim * Program::y_dim; 
-           if (temp >= 64*Program::x_dim * Program::y_dim * Program::z_dim) return;
+           temp = Program::cube_float + 1; 
+           if (temp >= 64*Program::x_dim * Program::y_dim * Program::z_dim) {}
            else {
              Program::cube_float = temp;
              glm::vec4 joop = case_values[temp];
              win->setTitle(vec_toString(joop));
-           return;
            }
-           return;
          } 
          if (c->isKeyPressed('u'))
          {
-           temp = Program::cube_float - 16*Program::x_dim * Program::y_dim; 
-           if (temp < 0) return;
+           temp = Program::cube_float + 16*Program::x_dim * Program::y_dim; 
+           if (temp >= 64*Program::x_dim * Program::y_dim * Program::z_dim) {}
            else {
              Program::cube_float = temp;
              glm::vec4 joop = case_values[temp];
              win->setTitle(vec_toString(joop));
-           return;
            }
-           return;
+         }
+         if (c->isKeyPressed('j'))
+         {
+           temp = Program::cube_float - 16*Program::x_dim * Program::y_dim; 
+           if (temp < 0) {}
+           else {
+             Program::cube_float = temp;
+             glm::vec4 joop = case_values[temp];
+             win->setTitle(vec_toString(joop));
+           }
          } 
+
+         if (c->isKeyPressed('9'))
+         {
+           //std::unique_ptr<float[]> density_values;
+           //Log::getDebug().log("cube_float == %, int(cube_float) == %", cube_float, int(cube_float));
+ //          density_values[int(cube_float)] = -1.0f;
+           density_values[int(cube_float)] = -1.0f;
+//           density_values[int(cube_float)+1] = -1.0f;
+//           density_values[int(Program::x_dim*4 + cube_float)] = -1.0f;
+//           density_values[int(Program::x_dim*4 + cube_float + 1)] = -1.0f;
+//           density_values[int(Program::x_dim*Program::y_dim*16 + cube_float)] = -1.0f;
+//           density_values[int(Program::x_dim*Program::y_dim*16 + cube_float + 1)] = -1.0f;
+           this->updateScene();
+         } 
+
+         if (c->isKeyPressed('0'))
+         {
+           density_values[int(cube_float)] = 1.0f;
+//           density_values[int(cube_float)+int(Program::x_dim*4)] = 1.0f;
+           this->updateScene();
+         } 
+
+         auto vb = ResourceManager::getInstance()->get<Vertexbuffer>("hopohopo");
+         
+         float hopohopo_data[1] = {Program::cube_float};
+         vb->populate_data(&hopohopo_data,sizeof(float));
       });
-  Log::getDebug().log("YHHYYYY");
 }
 
 /////////////////////////////////////////////////////////////////////////////////////

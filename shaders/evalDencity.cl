@@ -22,15 +22,11 @@ float ball(float4 f_pos, float4 ball_center, float radius)
   return fmin(2.0f,fmax(-2.0f,pow(ball_center.x - f_pos.x,2.0f + pow(ball_center.y - f_pos.y,2.0f) + pow(ball_center.z - f_pos.z,2.0f) - pow(radius, 2.0f))));  
 }
 
-/**
- * Creates a environment which is full of bullet holes.
- */
 float maasto(float4 f_pos)
 {
-
 	float value =  Noise_3d(f_pos.x*0.1, f_pos.y*0.1, f_pos.z*0.1); 
 	float value2 =  Noise_3d(f_pos.x*0.02, f_pos.y*0.02, f_pos.z*0.02); 
-  float result =  f_pos.y - 8*value + 15.0*value2 - 15;
+  float result =  f_pos.y - 15*value + 15.0*value2;
   //if (result > 0.0001)  return 1.0;
   //if (result < 0.0001)  return -1.0;
   //return 0.0;
@@ -46,7 +42,8 @@ float anti_maasto(float4 f_pos, float4 a1, float4 a2)
   float m = maasto(f_pos);
   float value;
   modf(m, &value);
-  return value;
+  if (value <= 0) return -1.0f;
+  else return 1.0f;
 }
 
 /**

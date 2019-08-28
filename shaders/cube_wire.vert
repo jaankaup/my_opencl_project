@@ -1,13 +1,13 @@
 #version 330
 
-layout(location = 0) in float hopohopo;
+layout(location = 0) in float index;
 
 uniform vec4 base_position;
 uniform float block_size = 1.0f;;
 uniform int x_offset;
 uniform int y_offset;
 uniform int z_offset;
-uniform int index;
+//uniform int index;
 
 void main()
 {
