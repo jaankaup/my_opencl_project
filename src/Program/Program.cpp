@@ -368,17 +368,20 @@ void MainProgram::registerHandlers()
          if (c->isKeyPressed('7')) { if (c->isKeyDown(SDL_SCANCODE_LSHIFT)) v6_amount -= 1; else v6_amount += 1; title_changed = true; }
          if (c->isKeyPressed('8')) { if (c->isKeyDown(SDL_SCANCODE_LSHIFT)) v7_amount -= 1; else v7_amount += 1; title_changed = true; }
 
-//         if (c->isKeyPressed('9'))
-//         {
-//           density_values[int(cube_float) + 1] += v0_amount; // v0
-//           density_values[int(cube_float)] += v3_amount; // v3 
-//           density_values[int(Program::x_dim*4 + cube_float)] += v1_amount; // v1 
-//           density_values[int(Program::x_dim*4 + cube_float + 1)] += v2_amount; // v2 
-//           density_values[int(cube_float + Program::x_dim * Program::y_dim*16) + 1] += v4_amount; // v4
-//           density_values[int(cube_float + Program::x_dim * Program::y_dim*16)] += v5_amount; // v5
-//           density_values[int(cube_float + Program::x_dim * 4 + Program::x_dim * Program::y_dim*16)] += v6_amount; // v6
-//           density_values[int(cube_float + Program::x_dim * 4 + Program::x_dim * Program::y_dim*16)+1] += v7_amount;
-//           this->updateScene();
+         if (c->isKeyPressed('9'))
+         { 
+           float kerroin = 1.0f;
+           if (c->isKeyDown(SDL_SCANCODE_LSHIFT)) kerroin = -1.0f; 
+           density_values[cube_now + 1]                                        += v0_amount * 0.1f * kerroin; // v0
+           density_values[cube_now]                                            += v3_amount * 0.1f * kerroin; // v3 
+           density_values[Program::x_dim*4 + cube_now]                         += v2_amount * 0.1f * kerroin; // v1 
+           density_values[Program::x_dim*4 + cube_now + 1]                     += v1_amount * 0.1f * kerroin; // v2 
+           density_values[cube_now + Program::x_dim * Program::y_dim*16 + 1]   += v4_amount * 0.1f * kerroin; // v4
+           density_values[cube_now + Program::x_dim * Program::y_dim*16 + Program::x_dim * 4]       += v6_amount * 0.1f * kerroin; // v6
+           density_values[cube_now + Program::x_dim * Program::y_dim*16 + Program::x_dim * 4 + 1]   += v5_amount * 0.1f * kerroin; // v6
+           density_values[cube_now + Program::x_dim * Program::y_dim*16 ]      += v7_amount * 0.1f * kerroin; // v7
+           this->updateScene();
+         } 
 //         } 
 
 //        v5                        v6

@@ -24,8 +24,8 @@ void main()
   gl_Position = vec4((vec4(x,y,z,0.0) * block_size + base_position).xyz,1.0);
   float clamped = (5 + clamp(density_value,-5,5))/10.0;
   vec3 temp_color = mix(vec3(0.0,0.0,0.5), vec3(0.5,0.0,0.0), clamped) ;
-  if (abs(density_value) <= 1.0) {
-    temp_color = mix(vec3(0.0,1.0,1.0), vec3(1.0,1.0,0.0), (2+clamped)/4.0);
+  if (abs(density_value) <= 0.00001) {
+    temp_color = vec3(1.0,1.0,1.0); mix(vec3(0.0,1.0,1.0), vec3(1.0,1.0,0.0), (2+clamped)/4.0);
   }
   vs_out.color = temp_color;
 }
