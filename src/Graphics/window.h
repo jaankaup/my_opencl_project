@@ -29,6 +29,8 @@ class Window
      
     void setTitle(const std::string& title) const;
 
+    std::string getTitle() const; 
+
     // Initializes window.
     bool init(int width, int height);
    

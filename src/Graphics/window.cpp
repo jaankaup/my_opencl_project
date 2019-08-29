@@ -176,6 +176,11 @@ void Window::setTitle(const std::string& title) const
   if (pWindow != nullptr) SDL_SetWindowTitle(pWindow, title.c_str());
 }
 
+std::string Window::getTitle() const 
+{
+  if (pWindow != nullptr) SDL_GetWindowTitle(pWindow);
+}
+
 //void Window::resize(InputCache* ic)
 void Window::resize(int w, int h)
 {

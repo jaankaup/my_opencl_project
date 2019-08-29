@@ -439,6 +439,9 @@ bool InputCache::isKeyPressed(const uint32_t key) const
 
 bool InputCache::isKeyDown(const uint32_t key) const
 {
+//  if (key == '1') Log::getDebug().log("11111111111");
+
+  // TODO: check boundaries!
   auto state = SDL_GetKeyboardState(NULL);
   if (state[key]) return true;
   return false;

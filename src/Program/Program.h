@@ -9,6 +9,16 @@
 
 namespace Program {
 
+//struct Tool {
+//  float v0_amount = 0.0f; 
+//  float v1_amount = 0.0f; 
+//  float v2_amount = 0.0f; 
+//  float v3_amount = 0.0f; 
+//  float v4_amount = 0.0f; 
+//  float v5_amount = 0.0f; 
+//  float v6_amount = 0.0f; 
+//  float v7_amount = 0.0f; 
+//};
 
 const static std::string DEFAULT_RENDERING_SHADER = "default_shader";
 
@@ -21,6 +31,15 @@ extern int x_dim;
 extern int y_dim;
 extern int z_dim;
 extern glm::vec4 bPOS;
+extern int v0_amount;
+extern int v1_amount;
+extern int v2_amount;
+extern int v3_amount;
+extern int v4_amount;
+extern int v5_amount;
+extern int v6_amount;
+extern int v7_amount;
+
 
 /**
  * The main program.

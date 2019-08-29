@@ -92,7 +92,7 @@ void Renderer::render(const Camera& camera) {
   //Program::cube_now +=1;
   //Program::cube_float += 10.0f;
   //  Log::getDebug().log("Program::cube_now == %", Program::cube_now);
-  if (Program::cube_now > Program::x_dim * Program::y_dim * Program::z_dim)
+  if (Program::cube_now > Program::x_dim * Program::y_dim * Program::z_dim * 64)
   {
     Program::cube_now = 0;
     Log::getDebug().log("Program::cube_now == %", Program::cube_now);
