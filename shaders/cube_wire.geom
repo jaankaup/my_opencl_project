@@ -320,7 +320,7 @@ void printCube(vec3 c)
 
 
 void main(){
-  vec4 pos = vec4(gl_in[0].gl_Position.xyz * block_size + base_position.xyz, 0.0);
+  vec4 pos = vec4(gl_in[0].gl_Position.xyz , 0.0);
   printCube(pos.xyz);
 }
 

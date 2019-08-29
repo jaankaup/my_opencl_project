@@ -21,7 +21,7 @@ void Renderer::init()
     glCullFace(GL_BACK);
     glEnable(GL_MULTISAMPLE);
     glEnable(GL_PROGRAM_POINT_SIZE);
-    glPointSize(3);
+    glPointSize(5);
     glLineWidth(5);
 //    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 }
@@ -34,6 +34,8 @@ void Renderer::render(const Camera& camera) {
   glm::mat4 projection = glm::perspective(glm::radians(45.0f), 16.0f / 9.0f, 0.001f, 1000.0f);
   glm::vec3 eyePosition = camera.getPosition();
   glm::mat4 MVP = projection * camera.getMatrix() * glm::mat4(1.0f);  
+
+  auto glob_manager = Program::GlobalPropertyManager::getInstance();
 
   auto rm = ResourceManager::getInstance();
   auto shader = rm->get<Shader>(Program::DEFAULT_RENDERING_SHADER);
@@ -48,12 +50,11 @@ void Renderer::render(const Camera& camera) {
 //  ruohikko->use(1);
   shader->setUniform("diffuseTexture2", 1);
 
-  auto glob_manager = Program::GlobalPropertyManager::getInstance();
-  auto property = glob_manager->get<Program::BoolProperty>("flat");
-  shader->setUniform("normal_mode", property->get() ? 1.0f : 0.0f);
 //  Texture* kallio = rm->get<Texture>("kallio");
 //  kallio->use(1);
 //  shader->setUniform("diffuseTexure2", 1);
+
+  auto show_scene = glob_manager->get<Program::BoolProperty>("show_scene")->get();
 
   shader->setUniform("MVP", MVP);
   shader->setUniform("normalMatrix", glm::inverseTranspose(glm::mat3(1.0)));
@@ -68,9 +69,11 @@ void Renderer::render(const Camera& camera) {
   shader->setUniform("diffuseTexure2", 1);
   //shader->setUniform("sampler2D", 1);
 
-  auto vb = rm->get<Vertexbuffer>("hah");
-  vb->bind();
-  glDrawArrays(GL_TRIANGLES, 0, vb->getCount());
+  if (show_scene) {
+    auto vb = rm->get<Vertexbuffer>("hah");
+    vb->bind();
+    glDrawArrays(GL_TRIANGLES, 0, vb->getCount());
+  }
 
   glFrontFace(GL_CW);
   auto shader_wire = rm->get<Shader>("cube_wire");
@@ -94,7 +97,25 @@ void Renderer::render(const Camera& camera) {
     Program::cube_now = 0;
     Log::getDebug().log("Program::cube_now == %", Program::cube_now);
   }
+
   glFrontFace(GL_CCW);
+
+  
+  auto show_den = glob_manager->get<Program::BoolProperty>("show_density")->get();
+  if (!show_den) return;
+  
+  auto shader_density_points = rm->get<Shader>("density_shader");
+  shader_density_points->bind();
+  shader_density_points->setUniform("MVP", MVP);
+  shader_density_points->setUniform("base_position", Program::bPOS);
+  shader_density_points->setUniform("x_offset", Program::x_dim);
+  shader_density_points->setUniform("y_offset", Program::y_dim);
+  shader_density_points->setUniform("z_offset", Program::z_dim);
+  shader_density_points->setUniform("block_size", Program::bSIZE);
+  auto vb_density_points = ResourceManager::getInstance()->get<Vertexbuffer>("density_points");
+  vb_density_points->bind();
+  glDrawArrays(GL_POINTS, 0, vb_density_points->getCount());
+
 }
 
 void Renderer::renderModels(const Camera& camera)

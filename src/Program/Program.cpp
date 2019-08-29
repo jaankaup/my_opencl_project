@@ -17,12 +17,12 @@ namespace Program {
 std::unique_ptr<float[]> density_values;
 std::unique_ptr<glm::vec4[]> case_values;
 int cube_now = Program::x_dim * Program::y_dim *  Program::z_dim * 64;//0;
-float bSIZE = 1.0f;
-int x_dim = 16;
+float bSIZE = 0.1f;
+int x_dim = 32;
 int y_dim = 16;
-int z_dim = 16;
+int z_dim = 32;
 float cube_float = float(x_dim * y_dim * z_dim * 64 / 3);;
-glm::vec4 bPOS = glm::vec4(-15.2f,-15.0f,-15.2f,0.0f);
+glm::vec4 bPOS = glm::vec4(-5.2f,-3.0f,-5.2f,0.0f);
 
 /////////////////////////////////////////////////////////////////////////////////////
 
@@ -103,10 +103,13 @@ void MainProgram::createGlobalProperties()
   glob_manager->add("initial_screen_height",initial_screen_height);
 
   //  .
-  BoolProperty flat;
-  initial_screen_height.set(true);
-//  initial_screen_height.registerTest(height_filter);
-  glob_manager->add("flat",flat);
+  BoolProperty show_density;
+  show_density.set(false);
+  glob_manager->add("show_density",show_density);
+
+  BoolProperty show_scene;
+  show_scene.set(true);
+  glob_manager->add("show_scene",show_scene);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////
@@ -149,6 +152,10 @@ bool MainProgram::createShaders()
   std::vector<std::string> src_wire = {"shaders/cube_wire.vert", "shaders/cube_wire.geom", "shaders/cube_wire.frag"};
   cube_wire->build(src_wire);
 
+  Shader* density_points = res_manager->create<Shader>("density_shader");
+  std::vector<std::string> src_density_points = {"shaders/density_points.vert", "shaders/density_points.geom", "shaders/density_points.frag"};
+  density_points->build(src_density_points);
+
   return true;
 }
 
@@ -189,6 +196,9 @@ void MainProgram::updateScene()
   std::vector<std::string> types = {"4f","4f","4f"};
   vb->addData(result.get(),sizeof(glm::vec4)*lkm,types);
   vb->setCount(lkm/3);
+  auto vb2 = ResourceManager::getInstance()->get<Vertexbuffer>("density_points");
+  vb2->populate_data(Program::density_values.get(),sizeof(float)*Program::x_dim * Program::y_dim * Program::z_dim * 64);
+
 }
 
 /////////////////////////////////////////////////////////////////////////////////////
@@ -229,12 +239,17 @@ bool MainProgram::createOpenCl()
   vb->setCount(lkm/3);
 
   auto vb2 = ResourceManager::getInstance()->create<Vertexbuffer>("hopohopo");
-  //vb2->init(GL_ARRAY_BUFFER,GL_DYNAMIC_DRAW);
   vb2->init(GL_ARRAY_BUFFER,GL_DYNAMIC_DRAW);
   float hopohopo_data[1] = {Program::cube_float};
   std::vector<std::string> types2 = {"1f"};
   vb2->addData(&hopohopo_data,sizeof(float),types2);
   vb2->setCount(1);
+
+  auto vb3 = ResourceManager::getInstance()->create<Vertexbuffer>("density_points");
+  vb3->init(GL_ARRAY_BUFFER,GL_DYNAMIC_DRAW);
+  std::vector<std::string> types3 = {"1f"};
+  vb3->addData(Program::density_values.get(),sizeof(float)*Program::x_dim * Program::y_dim * Program::z_dim * 64,types3);
+  vb3->setCount(Program::x_dim * Program::y_dim * Program::z_dim * 64);
 //  for (int i=0 ; i<lkm ; i++) {
 //    Log::getDebug().log("% . cube-case == % ",i, Program::case_values.get()[i]);
 //  }
@@ -250,8 +265,15 @@ void MainProgram::registerHandlers()
   auto id2 = ic->register_lambda_function(EventType::KEYBOARD_MOUSE,[](const InputCache* c) {
          if (!c->isKeyReleased('f')) return; 
          auto glob_manager = GlobalPropertyManager::getInstance();
-         auto property = glob_manager->get<BoolProperty>("flat");
+         auto property = glob_manager->get<BoolProperty>("show_density");
          property->set(!property->get());
+      });
+
+  auto show_scene_handler = ic->register_lambda_function(EventType::KEYBOARD_MOUSE,[](const InputCache* c) {
+         if (!c->isKeyReleased('g')) return; 
+         auto glob_manager = GlobalPropertyManager::getInstance();
+         auto show_scene = glob_manager->get<BoolProperty>("show_scene");
+         show_scene->set(!show_scene->get());
       });
 
   auto id3 = ic->register_lambda_function(EventType::KEYBOARD_MOUSE,[&](const InputCache* c) {
@@ -316,6 +338,58 @@ void MainProgram::registerHandlers()
              glm::vec4 joop = case_values[temp];
              win->setTitle(vec_toString(joop) + " : " + std::to_string(temp));
            }
+         } 
+
+         if (c->isKeyPressed('5'))
+         {
+           density_values[int(cube_float) + 1] = 1.0f;
+           density_values[int(cube_float)] = 1.0f;
+           density_values[int(Program::x_dim*4 + cube_float)] = 1.0f;
+           density_values[int(Program::x_dim*4 + cube_float + 1)] = 1.0f;
+           density_values[int(cube_float + Program::x_dim * Program::y_dim*16) + 1] = -0.1f;
+           density_values[int(cube_float + Program::x_dim * Program::y_dim*16)] = -0.1f;
+           density_values[int(cube_float + Program::x_dim * 4 + Program::x_dim * Program::y_dim*16)] = -0.1f;
+           density_values[int(cube_float + Program::x_dim * 4 + Program::x_dim * Program::y_dim*16)+1] = -0.1f;
+           this->updateScene();
+         } 
+
+         if (c->isKeyPressed('6'))
+         {
+           density_values[int(cube_float) + 1] = 1.0f;
+           density_values[int(cube_float)] = 1.0f;
+           density_values[int(Program::x_dim*4 + cube_float)] = 1.0f;
+           density_values[int(Program::x_dim*4 + cube_float + 1)] = 1.0f;
+           density_values[int(cube_float + Program::x_dim * Program::y_dim*16) + 1] = 1.0f;
+           density_values[int(cube_float + Program::x_dim * Program::y_dim*16)] = 1.0f;
+           density_values[int(cube_float + Program::x_dim * 4 + Program::x_dim * Program::y_dim*16)] = 1.0f;
+           density_values[int(cube_float + Program::x_dim * 4 + Program::x_dim * Program::y_dim*16)+1] = 1.0f;
+           this->updateScene();
+         } 
+
+         if (c->isKeyPressed('7'))
+         {
+           density_values[int(cube_float) + 1] = -0.1f;
+           density_values[int(cube_float)] = -0.1f;
+           density_values[int(Program::x_dim*4 + cube_float)] = -0.1f;
+           density_values[int(Program::x_dim*4 + cube_float + 1)] = -0.1f;
+           density_values[int(cube_float + Program::x_dim * Program::y_dim*16) + 1] = 1.0f;
+           density_values[int(cube_float + Program::x_dim * Program::y_dim*16)] = 1.0f;
+           density_values[int(cube_float + Program::x_dim * 4 + Program::x_dim * Program::y_dim*16)] = 1.0f;
+           density_values[int(cube_float + Program::x_dim * 4 + Program::x_dim * Program::y_dim*16)+1] = 1.0f;
+           this->updateScene();
+         } 
+
+         if (c->isKeyPressed('8'))
+         {
+           density_values[int(cube_float) + 1] = 1.0f;
+           density_values[int(cube_float)] = 1.0f;
+           density_values[int(Program::x_dim*4 + cube_float)] = 1.0f;
+           density_values[int(Program::x_dim*4 + cube_float + 1)] = 1.0f;
+           density_values[int(cube_float + Program::x_dim * Program::y_dim*16) + 1] = 1.0f;
+           density_values[int(cube_float + Program::x_dim * Program::y_dim*16)] = 1.0f;
+           density_values[int(cube_float + Program::x_dim * 4 + Program::x_dim * Program::y_dim*16)] = 1.0f;
+           density_values[int(cube_float + Program::x_dim * 4 + Program::x_dim * Program::y_dim*16)+1] = 1.0f;
+           this->updateScene();
          } 
 
          if (c->isKeyPressed('9'))
