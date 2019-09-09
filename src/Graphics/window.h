@@ -33,6 +33,8 @@ class Window
 
     // Initializes window.
     bool init(int width, int height);
+
+    void renderImgui();
    
     // Doesn't destroy the SDL2 and window. Call dispose to do this.
     ~Window();
@@ -44,7 +46,6 @@ class Window
 
     // Creates a window and initializes SDL2.
     Window();
-
 
     // Disposes the window. Destroys both window and SDL2.
     void dispose();

@@ -21,6 +21,7 @@ set (util_dir ${src_dir}/Utils)
 set (opencl_dir ${src_dir}/OpenCL)
 set (program_dir ${src_dir}/Program)
 set (test_dir ${src_dir}/Tests)
+set (imgui_dir ${CMAKE_SOURCE_DIR}/includes/imgui)
 
 set(graphics_src 
       ${graphics_dir}/window.cpp
@@ -59,6 +60,15 @@ set (soil_src
   ${soil_dir}/stb_image_aug.c
   )
 
+set (imgui_src
+  ${imgui_dir}/imgui.cpp
+  ${imgui_dir}/imgui_draw.cpp
+  ${imgui_dir}/imgui_widgets.cpp
+  ${imgui_dir}/imgui_demo.cpp
+  ${imgui_dir}/imgui_impl_sdl.cpp
+  ${imgui_dir}/imgui_impl_opengl3.cpp
+  )
+
 #set (tests_src
 #  ${tests_dir}/TestEvents.c
 #	)
@@ -89,7 +99,7 @@ set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/lib)
 #add_library(math SHARED lib/math/operations.cpp)
 #add_library(math STATIC lib/math/operations.cpp)
 
-add_executable(hello ${src_dir}/hello.cpp ${util_src} ${graphics_src} ${opencl_src} ${program_src} ${soil_src})  
+add_executable(hello ${src_dir}/hello.cpp ${util_src} ${graphics_src} ${opencl_src} ${program_src} ${soil_src} ${imgui_src})  
 
 #Tanne linkitykset
 target_link_libraries(hello ${SDL2_LIBRARIES} ${OPENGL_LIBRARIES} ${GLEW_LIBRARIES} OpenCL::OpenCL ${Boost_LIBRARIES}) 

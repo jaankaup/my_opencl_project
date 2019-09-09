@@ -22,6 +22,7 @@ endif()
 # The following folder will be included
 include_directories("${CMAKE_SOURCE_DIR}/includes")
 include_directories("${CMAKE_SOURCE_DIR}/includes/soil")
+include_directories("${CMAKE_SOURCE_DIR}/includes/imgui")
 
 if ( WIN32 )
   set ( default_deps_dir "${CMAKE_SOURCE_DIR}/deps" )

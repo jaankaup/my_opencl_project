@@ -1,3 +1,6 @@
+#include <imgui.h>
+#include <imgui_impl_sdl.h>
+#include <imgui_impl_opengl3.h>
 #include "Program.h"
 #include "GlobalPropertyManager.h"
 #include "ResourceManager.h"
@@ -92,13 +95,20 @@ void MainProgram::start()
   auto id1 = ic->register_lambda_function(EventType::KEYBOARD_MOUSE,[&](const InputCache* c) { running = !c->isKeyReleased('q'); });
   registerHandlers();
 
+  // Our state (imgui)
+  bool show_demo_window = true;
+  bool show_another_window = false;
+  ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+
   // Main loop.
   while (running) {
     ic->pollEvents();
+
     camera.handleKeyInput();
     Window::getInstance()->swapBuffers();
     //rayTrace(camera.getPosition(), camera.getTarget(), glm::vec3(0.0f,1.0f,0.0f)); 
     renderer.render(camera);
+    //Window::getInstance()->renderImgui();
   };
 }
 

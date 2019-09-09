@@ -1,3 +1,6 @@
+#include <imgui.h>
+#include <imgui_impl_sdl.h>
+#include <imgui_impl_opengl3.h>
 #include "InputCache.h"
 #include "../Utils/Helper.h"
 #include "../Utils/static_string.h"
@@ -67,7 +70,7 @@ void InputCache::pollEvents()
     SDL_Event e;
 
     while (SDL_PollEvent(&e)) {
-
+        ImGui_ImplSDL2_ProcessEvent(&e); // for imgui
         switch (e.type) {
 
         case SDL_QUIT: pQuitEvent.push_back(e); break;
