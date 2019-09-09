@@ -108,7 +108,7 @@ void MainProgram::start()
     Window::getInstance()->swapBuffers();
     //rayTrace(camera.getPosition(), camera.getTarget(), glm::vec3(0.0f,1.0f,0.0f)); 
     renderer.render(camera);
-    //Window::getInstance()->renderImgui();
+    Window::getInstance()->renderImgui();
   };
 }
 
@@ -140,11 +140,12 @@ void MainProgram::createGlobalProperties()
   initial_screen_height.registerTest(height_filter);
   glob_manager->add("initial_screen_height",initial_screen_height);
 
-  //  .
+  // Property for showing the density values.  
   BoolProperty show_density;
   show_density.set(false);
   glob_manager->add("show_density",show_density);
 
+  // Property for showing the scene values.  
   BoolProperty show_scene;
   show_scene.set(true);
   glob_manager->add("show_scene",show_scene);
@@ -553,9 +554,7 @@ void MainProgram::rayTrace(const glm::vec3& pos, const glm::vec3& target, const 
   cl::Buffer* density_output = d->get<cl::Buffer>("density_values");
   assert(density_output != nullptr);
 
-
   cl_int error = CL_SUCCESS;
-
 
   // THE KERNEL CREATION.
 
