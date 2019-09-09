@@ -23,6 +23,7 @@ class Camera
 
         glm::mat4 getMatrix() const;
         glm::vec3 getPosition() const;
+        glm::vec3 getTarget() const;
         void translate(const glm::vec3& newPos);
         void rotateCamera(const float &xoffset, const float &yoffset);
         void update(const float time);

@@ -20,6 +20,16 @@ namespace Program {
 //  float v7_amount = 0.0f; 
 //};
 
+struct RayCamera {
+	glm::vec3 position;
+	glm::vec3 view;
+	glm::vec3 up;
+	glm::vec2 resolution;
+	glm::vec2 fov;		
+	float apertureRadius;
+	float focalDistance;
+};
+
 const static std::string DEFAULT_RENDERING_SHADER = "default_shader";
 
 extern std::unique_ptr<float[]> density_values;
@@ -104,6 +114,8 @@ class MainProgram
      * for the application.
      */
     void registerHandlers();
+
+    void rayTrace(const glm::vec3& pos, const glm::vec3& target, const glm::vec3& up); 
 };
 
 } // namespace Program

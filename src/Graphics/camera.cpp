@@ -114,6 +114,10 @@ glm::vec3 Camera::getPosition() const
     return position_;
 }
 
+glm::vec3 Camera::getTarget() const
+{
+    return target_;
+}
 
 /**
  * Asettaa kameran katsomaan annettua kohdetta

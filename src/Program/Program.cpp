@@ -7,6 +7,7 @@
 #include "../Graphics/camera.h"
 #include "../Graphics/renderer.h"
 #include "../Graphics/shader.h"
+#include "../Graphics/IACamera.h"
 #include "../Graphics/texture.h"
 #include "../OpenCL/GPU_Device.h"
 #include "../OpenCL/CL_Helper.h"
@@ -38,6 +39,7 @@ int v7_amount = 0.0f;
 bool MainProgram::initialize()
 {
   Log::getDebug().log("INITIALIZING PROGRAM.\n");
+//  IAC::InteractiveCamera cam;
 
   // Initialize InputCache.
   auto ic = InputCache::getInstance();
@@ -52,6 +54,22 @@ bool MainProgram::initialize()
   if (!createOpenCl()) { Log::getError().log("Failed to create opencl."); return false; }
   if (!createShaders()) { Log::getError().log("Failed to create shaders."); return false; }
   if (!createTextures()) { Log::getError().log("Failed to create textures."); return false; } 
+
+//  auto vb = ResourceManager::getInstance()->create<Vertexbuffer>("uvs");
+//  vb->init(GL_ARRAY_BUFFER,GL_STATIC_DRAW);
+//  std::vector<std::string> types = {"4f"};
+//  std::vector<glm::vec4> uvs;
+//  int sw = ic->get_screenWidth();
+//  int sh = ic->get_screenHeight();
+//  Log::getDebug().log(" yeah "); //sw == %, sh == %", sw, sh);
+//  for (int x=0; x<sw; x++) {
+//  for (int y=0; y<sh; y++) {
+//    uvs.push_back(glm::vec4(float(x)/float(sw),float(y)/float(sh),0.0f,0.0f));
+//  }};
+
+//  vb->addData(&uvs[0],sizeof(glm::vec4)*uvs.size(),types);
+//  vb->setCount(uvs.size());
+  return true;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////
@@ -79,6 +97,7 @@ void MainProgram::start()
     ic->pollEvents();
     camera.handleKeyInput();
     Window::getInstance()->swapBuffers();
+    //rayTrace(camera.getPosition(), camera.getTarget(), glm::vec3(0.0f,1.0f,0.0f)); 
     renderer.render(camera);
   };
 }
@@ -164,6 +183,10 @@ bool MainProgram::createShaders()
   Shader* density_points = res_manager->create<Shader>("density_shader");
   std::vector<std::string> src_density_points = {"shaders/density_points.vert", "shaders/density_points.geom", "shaders/density_points.frag"};
   density_points->build(src_density_points);
+
+  Shader* raymarch_shader = res_manager->create<Shader>("march_shader");
+  std::vector<std::string> raymarch_shader_src = {"shaders/raymarch.vert",  "shaders/raymarch.frag"};
+  raymarch_shader->build(raymarch_shader_src);
 
   return true;
 }
@@ -262,6 +285,12 @@ bool MainProgram::createOpenCl()
 //  for (int i=0 ; i<lkm ; i++) {
 //    Log::getDebug().log("% . cube-case == % ",i, Program::case_values.get()[i]);
 //  }
+
+  cl::Program::Sources raySources;
+  std::string src_ray = Helper::loadSource("shaders/rayTrace.cl"); 
+  sources.push_back({src_ray.c_str(),src_ray.length()});
+
+  d->createProgram("rayTrace", raySources);
   return true;
 }
 
@@ -460,6 +489,132 @@ void MainProgram::registerHandlers()
          float hopohopo_data[1] = {float(Program::cube_now)};
          vb->populate_data(&hopohopo_data,sizeof(float));
       });
+}
+
+/////////////////////////////////////////////////////////////////////////////////////
+
+void MainProgram::rayTrace(const glm::vec3& pos, const glm::vec3& target, const glm::vec3& up ) {
+
+  //const static glm::ivec3 LOCAL_GROUP_SIZE(4,4,4);
+  //glm::ivec3 global_group_size(dimensionX, dimensionY, dimensionZ);
+  GPU_Device* d = GPU_Device::getInstance();
+
+  cl::CommandQueue* command = d->get<cl::CommandQueue>("command_ray");
+  if (d == nullptr) command = d->create<cl::CommandQueue>("command_ray");
+
+// struct RayCamera {
+// 	glm::vec3 position;
+// 	glm::vec3 view;
+// 	glm::vec3 up;
+// 	glm::vec2 resolution;
+// 	glm::vec2 fov;		
+// 	float apertureRadius;
+// 	float focalDistance;
+// };
+  // Create the camera.
+
+  RayCamera r;
+  r.position = pos;
+  r.view = target;
+  r.up = up;
+  r.resolution;
+  r.fov = glm::vec2(45.0f,45.0f);
+
+  cl::Buffer* rayCamera = d->get<cl::Buffer>("rayCamera");
+
+  if (rayCamera == nullptr) rayCamera = d->createBuffer("rayCamera", sizeof(RayCamera), CL_MEM_READ_WRITE);
+	command->enqueueWriteBuffer(*rayCamera, CL_TRUE, 0, sizeof(RayCamera), &r);
+
+  auto ic = InputCache::getInstance();
+
+  int sw = ic->get_screenWidth();
+  int sh = ic->get_screenHeight();
+
+  // The global range. Screen size.
+  cl::NDRange global(sw, sh, 1);
+  cl::NDRange local(8, 8, 1);
+
+  int theSIZE = sw * sh;
+
+  cl::Buffer* theScreen = d->get<cl::Buffer>("theScreen");
+  if (theScreen == nullptr) d->createBuffer("theScreen", sizeof(glm::vec3)*theSIZE, CL_MEM_READ_WRITE);
+
+  // TODO: check if this exists.
+  cl::Buffer* density_output = d->get<cl::Buffer>("density_values");
+  assert(density_output != nullptr);
+
+
+  cl_int error = CL_SUCCESS;
+
+
+  // THE KERNEL CREATION.
+
+  // THE INDICES for both evalDensity and mc.
+  cl::EnqueueArgs eargs(*command, global, local);
+
+  cl::Program* program = d->get<cl::Program>("rayTrace");
+  assert(program != nullptr);
+
+//__kernel void render_kernel(const int width, const int height, __global float3* output, __constant const Camera* cam)
+  cl::make_kernel<int, int, cl::Buffer, cl::Buffer> ray_kernel(*program,"render_kernel",&error);
+  if (error != CL_SUCCESS) print_cl_error(error);
+
+  // THE EXECUTION.
+
+  ray_kernel(eargs, sw, sh, *theScreen, *rayCamera).wait();
+
+//  float eval_result[theSIZE];
+//  error = command->enqueueReadBuffer(*density_output,CL_TRUE,0,sizeof(float)*theSIZE,eval_result);
+//
+//  for (int i=0; i<theSIZE; i++)
+//  {
+//     Log::getDebug().log("i == % : % ", i, eval_result[i]);
+//  }
+
+  // The marching cubes output count. The total count of the float4 values
+  // (vvvv nnnn vvvv nnnn vvvv nnn.....) vvvv :: float4, nnnn :: float4
+////  int lkm[1] = {0};
+////  error = command->enqueueReadBuffer(*counter,CL_TRUE,0,sizeof(int),lkm);
+////  if (error != CL_SUCCESS) { print_cl_error(error); }
+////  
+////  Log::getDebug().log("lkm[0] == %", lkm[0]);
+////  
+////  // Create the array for maching cubes output.
+////  auto result = std::make_unique<glm::vec4[]>(lkm[0]);
+////
+////  // Create the array for maching cubes output.
+////  if (!update) {
+////    auto d_values = std::make_unique<float[]>(theSIZE);
+////    error = command->enqueueReadBuffer(*density_output,CL_TRUE,0,sizeof(float)*theSIZE, d_values.get());
+////    if (error != CL_SUCCESS) { print_cl_error(error); }
+////    Program::density_values = std::move(d_values);
+////  }
+////
+////  auto c_values = std::make_unique<glm::vec4[]>(theSIZE);
+////  error = command->enqueueReadBuffer(*cubecase_output,CL_TRUE,0,sizeof(glm::vec4)*theSIZE, c_values.get());
+////  if (error != CL_SUCCESS) { print_cl_error(error); }
+////  Program::case_values = std::move(c_values);
+////
+////  // Copy the result of marching cubes.
+////  error = command->enqueueReadBuffer(*mc_output,CL_TRUE,0,sizeof(glm::vec4)*lkm[0], result.get());
+////  if (error != CL_SUCCESS) { print_cl_error(error); }
+////
+////  //for (int i=0; i< lkm[0]; i++)
+////  //{
+////  //   Log::getDebug().log("i == % : % ", i, c_values.get()[i]); // result.get()[i]);
+////  //}
+////
+//////  for (int i=0; i< lkm[0]; i++)
+//////  {
+//////     Log::getDebug().log("i == % : % ", i, Program::density_values.get()[i]); // result.get()[i]);
+//////  }
+////
+////  // Store the output count of marching cubes. This is the count of all float4
+////  // created in marching cubes shader. We need so we can store and draw 
+////  // the mc output with opengl.
+////  *total_count = lkm[0];
+////
+////  return std::move(result);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////

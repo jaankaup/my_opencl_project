@@ -30,6 +30,7 @@ set(graphics_src
       ${graphics_dir}/renderer.cpp
       ${graphics_dir}/texture.cpp
       ${graphics_dir}/camera.cpp
+      ${graphics_dir}/IACamera.cpp
       ${graphics_dir}/textureData.cpp
       )
 

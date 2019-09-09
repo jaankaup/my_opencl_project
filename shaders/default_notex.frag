@@ -93,5 +93,15 @@ void main(){
         // Lopullinen vä.
         //color = ambient + attentuation * (diffuseComponent + specularComponent);
         //color = ambient;
-	color = ambient + attentuation * (diffuseComponent + specularComponent);
+	vec3 temp_color = ambient + attentuation * (diffuseComponent + specularComponent);
+        color = temp_color;
+//        float ix;
+//        float iy;
+//        float iz;
+//        modf(4*temp_color.x,ix);
+//        modf(4*temp_color.y,iy);
+//        modf(4*temp_color.z,iz);
+//        color = vec3(ix/4.0, iy/4.0, iz/4.0); 
+//        //color = vec3(ix/4.0 + temp_color.x/10.0, iy/4.0+temp_color.y/4.0 + temp_color.x/4.0, iz/10.0+temp_color.z/4.0 + temp_color.x/4.0); 
+//	color = mix(temp_color,vec3(0.2,0.8,0.2) ,smoothstep(0.0,1.0,(ix+iy+iz)/12));
 }
