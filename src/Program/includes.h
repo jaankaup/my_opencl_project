@@ -1,3 +1,3 @@
+//#define NDEBUG
 #include <assert.h>
 
-//#define NDEBUG

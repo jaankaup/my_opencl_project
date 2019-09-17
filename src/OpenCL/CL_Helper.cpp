@@ -137,6 +137,8 @@ std::string errorcode_toString(const cl_int errorCode)
     case -68:	return "CL_INVALID_DEVICE_PARTITION_COUNT	clCreateSubDevices	if the partition name specified in properties is CL_DEVICE_PARTITION_BY_COUNTS and the number of sub-devices requested exceeds CL_DEVICE_PARTITION_MAX_SUB_DEVICES or the total number of compute units requested exceeds CL_DEVICE_PARTITION_MAX_COMPUTE_UNITS for in_device, or the number of compute units requested for one or more sub-devices is less than zero or the number of sub-devices requested exceeds CL_DEVICE_PARTITION_MAX_COMPUTE_UNITS for in_device.";
     case -69:	return "CL_INVALID_PIPE_SIZE	clCreatePipe	if pipe_packet_size is 0 or the pipe_packet_size exceeds CL_DEVICE_PIPE_MAX_PACKET_SIZE value for all devices in context or if pipe_max_packets is 0.";
     case -70:	return "CL_INVALID_DEVICE_QUEUE	clSetKernelArg	when an argument is of type queue_t when it’s not a valid device queue object.";
+    case -9999:	return "NVidia. clEnqueueNDRangeKernel. Illegal read or write to a buffer.";
+    default: return "UNKOW ERROR TYPE " + std::to_string(errorCode) + ".";
 
 
 

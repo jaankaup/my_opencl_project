@@ -1,13 +1,17 @@
 #version 330
 
-in vec4 fUV;
+in vec4 fCoords;
+in vec4 nCoords;
 
 out vec3 color;
 
-uniform mat4 viewMatrix;
-uniform vec3 cameraPosition;
+//uniform mat4 viewMatrix;
+//uniform vec3 cameraPosition;
 
 void main(){
-   
-  color = vec3(0.2f,1.0f,0.9f);
+  //gl_FragCoord = vec4(fCoords.x, fCoords.y, 0.0, 1.0);   
+  //gl_PointCoord = vec2(fCoords.x/1024.0,fCoords.y/1024.0);
+  //color = vec3((1.0 + nCoords.x)*0.5, (1.0 + nCoords.y) * 0.5, (1.0 + nCoords.z) * 0.5); // nCoords.xyz;
+  //color = vec3((1.0 + nCoords.x) * 0.5, (1.0 + nCoords.y) * 0.5, (1.0 + nCoords.z) * 0.5); // nCoords.xyz;
+  color = vec3(nCoords.x, nCoords.y, nCoords.z); // nCoords.xyz;
 }

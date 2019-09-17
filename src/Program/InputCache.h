@@ -9,6 +9,7 @@
 #include <SDL2/SDL.h>
 #include <glm/glm.hpp>
 #include "../Utils/log.h"
+#include "GlobalPropertyManager.h"
 
 /**
  * An enum for different event types.
@@ -130,7 +131,15 @@ class InputCache
      * A method for getting the pointer to the InputCache object.
      * @param return The pointer to the InputCache instance.
      */
-    static InputCache* getInstance() { static InputCache eh; return &eh; };
+    static InputCache* getInstance() {
+       static InputCache eh;
+       auto g = Program::GlobalPropertyManager::getInstance();
+       int w = g->get<Program::IntProperty>("initial_screen_width")->get();
+       int h = g->get<Program::IntProperty>("initial_screen_height")->get();
+       eh.pScreenWidth = w;
+       eh.pScreenHeight = h;
+       return &eh;
+    };
 
     /** Copy and move operations are deleted because this is an singleton class. */
     InputCache(const InputCache&) = delete;

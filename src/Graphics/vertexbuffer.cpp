@@ -72,6 +72,9 @@ void Vertexbuffer::populate_data(const void* data, unsigned int size)
 
   memcpy(ptr, data, size);
   glUnmapNamedBuffer(pId);
+
+  // Paivitetaan data size. TODO: fiksaile koko funktio.
+  //pData_size = size;
 }
 
 void Vertexbuffer::addData(const void* data, unsigned int size, const std::vector<std::string>& types)

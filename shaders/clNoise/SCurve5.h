@@ -1,0 +1,10 @@
+const char *SCurve5_Src = "\n"
+"float SCurve5 (float a)\n"
+"{\n"
+"    float a3 = a * a * a;\n"
+"    float a4 = a3 * a;\n"
+"    float a5 = a4 * a;\n"
+"    return (6.0f * a5) - (15.0f * a4) + (10.0f * a3);\n"
+"}\n"
+"\n"
+;

@@ -20,24 +20,45 @@ void Renderer::init()
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
     glEnable(GL_MULTISAMPLE);
-    glEnable(GL_PROGRAM_POINT_SIZE);
-    glPointSize(5);
-    glLineWidth(5);
+    //glEnable(GL_PROGRAM_POINT_SIZE);
+    //glPointSize(1);
+    glLineWidth(1);
 //    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 }
 
-void Renderer::render(const Camera& camera) {
+void Renderer::render(const Camera& camera, const Camera& ray_camera) {
+  auto ic = InputCache::getInstance();
+
+  int sw = ic->get_screenWidth();
+  int sh = ic->get_screenHeight();
+
   //Log::getDebug().log("camera % .",camera.getMatrix());
   glClearColor(0.0f,0.0f,0.0f,1.0f);
   glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
-  glm::mat4 projection = glm::perspective(glm::radians(45.0f), 16.0f / 9.0f, 0.001f, 1000.0f);
+  //glm::mat4 projection = glm::perspective(glm::radians(45.0f), 16.0f / 9.0f, 0.001f, 1000.0f);
+  glm::mat4 projection = glm::perspective(glm::radians(90.0f), float(sw) / float(sh), 1.000f, 200.0f);
   glm::vec3 eyePosition = camera.getPosition();
   glm::mat4 MVP = projection * camera.getMatrix() * glm::mat4(1.0f);  
 
+//  glDisable(GL_DEPTH_TEST);
+//  glDisable(GL_CULL_FACE);
   auto glob_manager = Program::GlobalPropertyManager::getInstance();
 
   auto rm = ResourceManager::getInstance();
+  //auto march_shader = rm->get<Shader>("march_shader");
+  auto march_shader = rm->get<Shader>("camera_debug_shader");
+  march_shader->bind();
+
+
+  march_shader->setUniform("MVP", MVP);
+  march_shader->setUniform("camera_position", camera.getPosition());
+  march_shader->setUniform("camera_front", camera.getFront());
+
+  auto ray_screen = rm->get<Vertexbuffer>("rayScreen");
+  ray_screen->bind();
+  glDrawArrays(GL_POINTS, 0, 128*128 /*1024*1024*/ );
+
   auto shader = rm->get<Shader>(Program::DEFAULT_RENDERING_SHADER);
   shader->bind();
 
@@ -74,16 +95,23 @@ void Renderer::render(const Camera& camera) {
     vb->bind();
     glDrawArrays(GL_TRIANGLES, 0, vb->getCount());
   }
-
+/////
   glFrontFace(GL_CW);
+  glLineWidth(5);
   auto shader_wire = rm->get<Shader>("cube_wire");
   shader_wire->bind();
   shader_wire->setUniform("MVP", MVP);
-  shader_wire->setUniform("base_position", Program::bPOS);
+  //shader_wire->setUniform("base_position", Program::bPOS);
+  shader_wire->setUniform("base_position", glm::vec4(ray_camera.getPosition(),1.0));
+
   shader_wire->setUniform("x_offset", Program::x_dim);
   shader_wire->setUniform("y_offset", Program::y_dim);
   shader_wire->setUniform("z_offset", Program::z_dim);
-  shader_wire->setUniform("block_size", Program::bSIZE);
+  shader_wire->setUniform("camera_position", ray_camera.getPosition());
+  shader_wire->setUniform("camera_front", ray_camera.getFront());
+  Log::getDebug().log("ray_camera.getFront() == %", ray_camera.getFront());
+
+//  shader_wire->setUniform("block_size", Program::bSIZE);
 //  shader_wire->setUniform("index", int(Program::cube_float));
 
   auto vb_wire = rm->get<Vertexbuffer>("hopohopo");
@@ -92,29 +120,32 @@ void Renderer::render(const Camera& camera) {
   //Program::cube_now +=1;
   //Program::cube_float += 10.0f;
   //  Log::getDebug().log("Program::cube_now == %", Program::cube_now);
-  if (Program::cube_now > Program::x_dim * Program::y_dim * Program::z_dim * 64)
-  {
-    Program::cube_now = 0;
-    Log::getDebug().log("Program::cube_now == %", Program::cube_now);
-  }
+  //if (Program::cube_now > Program::x_dim * Program::y_dim * Program::z_dim * 64)
+  //{
+  //  Program::cube_now = 0;
+  //  Log::getDebug().log("Program::cube_now == %", Program::cube_now);
+  //}
 
   glFrontFace(GL_CCW);
 
-  
-  auto show_den = glob_manager->get<Program::BoolProperty>("show_density")->get();
-  if (!show_den) return;
-  
-  auto shader_density_points = rm->get<Shader>("density_shader");
-  shader_density_points->bind();
-  shader_density_points->setUniform("MVP", MVP);
-  shader_density_points->setUniform("base_position", Program::bPOS);
-  shader_density_points->setUniform("x_offset", Program::x_dim);
-  shader_density_points->setUniform("y_offset", Program::y_dim);
-  shader_density_points->setUniform("z_offset", Program::z_dim);
-  shader_density_points->setUniform("block_size", Program::bSIZE);
-  auto vb_density_points = ResourceManager::getInstance()->get<Vertexbuffer>("density_points");
-  vb_density_points->bind();
-  glDrawArrays(GL_POINTS, 0, vb_density_points->getCount());
+  glLineWidth(1);
+  glFlush();
+/////
+/////  
+/////  auto show_den = glob_manager->get<Program::BoolProperty>("show_density")->get();
+/////  if (!show_den) return;
+/////  
+/////  auto shader_density_points = rm->get<Shader>("density_shader");
+/////  shader_density_points->bind();
+/////  shader_density_points->setUniform("MVP", MVP);
+/////  shader_density_points->setUniform("base_position", Program::bPOS);
+/////  shader_density_points->setUniform("x_offset", Program::x_dim);
+/////  shader_density_points->setUniform("y_offset", Program::y_dim);
+/////  shader_density_points->setUniform("z_offset", Program::z_dim);
+/////  shader_density_points->setUniform("block_size", Program::bSIZE);
+/////  auto vb_density_points = ResourceManager::getInstance()->get<Vertexbuffer>("density_points");
+/////  vb_density_points->bind();
+/////  glDrawArrays(GL_POINTS, 0, vb_density_points->getCount());
 
 }
 

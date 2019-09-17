@@ -1,4 +1,6 @@
-#define MAX_MARCHING_STEPS 100
+#include "shaders/Noise2.cl"
+#define MAX_MARCHING_STEPS 1000
+
 __constant float EPSILON = 0.00003f; /* req2uired to compensate for limited float precision */
 __constant float PI = 3.14159265359f;
 __constant int SAMPLES = 4;
@@ -25,6 +27,7 @@ typedef struct Camera{
 	float focalDistance;
 } Camera;
 
+
 //static float get_random(unsigned int *seed0, unsigned int *seed1) {
 //
 //	/* hash the seeds using bitwise AND operations and bitshifts */
@@ -43,7 +46,8 @@ typedef struct Camera{
 //	return (res.f - 2.0f) / 2.0f;
 //}
 
-Ray createCamRay(const int x_coord, const int y_coord, const int width, const int height, __constant Camera* cam) {
+//Ray createCamRay(const int x_coord, const int y_coord, const int width, const int height, __constant Camera* cam) {
+Ray createCamRay(const int x_coord, const int y_coord, const int width, const int height, __global Camera* cam) {
 
 	/* create a local coordinate frame for the camera */
 	float3 rendercamview = cam->view; rendercamview = normalize(rendercamview);
@@ -67,7 +71,7 @@ Ray createCamRay(const int x_coord, const int y_coord, const int width, const in
 	float3 pointOnPlaneOneUnitAwayFromEye = middle + (horizontal * ((2 * sx) - 1)) + (vertical * ((2 * sy) - 1));
 	float3 pointOnImagePlane = cam->position + ((pointOnPlaneOneUnitAwayFromEye - cam->position) * cam->focalDistance); /* cam->focalDistance */
 
-//	float3 aperturePoint;
+	float3 aperturePoint;
 //
 //	/* if aperture is non-zero (aperture is zero for pinhole camera), pick a random point on the aperture/lens */
 //	if (cam->apertureRadius > 0.00001f) { 
@@ -209,18 +213,84 @@ Ray createCamRay(const int x_coord, const int y_coord, const int width, const in
 
 //union Colour{ float c; uchar4 components; };
 
-__kernel void render_kernel(const int width, const int height, __global float3* output, __constant const Camera* cam)
+///**
+// * Map cube coordinate to the index of the density value array.
+// * @param global_x The count of total poinst in x direction.
+// * @param global_y The count of total poinst in y direction.
+// * @param global_z The count of total poinst in z direction.
+// * @param x_offset The offset for density array for y coordinates.
+// * @param y_offset The offset for density array for z coordinates.
+// * @param return The index of density value array.
+// */
+//int globalIndex(int global_x, int global_y, int global_z, int x_offset, int y_offset) 
+//{
+//  return global_x + x_offset * global_y + x_offset * y_offset * global_z;
+//}
+
+float maasto(float3 f_pos)
+{
+  return -1.0f;
+ 	//float value =  GetWhiteNoise3(3,f_pos.x*0.001, f_pos.y*0.001, f_pos.z*0.001); 
+  //return f_pos.y + value*0.1;
+}
+
+float anti_maasto(float3 f_pos)
+{
+  return -1.0f;
+  //float m = maasto(f_pos);
+  //float value;
+  //modf(m, &value);
+  //return value;
+}
+
+float sceneSDF(float3 cam_ray, float isovalue) {
+//  int x = (int)cam_ray.x; 
+//  int y = (int)cam_ray.y; 
+//  int z = (int)cam_ray.z; 
+
+//  size_t x_dim = get_global_size(0);
+//  size_t y_dim = get_global_size(1);
+//  size_t z_dim = get_global_size(2);
+
+   return anti_maasto(cam_ray) - isovalue;
+}
+
+// TODO: check mc-normal indexes!!! Possible BUG.
+float3 calculate_normal(float3 pos)
+{
+  float3 grad;
+  float right = maasto(pos); //   antimaasto((float3){pos.x+1.0f, pos.y,pos.z});
+  float left =    maasto((float3){pos.x-1.0f, pos.y,pos.z});
+  float up =      maasto((float3){pos.x, pos.y+1.0f,pos.z});
+  float down =    maasto((float3){pos.x, pos.y-1.0f,pos.z});
+  float z =       maasto((float3){pos.x, pos.y,pos.z-1.0f});
+  float z_minus = maasto((float3){pos.x, pos.y,pos.z+1.0f});
+
+  //return (float3){0.0f,0.0f,0.0f};
+  grad.x = right - left;
+  grad.y = up - down;
+  grad.z = z - z_minus;
+  return normalize(grad); // Normalize the result. 
+}
+
+//__kernel void render_kernel(const float isovalue, const int width, const int height, __global float3* output, __constant const Camera* cam)
+__kernel void render_kernel(float isovalue, int width, int height, __global float8* output, __global Camera* cam)
 {
 	unsigned int work_item_id = get_global_id(0);	/* the unique global id of the work item for the current pixel */
 	unsigned int x_coord = work_item_id % width;			/* x-coordinate of the pixel */
 	unsigned int y_coord = work_item_id / width;			/* y-coordinate of the pixel */
 
 	Ray camray = createCamRay(x_coord, y_coord, width, height, cam);
+  float depth = 0.0f;
+  float3 normal = (float3){0.0f,0.0f,0.0f};
+  //for (int i=0 ; i<MAX_MARCHING_STEPS; i++) {
+  //  depth += 1.0f;
+  //  float3 ray_point = camray.origin + (-1.0f) * depth * camray.dir;
+  //  if (sceneSDF(ray_point, isovalue) < 0.0f) { normal = calculate_normal(ray_point); break; } 
+  //}
 
-  float depth = 1.0;
-  for (int i=0 ; i<MAX_MARCHING_STEPS; i++) {
-    float dist = sceneSDF(camray.origin + depth * camray.dir); 
-  }
+	output[work_item_id] = float8(x_coord, y_coord, 0.5f, 0.3f, 0.2f, normal.x,normal.y,normal.z); //; // (float3){x_coord, y_coord, 1.0f};
+   
 //	/* add the light contribution of each sample and average over all samples*/
 //	float3 finalcolor = (float3)(0.0f, 0.0f, 0.0f);
 //	float invSamples = 1.0f / SAMPLES;

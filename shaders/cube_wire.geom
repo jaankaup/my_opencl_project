@@ -2,15 +2,17 @@
 
 layout(points) in;
 
-//layout(triangle_strip, max_vertices = 30) out;
-layout(line_strip, max_vertices = 30) out;
+layout(triangle_strip, max_vertices = 30) out;
+//layout(line_strip, max_vertices = 30) out;
 //layout(points, max_vertices = 8) out;
 
 out vec3 color_in;
 
 uniform mat4 MVP;
-uniform float block_size = 1.0;
 uniform vec4 base_position;
+uniform vec3 camera_position;
+uniform vec3 camera_front;
+uniform float block_size = 1.0;
 
 //in gl_PerVertex
 //{
@@ -115,8 +117,9 @@ uniform vec4 base_position;
 void printCube(vec3 c)
 {
   float pSize = 1.0; // block_size;
-  float d = block_size; // block_size;
-  vec3 theCOLOR = vec3(1.0,0.0,0.0);
+  //float d = block_size; // block_size;
+  float d = 0.5; // block_size;
+  vec3 theCOLOR = vec3(0.0,0.0,1.0);
 
   vec3 p0 = c.xyz;
   vec3 p1 = c.xyz + vec3(0.0,   d, 0.0);
@@ -316,11 +319,259 @@ void printCube(vec3 c)
     EmitVertex();
 
     EndPrimitive();
+
+
 }
 
+void printCube2(vec3 c)
+{
+  float pSize = 1.0; // block_size;
+  float d = 0.20;
+  vec3 theCOLOR = vec3(0.0,0.0,1.0); // gs_in[0].color;
+
+  vec3 p0 = c.xyz;
+  vec3 p1 = c.xyz + vec3(0.0,   d, 0.0);
+  vec3 p2 = c.xyz + vec3(d  ,   d, 0.0);
+  vec3 p3 = c.xyz + vec3(d  , 0.0, 0.0);
+  vec3 p4 = c.xyz + vec3(0.0, 0.0,  d);
+  vec3 p5 = c.xyz + vec3(0.0,   d,  d);
+  vec3 p6 = c.xyz + vec3(d  ,   d,  d);
+  vec3 p7 = c.xyz + vec3(d  , 0.0,  d);
+
+    // FRONT sideFront = v0 v1 v2 v3
+    gl_PointSize = pSize;
+    gl_Position =  MVP * vec4(p0,1.0);
+    color_in = theCOLOR;
+    EmitVertex();
+
+    gl_PointSize = pSize;
+    gl_Position =  MVP * vec4(p1,1.0);
+    color_in = theCOLOR;
+    EmitVertex();
+
+    gl_PointSize = pSize;
+    gl_Position =  MVP * vec4(p2,1.0);
+    color_in = theCOLOR;
+    EmitVertex();
+
+    gl_PointSize = pSize;
+    gl_Position =  MVP * vec4(p3,1.0);
+    color_in = theCOLOR;
+    EmitVertex();
+
+    gl_PointSize = pSize;
+    gl_Position =  MVP * vec4(p0,1.0);
+      color_in = theCOLOR;
+    EmitVertex();
+
+    EndPrimitive();
+
+    gl_PointSize = pSize;
+    gl_Position =  MVP * vec4(p1,1.0);
+      color_in = theCOLOR;
+    EmitVertex();
+
+    gl_PointSize = pSize;
+    gl_Position =  MVP * vec4(p5,1.0);
+      color_in = theCOLOR;
+    EmitVertex();
+
+    gl_PointSize = pSize;
+    gl_Position =  MVP * vec4(p6,1.0);
+      color_in = theCOLOR;
+    EmitVertex();
+
+    gl_PointSize = pSize;
+    gl_Position =  MVP * vec4(p2,1.0);
+      color_in = theCOLOR;
+    EmitVertex();
+
+    gl_PointSize = pSize;
+    gl_Position =  MVP * vec4(p1,1.0);
+      color_in = theCOLOR;
+    EmitVertex();
+
+    EndPrimitive();
+
+    gl_PointSize = pSize;
+    gl_Position =  MVP * vec4(p3,1.0);
+      color_in = theCOLOR;
+    EmitVertex();
+
+    gl_PointSize = pSize;
+    gl_Position =  MVP * vec4(p2,1.0);
+      color_in = theCOLOR;
+    EmitVertex();
+
+    gl_PointSize = pSize;
+    gl_Position =  MVP * vec4(p6,1.0);
+      color_in = theCOLOR;
+    EmitVertex();
+
+    gl_PointSize = pSize;
+    gl_Position =  MVP * vec4(p7,1.0);
+      color_in = theCOLOR;
+    EmitVertex();
+
+    gl_PointSize = pSize;
+    gl_Position =  MVP * vec4(p3,1.0);
+      color_in = theCOLOR;
+    EmitVertex();
+
+    EndPrimitive();
+
+    gl_PointSize = pSize;
+    gl_Position =  MVP * vec4(p0,1.0);
+      color_in = theCOLOR;
+    EmitVertex();
+
+    gl_PointSize = pSize;
+    gl_Position =  MVP * vec4(p4,1.0);
+      color_in = theCOLOR;
+    
+    EmitVertex();
+    gl_PointSize = pSize;
+    gl_Position =  MVP * vec4(p5,1.0);
+      color_in = theCOLOR;
+    EmitVertex();
+
+    gl_PointSize = pSize;
+    gl_Position =  MVP * vec4(p1,1.0);
+      color_in = theCOLOR;
+    EmitVertex();
+
+    gl_PointSize = pSize;
+    gl_Position =  MVP * vec4(p0,1.0);
+      color_in = theCOLOR;
+    EmitVertex();
+
+    EndPrimitive();
+
+
+    gl_PointSize = pSize;
+    gl_Position =  MVP * vec4(p4,1.0);
+      color_in = theCOLOR;
+    EmitVertex();
+
+    gl_PointSize = pSize;
+    gl_Position =  MVP * vec4(p7,1.0);
+      color_in = theCOLOR;
+    EmitVertex();
+
+    gl_PointSize = pSize;
+    gl_Position =  MVP * vec4(p6,1.0);
+      color_in = theCOLOR;
+    EmitVertex();
+
+    gl_PointSize = pSize;
+    gl_Position =  MVP * vec4(p5,1.0);
+      color_in = theCOLOR;
+    EmitVertex();
+
+    gl_PointSize = pSize;
+    gl_Position =  MVP * vec4(p4,1.0);
+      color_in = theCOLOR;
+    EmitVertex();
+
+    EndPrimitive();
+
+
+    gl_PointSize = pSize;
+    gl_Position =  MVP * vec4(p0,1.0);
+      color_in = theCOLOR;
+    EmitVertex();
+
+    gl_PointSize = pSize;
+    gl_Position =  MVP * vec4(p3,1.0);
+      color_in = theCOLOR;
+    EmitVertex();
+
+    gl_PointSize = pSize;
+    gl_Position =  MVP * vec4(p7,1.0);
+      color_in = theCOLOR;
+    EmitVertex();
+
+    gl_PointSize = pSize;
+    gl_Position =  MVP * vec4(p4,1.0);
+      color_in = theCOLOR;
+    EmitVertex();
+
+    gl_PointSize = pSize;
+    gl_Position =  MVP * vec4(p0,1.0);
+      color_in = theCOLOR;
+    EmitVertex();
+
+    EndPrimitive();
+
+    // LOOK AT
+
+    vec3 camera_position2 = vec3(5.5,5.5,5.5);
+
+    gl_PointSize = pSize;
+    gl_Position =  MVP * vec4(c,1.0);
+    color_in = theCOLOR;
+    EmitVertex();
+
+    gl_PointSize = pSize;
+    gl_Position =  MVP * vec4(c + vec3(10.3,0.3,0.3),1.0);
+    color_in = theCOLOR;
+    EmitVertex();
+
+    gl_PointSize = pSize;
+    //gl_Position =  MVP * vec4(camera_position + 10.0*camera_front,1.0);
+    gl_Position =  MVP * vec4(0.0,0.0,0.0,1.0);
+    color_in = theCOLOR;
+    EmitVertex();
+
+    gl_PointSize = pSize;
+    gl_Position =  MVP * vec4(c,1.0);
+    color_in = theCOLOR;
+    EmitVertex();
+
+    EndPrimitive();
+
+}
+
+void printCube3(vec3 c) {
+
+  float pSize = 1.0; // block_size;
+  float d = 0.20;
+  vec3 theCOLOR = vec3(0.0,0.0,1.0); // gs_in[0].color;
+
+  gl_PointSize = pSize;
+  gl_Position =  MVP * vec4(c,1.0);
+  color_in = theCOLOR;
+  EmitVertex();
+
+  gl_PointSize = pSize;
+  gl_Position =  MVP * vec4(c+ vec3(0.2,0.0,0.0),1.0);
+  color_in = theCOLOR;
+  EmitVertex();
+
+  gl_PointSize = pSize;
+  gl_Position =  MVP * vec4(c + 4.0 * camera_front,1.0);
+  color_in = theCOLOR;
+  EmitVertex();
+
+  gl_PointSize = pSize;
+  gl_Position =  MVP * vec4(c + 4.0 * camera_front + vec3(0.2,0.0,0.0),1.0);
+  color_in = vec3(0.0,1.0,1.0);
+  EmitVertex();
+
+  gl_PointSize = pSize;
+  gl_Position =  MVP * vec4(c,1.0);
+  color_in = (1.0 + camera_front) * 0.5;
+  EmitVertex();
+
+  EndPrimitive();
+
+}
+//uniform vec3 camera_position;
+//uniform vec3 camera_front;
 
 void main(){
-  vec4 pos = vec4(gl_in[0].gl_Position.xyz , 0.0);
-  printCube(pos.xyz);
+  vec4 pos = base_position; // vec4(gl_in[0].gl_Position.xyz , 0.0);
+  printCube3(pos.xyz);
+  printCube2(pos.xyz);
 }
 

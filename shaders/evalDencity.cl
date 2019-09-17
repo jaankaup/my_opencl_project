@@ -1,5 +1,6 @@
 // This is a file that is not included in in source because it's not my code. TODO: replace it with something else.
-#include "shaders/Noise.cl"
+//#include "shaders/Noise.cl"
+#include "shaders/Noise2.cl"
 
 // futhark
 // Density-function example.
@@ -17,34 +18,45 @@ float createCube(float4 pos, float4 a1, float4 a2, float4 b1, float4 b2)
 /**
  * Another wierd density value funcion. This won't create any ball now... 
  */
-float ball(float4 f_pos, float4 ball_center, float radius)
-{
-  return fmin(2.0f,fmax(-2.0f,pow(ball_center.x - f_pos.x,2.0f + pow(ball_center.y - f_pos.y,2.0f) + pow(ball_center.z - f_pos.z,2.0f) - pow(radius, 2.0f))));  
+/******************************************************************************************************************************/
+
+float ball(float3 f_pos, float3 ball_center, float radius) {
+  //return f_pos.y;
+  float final_value = 0.0f;
+  float value = pow(ball_center.x - f_pos.x,2.0f) + pow(ball_center.y - f_pos.y,2.0f) + pow(ball_center.z - f_pos.z,2.0f) - pow(radius, 2.0f);  
+  if (f_pos.y < -0.2f) return 1.0f;
+  //if (fabs(f_pos.y) < 0.001f) return 0.4f;
+  if (f_pos.y < 0.2f) return -1.0f;
+  //else if (value - 0.4f < 0.2f) return 0.41f; 
+  //else if (value - 0.4f < 0.1f) return 0.4f; 
+  //else if (value - 0.4f < 0.0f) return 0.39f; 
+  //else if (f_pos.y - 0.4f < 0.0f) return f_pos.y;
+  return value; // f_pos.y + 0.4f;;
 }
+
+/******************************************************************************************************************************/
 
 float maasto(float4 f_pos)
 {
-	float value =  Noise_3d(f_pos.x*0.1, f_pos.y*0.1, f_pos.z*0.1); 
-	float value2 =  Noise_3d(f_pos.x*0.2, f_pos.y*0.2, f_pos.z*0.2); 
-  float result =  f_pos.y - 15*value + 15.0*value2;
-  //if (result > 0.0001)  return 1.0;
-  //if (result < 0.0001)  return -1.0;
-  //return 0.0;
-  return result;
+  
+//  float value =  SingleValueFractalRigidMulti3(18.2, 0.5, 4, 2, 2, f_pos.x, f_pos.y, f_pos.z);
+//  float value =  GetValueFractal3(5.2, 2, 1.3, 2.0, 2, 0.3, 1,3, f_pos.x*0.2, f_pos.y*0.2, f_pos.z*0.2);
+//  float value2 = GetValueFractal3(1.5, 1, 0.7, 0.5, 3, 0.5, 1,3, f_pos.x*0.25, f_pos.y*0.25, f_pos.z*0.25);
+//	float value =  Noise_3d(f_pos.x*0.1, f_pos.y*0.1, f_pos.z*0.1); 
+  	float value =  GetWhiteNoise3(3,f_pos.x*0.001, f_pos.y*0.001, f_pos.z*0.001); 
+//	float value2 =  Noise_3d(f_pos.x*0.2, f_pos.y*0.2, f_pos.z*0.2); 
+//  float result =  f_pos.y - 15*value + 15.0*value2;
+//  return result;
+//  return f_pos.y + value + 0.5*value2;
+  return f_pos.y + value*0.1;
 }
 
 float anti_maasto(float4 f_pos, float4 a1, float4 a2)
 {
-  //if (f_pos.x < a1.x || f_pos.y < a1.y || f_pos.z > a1.z || f_pos.x > a2.x || f_pos.y > a2.y || f_pos.z < a2.z) return maasto(f_pos);
-  //if (f_pos.x < a1.x || f_pos.z > a1.z || f_pos.x > a2.x || f_pos.z < a2.z) return maasto(f_pos);
-  //if (f_pos.x > a1.x && f_pos.y > a1.y && f_pos.z < a1.z && f_pos.x < a2.x && f_pos.y < a2.y && f_pos.z > a2.z) return -1.0f; // f_pos.y;
-  //else f_pos.y;; // return maasto(f_pos);//f_pos.y;
   float m = maasto(f_pos);
   float value;
   modf(m, &value);
   return value;
-  //if (value <= 0) return -1.0f;
-  //else return 1.0f;
 }
 
 /**
@@ -90,5 +102,7 @@ __kernel void evalDensity(__global float* output, int x_offset, int y_offset, fl
 
   // Save the density value to the output.
   //output[finalID] = outoLaatikko(this_point_global) + maasto(this_point_global) + 15 + ball(this_point_global, (float4){0.0,0.0,0.0,0.0}, 15.0);
-  output[finalID] = anti_maasto(this_point_global, (float4){0.0,0.0,0.0,0.0}, (float4){10.0,10.0,-10.0,0.0});
+  //output[finalID] = maasto(this_point_global);
+  output[finalID] = ball(this_point_global.xyz, (float3){0.0f,0.0f,0.0f},5.3f);
+
 }                                                                               

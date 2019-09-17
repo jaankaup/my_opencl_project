@@ -13,6 +13,7 @@ in COLOR_OUT {
 out vec3 fColor_in;
 
 uniform mat4 MVP;
+uniform int show_surface = 0;
 //uniform float block_size = 1.0;
 //uniform vec4 base_position;
 
@@ -222,6 +223,7 @@ void printCube(vec3 c)
 
 void main(){
   vec3 pos = gl_in[0].gl_Position.xyz;
+  if (show_surface != 0 && gs_in[0].color == vec3(0.0)) return;
   printCube(pos);
 }
 

@@ -1,5 +1,6 @@
 #include "camera.h"
 #include "../Program/InputCache.h"
+#include "../Program/Program.h"
 
 // Konstruktori
 Camera::Camera(const glm::vec3& cameraPosition, const glm::vec3& cameraTarget, const glm::vec3& upVector)
@@ -10,7 +11,8 @@ Camera::Camera(const glm::vec3& cameraPosition, const glm::vec3& cameraTarget, c
     target_ = cameraTarget;
     up_ = upVector;
 
-    rotateCamera(120,10);
+    //rotateCamera(120,10);
+    rotateCamera(0,0);
     auto ic = InputCache::getInstance();
 //    ic->register_lambda_function(EventType::KEYBOARD_MOUSE,
 //              [&](const InputCache* c) {  
@@ -56,6 +58,8 @@ Camera::Camera(const glm::vec3& cameraPosition, const glm::vec3& cameraTarget, c
 
     ic->register_lambda_function(EventType::KEYBOARD_MOUSE,
               [&](const InputCache* c) {  
+                if (Program::rayCamera == false && pRaycamera) return;
+                if (Program::rayCamera == true && !pRaycamera) return;
                 if (c->isMousePressed(SDL_BUTTON_LEFT))
                 {
                   auto pos = c->getCurrent_mousePosition();
@@ -71,6 +75,7 @@ Camera::Camera(const glm::vec3& cameraPosition, const glm::vec3& cameraTarget, c
                   this->lastMouseX = pos.x;
                   this->lastMouseY = pos.y;
                 }
+                this->update(0.0f);
               });
 
 
@@ -119,13 +124,18 @@ glm::vec3 Camera::getTarget() const
     return target_;
 }
 
+glm::vec3 Camera::getFront() const
+{
+  return front_;
+}
 /**
  * Asettaa kameran katsomaan annettua kohdetta
  * @param cameraTarget kameran kohdevektori
  */
 void Camera::setView(const glm::vec3& cameraTarget)
 {
-    view = glm::lookAt(position_, cameraTarget, up_);
+    //view = glm::lookAt(position_, cameraTarget, up_);
+    view = glm::lookAt(position_, position_ + front_ , up_);
 }
 
 
@@ -217,6 +227,9 @@ void Camera::update(const float time)
  */
 void Camera::handleKeyInput()
 {
+  if (Program::rayCamera == false && pRaycamera) return;
+  if (Program::rayCamera == true && !pRaycamera) return;
+
   auto ic = InputCache::getInstance();
   auto deltaTime2 = ic->get_timeDelta();
 
@@ -248,6 +261,17 @@ void Camera::handleKeyInput()
 
   if(ic->isKeyDown(SDL_SCANCODE_C))
       position_ -= glm::normalize(up_) * speedMultiplier * deltaTime;
+
+  if(ic->isKeyDown(SDL_SCANCODE_O)) {
+      if (pFocaldistance < 0.2f) return;
+      pFocaldistance -= 0.1f;
+      Log::getDebug().log("Focaldistance == %", pFocaldistance);
+  }
+
+  if(ic->isKeyDown(SDL_SCANCODE_P)) {
+      pFocaldistance += 0.1f;
+      Log::getDebug().log("Focaldistance == %", pFocaldistance);
+  }
   update(deltaTime);
 
 }
@@ -257,7 +281,8 @@ void Camera::handleKeyInput()
  */
 void Camera::handleMouseInput(SDL_Event &inputEvent)
 {
-
+  if (Program::rayCamera == false && pRaycamera) return;
+  if (Program::rayCamera == true && !pRaycamera) return;
     switch (inputEvent.type)
     {
     case (SDL_MOUSEBUTTONDOWN): /* Klikkaus. Sijainti talteen sulavampaa liikettä varten */

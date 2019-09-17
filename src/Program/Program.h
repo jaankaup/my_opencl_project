@@ -6,6 +6,8 @@
 #include <string>
 #include <glm/glm.hpp>
 #include <SDL2/SDL.h>
+#include <CL/cl.hpp>
+#include "includes.h"
 
 namespace Program {
 
@@ -21,11 +23,11 @@ namespace Program {
 //};
 
 struct RayCamera {
-	glm::vec3 position;
-	glm::vec3 view;
-	glm::vec3 up;
-	glm::vec2 resolution;
-	glm::vec2 fov;		
+	cl_float3 position;
+	cl_float3 view;
+	cl_float3 up;
+	cl_float2 resolution;
+	cl_float2 fov;		
 	float apertureRadius;
 	float focalDistance;
 };
@@ -49,6 +51,7 @@ extern int v4_amount;
 extern int v5_amount;
 extern int v6_amount;
 extern int v7_amount;
+extern bool rayCamera;
 
 
 /**
@@ -115,7 +118,7 @@ class MainProgram
      */
     void registerHandlers();
 
-    void rayTrace(const glm::vec3& pos, const glm::vec3& target, const glm::vec3& up); 
+    void rayTrace(const glm::vec3& pos, const glm::vec3& target, const glm::vec3& up, const float focalDistance); 
 };
 
 } // namespace Program

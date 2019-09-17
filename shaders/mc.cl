@@ -345,8 +345,8 @@ int calculate_case(float d0, float d1, float d2, float d3, float d4, float d5, f
 float4 calculate_normal(int index, int x_offset, int y_offset, __global float* density_values)
 {
   float3 grad;
-  float right = density_values[index-1];
-  float left = density_values[index+1]; 
+  float right = density_values[index+1];
+  float left = density_values[index-1]; 
   float up = density_values[index+x_offset]; 
   float down = density_values[index-x_offset]; 
   float z = density_values[index+x_offset*y_offset]; 

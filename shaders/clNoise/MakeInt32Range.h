@@ -1,0 +1,13 @@
+const char *MakeInt32Range_Src = "\n"
+"float MakeInt32Range (float n)\n"
+"{\n"
+"    if (n >= 1073741824.0f) {\n"
+"      return (2.0f * fmod (n, 1073741824.0f)) - 1073741824.0f;\n"
+"    } else if (n <= -1073741824.0) {\n"
+"      return (2.0f * fmod (n, 1073741824.0f)) + 1073741824.0f;\n"
+"    } else {\n"
+"      return n;\n"
+"    }\n"
+"}\n"
+"\n"
+;

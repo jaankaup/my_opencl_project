@@ -28,7 +28,7 @@ class Renderer
 
     void init();
     void renderModels(const Camera& camera);
-    void render(const Camera& camera);
+    void render(const Camera& camera, const Camera& ray_camera);
 
 	private:
 

@@ -24,6 +24,8 @@ class Camera
         glm::mat4 getMatrix() const;
         glm::vec3 getPosition() const;
         glm::vec3 getTarget() const;
+        glm::vec3 getFront() const;
+        float getFocaldistance() const { return pFocaldistance; }
         void translate(const glm::vec3& newPos);
         void rotateCamera(const float &xoffset, const float &yoffset);
         void update(const float time);
@@ -34,6 +36,7 @@ class Camera
         void toggleMode();
         void adjustSpeed(const float &adjust);
         void adjustSensitivity(const float &adjust);
+        void isRaycamera(const bool isRayCamera) { pRaycamera = isRayCamera; }
 
     private:
         glm::mat4 view;
@@ -51,14 +54,18 @@ class Camera
         // Katselukulma
         float pitch = -45.0f;
         float yaw   = -90.0f;
+        //float pitch = 90.0f;
+        //float yaw   = 90.0f;
 
         // Kursorin sijainti ruudulla
         float lastMouseX = 0.0f;
         float lastMouseY = 0.0f;
+        bool pRaycamera = false;
 
         // Kameran liikkumisnopeuden kertoimet
-        float camSpeed = 0.005;       // 1.0 - 10.0
+        float camSpeed = 0.1f;       // 1.0 - 10.0
         float camSensitivity = 0.05; // 0.1 - 1.0
+        float pFocaldistance = 1.0f;
 
         uint32_t pPrevTick;
 //        enum class CameraMode { Free, Orbit, Floating };

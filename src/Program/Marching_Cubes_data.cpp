@@ -57,7 +57,7 @@ std::unique_ptr<glm::vec4[]> Marching_Cubes_Data::create(const std::string& prog
 //  Log::getDebug().log("local[%],local[%],local[%]",local[0],local[1],local[2]);
 
   // The maximum size of elements that marching cubes array can hold. 
-  int theSIZE = global[0] * global[1] * global[2] * 4;
+  int theSIZE = global[0] * global[1] * global[2] * 8;
 
   // The initial value for counter. This is the value for stored vec4 values
   // after marching cubes.

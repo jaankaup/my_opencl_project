@@ -1,3 +1,4 @@
+#include <exception>
 #include <imgui.h>
 #include <imgui_impl_sdl.h>
 #include <imgui_impl_opengl3.h>
@@ -22,12 +23,14 @@ std::unique_ptr<float[]> density_values;
 std::unique_ptr<glm::vec4[]> case_values;
 float bSIZE = 0.1f;
 int x_dim = 32;
-int y_dim = 16;
+int y_dim = 32;
 int z_dim = 32;
 //int cube_now = (Program::x_dim * Program::y_dim * Program::z_dim * 64) / 3;//0;
 int cube_now = (32 * 16 * 32 * 64) / 3;//0;
 //float cube_float = float(x_dim * y_dim * z_dim * 64 / 3);;
-glm::vec4 bPOS = glm::vec4(-5.2f,-3.0f,-5.2f,0.0f);
+glm::vec4 bPOS = glm::vec4(-5.8f,-7.0f,-6.2f,0.0f);
+//glm::vec4 bPOS = glm::vec4(-5.2f,-5.0f,-5.2f,0.0f);
+//glm::vec4 bPOS = glm::vec4(-1.2f,-1.0f,-1.2f,0.0f);
 int v0_amount = 0.0f;// THE_Tool;
 int v1_amount = 0.0f;
 int v2_amount = 0.0f;
@@ -36,6 +39,7 @@ int v4_amount = 0.0f;
 int v5_amount = 0.0f;
 int v6_amount = 0.0f;
 int v7_amount = 0.0f;
+bool rayCamera = false;
 
 /////////////////////////////////////////////////////////////////////////////////////
 
@@ -44,11 +48,11 @@ bool MainProgram::initialize()
   Log::getDebug().log("INITIALIZING PROGRAM.\n");
 //  IAC::InteractiveCamera cam;
 
+  createGlobalProperties();
+
   // Initialize InputCache.
   auto ic = InputCache::getInstance();
   ic->init();
-
-  createGlobalProperties();
 
   if (!createWindow()) { Log::getError().log("Failed to create window."); return false; }
 
@@ -58,9 +62,15 @@ bool MainProgram::initialize()
   if (!createShaders()) { Log::getError().log("Failed to create shaders."); return false; }
   if (!createTextures()) { Log::getError().log("Failed to create textures."); return false; } 
 
-//  auto vb = ResourceManager::getInstance()->create<Vertexbuffer>("uvs");
-//  vb->init(GL_ARRAY_BUFFER,GL_STATIC_DRAW);
-//  std::vector<std::string> types = {"4f"};
+  auto vb = ResourceManager::getInstance()->create<Vertexbuffer>("rayScreen");
+  vb->init(GL_ARRAY_BUFFER,GL_DYNAMIC_DRAW);
+  std::vector<std::string> types = {"4f","4f","4f","4f"};
+
+  // TODO: FIXXXX
+  auto width = 128; // ic->get_screenWidth();
+  auto height = 128; // ic->get_screenHeight();
+  auto dummy = std::make_unique<float[]>(width*height*16);
+  vb->addData(dummy.get(),sizeof(float)*width*height*16,types);
 //  std::vector<glm::vec4> uvs;
 //  int sw = ic->get_screenWidth();
 //  int sh = ic->get_screenHeight();
@@ -71,7 +81,7 @@ bool MainProgram::initialize()
 //  }};
 
 //  vb->addData(&uvs[0],sizeof(glm::vec4)*uvs.size(),types);
-//  vb->setCount(uvs.size());
+  vb->setCount(width*height);
   return true;
 }
 
@@ -89,7 +99,11 @@ void MainProgram::start()
   renderer.init();
 
   // Create the camera for this application.
-  Camera camera = Camera(glm::vec3(5.0f,2.0f,0.0f),glm::vec3(0.0f,10.0f,-10.0f),glm::vec3(0.0f,1.0f,0.0f));
+  Camera camera = Camera(glm::vec3(0.0f,22.0f,-3.0f),glm::vec3(0.0f,6.0f,2.0f),glm::vec3(0.0f,1.0f,0.0f));
+
+  // Create the raycamera for this application.
+  Camera ray_camera = Camera(glm::vec3(0.0f,22.0f,-3.0f),glm::vec3(0.0f,6.0f,2.0f),glm::vec3(0.0f,1.0f,0.0f));
+  ray_camera.isRaycamera(true);
 
   // Register q for stoppin the application.
   auto id1 = ic->register_lambda_function(EventType::KEYBOARD_MOUSE,[&](const InputCache* c) { running = !c->isKeyReleased('q'); });
@@ -103,12 +117,12 @@ void MainProgram::start()
   // Main loop.
   while (running) {
     ic->pollEvents();
-
     camera.handleKeyInput();
-    Window::getInstance()->swapBuffers();
-    //rayTrace(camera.getPosition(), camera.getTarget(), glm::vec3(0.0f,1.0f,0.0f)); 
-    renderer.render(camera);
+    ray_camera.handleKeyInput();
+    rayTrace(ray_camera.getPosition(), ray_camera.getFront(), glm::vec3(0.0f,1.0f,0.0f), ray_camera.getFocaldistance()); 
+    renderer.render(camera,ray_camera);
     Window::getInstance()->renderImgui();
+    Window::getInstance()->swapBuffers();
   };
 }
 
@@ -130,13 +144,13 @@ void MainProgram::createGlobalProperties()
 
   // Initial screend width.
   IntProperty initial_screen_width;
-  initial_screen_width.set(1280);
+  initial_screen_width.set(1024);
   initial_screen_width.registerTest(width_filter);
   glob_manager->add("initial_screen_width",initial_screen_width);
 
   // Initial screend height.
   IntProperty initial_screen_height;
-  initial_screen_height.set(720);
+  initial_screen_height.set(1024);
   initial_screen_height.registerTest(height_filter);
   glob_manager->add("initial_screen_height",initial_screen_height);
 
@@ -145,7 +159,7 @@ void MainProgram::createGlobalProperties()
   show_density.set(false);
   glob_manager->add("show_density",show_density);
 
-  // Property for showing the scene values.  
+  // Property for showing the scene values.
   BoolProperty show_scene;
   show_scene.set(true);
   glob_manager->add("show_scene",show_scene);
@@ -199,6 +213,10 @@ bool MainProgram::createShaders()
   std::vector<std::string> raymarch_shader_src = {"shaders/raymarch.vert",  "shaders/raymarch.frag"};
   raymarch_shader->build(raymarch_shader_src);
 
+  Shader* camera_debug_shader = res_manager->create<Shader>("camera_debug_shader");
+  std::vector<std::string> camera_debug_shader_src = {"shaders/camera_debug.vert", "shaders/camera_debug.geom", "shaders/camera_debug.frag"};
+  camera_debug_shader->build(camera_debug_shader_src);
+
   return true;
 }
 
@@ -228,7 +246,7 @@ void MainProgram::updateScene()
                                                 y_dim,
                                                 z_dim,
                                                 bSIZE,
-                                                0.0f,
+                                                0.4f,
                                                 bPOS,
                                                 &lkm);
 
@@ -241,7 +259,6 @@ void MainProgram::updateScene()
   vb->setCount(lkm/3);
   auto vb2 = ResourceManager::getInstance()->get<Vertexbuffer>("density_points");
   vb2->populate_data(Program::density_values.get(),sizeof(float)*Program::x_dim * Program::y_dim * Program::z_dim * 64);
-
 }
 
 /////////////////////////////////////////////////////////////////////////////////////
@@ -252,15 +269,26 @@ bool MainProgram::createOpenCl()
   auto d = GPU_Device::getInstance();
   if (!d->init()) return false;
 
+  cl::Program::Sources raySources;
+  std::string src_ray = Helper::loadSource("shaders/ray.cl"); 
+  raySources.push_back({src_ray.c_str(),src_ray.length()});
+
+  Log::getDebug().log("EHE!");
+  d->createProgram("rayTrace", raySources);
+  Log::getDebug().log("OHO!");
+
   // Load the sources for marching cubes program.
   cl::Program::Sources sources;
   std::string src_mc = Helper::loadSource("shaders/mc.cl"); 
   std::string src_eval = Helper::loadSource("shaders/evalDencity.cl"); 
+//  std::string src_eval2 = Helper::loadSource("shaders/Noise2.cl"); 
   sources.push_back({src_mc.c_str(),src_mc.length()});
   sources.push_back({src_eval.c_str(),src_eval.length()});
+//  sources.push_back({src_eval2.c_str(),src_eval2.length()});
 
   // Create the program.
   d->createProgram("mc_program", sources);
+  Log::getDebug().log("12093478132904718290347");
 
   // Run the marching cubes algoritm an get the result of it.
   Marching_Cubes_Data mcd;
@@ -297,11 +325,6 @@ bool MainProgram::createOpenCl()
 //    Log::getDebug().log("% . cube-case == % ",i, Program::case_values.get()[i]);
 //  }
 
-  cl::Program::Sources raySources;
-  std::string src_ray = Helper::loadSource("shaders/rayTrace.cl"); 
-  sources.push_back({src_ray.c_str(),src_ray.length()});
-
-  d->createProgram("rayTrace", raySources);
   return true;
 }
 
@@ -389,14 +412,15 @@ void MainProgram::registerHandlers()
          }
          if (c->isKeyPressed('j'))
          {
-           temp = Program::cube_now - 16*Program::x_dim * Program::y_dim; 
-           if (temp < 0) {}
-           else {
-             Program::cube_now = temp;
-             glm::vec4 joop = case_values[temp];
-             window_title = vec_toString(joop) + " : " + std::to_string(temp);
-             title_changed = true;
-           }
+           rayCamera = !rayCamera;
+           //temp = Program::cube_now - 16*Program::x_dim * Program::y_dim; 
+           //if (temp < 0) {}
+           //else {
+           //  Program::cube_now = temp;
+           //  glm::vec4 joop = case_values[temp];
+           //  window_title = vec_toString(joop) + " : " + std::to_string(temp);
+           //  title_changed = true;
+           //}
          } 
 
          if (c->isKeyPressed('1')) { if (c->isKeyDown(SDL_SCANCODE_LSHIFT)) v0_amount -= 1; else v0_amount += 1; title_changed = true; }
@@ -504,15 +528,23 @@ void MainProgram::registerHandlers()
 
 /////////////////////////////////////////////////////////////////////////////////////
 
-void MainProgram::rayTrace(const glm::vec3& pos, const glm::vec3& target, const glm::vec3& up ) {
+void MainProgram::rayTrace(const glm::vec3& pos, const glm::vec3& target, const glm::vec3& up, const float focalDistance ) {
 
+//  Log::getDebug().log("RAY_TRACE");
   //const static glm::ivec3 LOCAL_GROUP_SIZE(4,4,4);
   //glm::ivec3 global_group_size(dimensionX, dimensionY, dimensionZ);
   GPU_Device* d = GPU_Device::getInstance();
 
   cl::CommandQueue* command = d->get<cl::CommandQueue>("command_ray");
-  if (d == nullptr) command = d->create<cl::CommandQueue>("command_ray");
-
+  if (command == nullptr) command = d->create<cl::CommandQueue>("command_ray");
+//  static float counter = 0.0f;
+//  counter += 0.02f;
+//  //float buah = 1*sin(counter); 
+//  auto pos_now = glm::vec3(0.0f,1.0f,-3.0f);
+//  auto target_now = glm::normalize(glm::vec3(0.0f,0.0f,-1.0f));
+//  auto up_now = glm::vec3(0.0f,1.0f,0.0f);
+//  Log::getDebug().log("POS :: % , TARGET :: %, UP :: %", pos_now, target_now, up_now);
+  Log::getDebug().log("POS :: % , TARGET :: %, UP :: %", pos, target, up);
 // struct RayCamera {
 // 	glm::vec3 position;
 // 	glm::vec3 view;
@@ -524,54 +556,115 @@ void MainProgram::rayTrace(const glm::vec3& pos, const glm::vec3& target, const 
 // };
   // Create the camera.
 
+  cl_float3 clpos; clpos.x = pos.x; clpos.y = pos.y; clpos.z = pos.z;// = (cl_float3){pos.x,pos.y,pos.z};
+  cl_float3 cltarget; cltarget.x = target.x; cltarget.y = target.y; cltarget.z = target.z; //  = (cl_float3){target.x,target.y,target.z};
+  cl_float3 clup; clup.x = up.x; clup.y = up.y; clup.z = up.z; // = (cl_float3){up.x,up.y,up.z};
+  //cl_float3 clpos; clpos.x = pos_now.x; clpos.y = pos_now.y; clpos.z = pos_now.z;// = (cl_float3){pos.x,pos.y,pos.z};
+  //cl_float3 cltarget; cltarget.x = target_now.x; cltarget.y = target_now.y; cltarget.z = target_now.z; //  = (cl_float3){target.x,target.y,target.z};
+  //cl_float3 clup; clup.x = up_now.x; clup.y = up_now.y; clup.z = up_now.z; // = (cl_float3){up.x,up.y,up.z};
+  cl_float2 clresolution; clresolution.x = 128.0f; clresolution.y= 128.0f; // = (cl_float2){128.0f,128.0f};
+  //cl_float2 clfov; clfov.x = 90.0f; clfov.y = 90.0f; // = (cl_float2){45.0f,45.0f};
+  cl_float2 clfov; clfov.x = glm::radians(-45.0f); clfov.y = glm::radians(-90.0f); // = (cl_float2){45.0f,45.0f};
+  
+  //cl_float2 clfov; clfov.x = 45.0f; clfov.y = 45.0f; // = (cl_float2){45.0f,45.0f};
+
   RayCamera r;
-  r.position = pos;
-  r.view = target;
-  r.up = up;
-  r.resolution;
-  r.fov = glm::vec2(45.0f,45.0f);
+  r.position = clpos;
+  r.view = cltarget;
+  r.up = clup;
+  r.resolution = clresolution; // glm::ivec2(128);
+  r.fov = clfov; //glm::vec2(45.0f,45.0f);
+  r.focalDistance = focalDistance;
 
   cl::Buffer* rayCamera = d->get<cl::Buffer>("rayCamera");
 
   if (rayCamera == nullptr) rayCamera = d->createBuffer("rayCamera", sizeof(RayCamera), CL_MEM_READ_WRITE);
-	command->enqueueWriteBuffer(*rayCamera, CL_TRUE, 0, sizeof(RayCamera), &r);
+	cl_int error = command->enqueueWriteBuffer(*rayCamera, CL_TRUE, 0, sizeof(RayCamera), &r);
+  if (error != CL_SUCCESS)
+  {
+    Log::getDebug().log("Program::rayTrace()");
+    print_cl_error(error);
+  }
 
   auto ic = InputCache::getInstance();
 
   int sw = ic->get_screenWidth();
   int sh = ic->get_screenHeight();
 
+//  Log::getDebug().log("sw == % , wh == %", sw, sh); //sw == %, sh == %", sw, sh);
   // The global range. Screen size.
-  cl::NDRange global(sw, sh, 1);
+  cl::NDRange global( 128,128,1); //sw, sh, 1);
+  //cl::NDRange global(sw, sh, 1);
   cl::NDRange local(8, 8, 1);
 
-  int theSIZE = sw * sh;
+  int theSIZE = 128 * 128; // sw * sh;
 
   cl::Buffer* theScreen = d->get<cl::Buffer>("theScreen");
-  if (theScreen == nullptr) d->createBuffer("theScreen", sizeof(glm::vec3)*theSIZE, CL_MEM_READ_WRITE);
+  if (theScreen == nullptr) theScreen = d->createBuffer("theScreen", sizeof(float)*theSIZE*16, CL_MEM_READ_WRITE);
 
+//  Log::getDebug().log("theScreen == nullptr :: %", theScreen == nullptr);
   // TODO: check if this exists.
-  cl::Buffer* density_output = d->get<cl::Buffer>("density_values");
-  assert(density_output != nullptr);
+//  cl::Buffer* density_output = d->get<cl::Buffer>("density_values");
+//  assert(density_output != nullptr);
 
-  cl_int error = CL_SUCCESS;
+//  cl_int error = CL_SUCCESS;
 
   // THE KERNEL CREATION.
 
   // THE INDICES for both evalDensity and mc.
   cl::EnqueueArgs eargs(*command, global, local);
 
+  // Find the rayTrace program.
   cl::Program* program = d->get<cl::Program>("rayTrace");
-  assert(program != nullptr);
+  if (program == nullptr)
+  {
+    Log::getError().log("Could't find the program."); 
+  }
 
 //__kernel void render_kernel(const int width, const int height, __global float3* output, __constant const Camera* cam)
-  cl::make_kernel<int, int, cl::Buffer, cl::Buffer> ray_kernel(*program,"render_kernel",&error);
+  cl::make_kernel<float, int, int, cl::Buffer, cl::Buffer> ray_kernel(*program,"ray_path",&error);
   if (error != CL_SUCCESS) print_cl_error(error);
 
   // THE EXECUTION.
 
-  ray_kernel(eargs, sw, sh, *theScreen, *rayCamera).wait();
+  ray_kernel(eargs, 0.0f, sw, sh, *theScreen, *rayCamera).wait();
 
+  auto rayOutput = std::make_unique<float[]>(theSIZE*16);
+  error = command->enqueueReadBuffer(*theScreen,CL_TRUE,0,sizeof(float)*theSIZE*16, rayOutput.get());
+  if (error != CL_SUCCESS) { print_cl_error(error); }
+//  for (int i=0 ; i<theSIZE/16 ; i++) {
+//    int p = i*16;
+//    //Log::getDebug().log("% :: (%,%,%,%,%,%,%,%)", i, rayOutput.get()[p],
+//    //                                                rayOutput.get()[p+1],
+//    //                                                rayOutput.get()[p+2],
+//    //                                                rayOutput.get()[p+3],
+//    //                                                rayOutput.get()[p+4],
+//    //                                                rayOutput.get()[p+5],
+//    //                                                rayOutput.get()[p+6],
+//    //                                                rayOutput.get()[p+7]);
+//    Log::getDebug().log("% :: (%,%,%,%,%,%,%,%,%,%,%,%,%,%,%,%)", i, rayOutput.get()[p],
+//                                                    rayOutput.get()[p+1],
+//                                                    rayOutput.get()[p+2],
+//                                                    rayOutput.get()[p+3],
+//                                                    rayOutput.get()[p+4],
+//                                                    rayOutput.get()[p+5],
+//                                                    rayOutput.get()[p+6],
+//                                                    rayOutput.get()[p+7],
+//                                                    rayOutput.get()[p+8],
+//                                                    rayOutput.get()[p+9],
+//                                                    rayOutput.get()[p+10],
+//                                                    rayOutput.get()[p+11],
+//                                                    rayOutput.get()[p+12],
+//                                                    rayOutput.get()[p+13],
+//                                                    rayOutput.get()[p+14],
+//                                                    rayOutput.get()[p+15]);
+//    if (i>50) break;
+//  }
+//  throw std::runtime_error("nojoo");
+  auto vb2 = ResourceManager::getInstance()->get<Vertexbuffer>("rayScreen");
+  vb2->populate_data(rayOutput.get(),sizeof(float)*theSIZE*16);
+
+//  Log::getDebug().log("RAY_TRACE END");
 //  float eval_result[theSIZE];
 //  error = command->enqueueReadBuffer(*density_output,CL_TRUE,0,sizeof(float)*theSIZE,eval_result);
 //
