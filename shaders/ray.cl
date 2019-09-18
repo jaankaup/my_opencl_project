@@ -28,17 +28,21 @@ float ball(float3 f_pos, float3 ball_center, float radius) {
 float maasto(float3 f_pos)
 {
   
-//  float value =  SingleValueFractalRigidMulti3(18.2, 0.5, 4, 2, 2, f_pos.x, f_pos.y, f_pos.z);
-//  float value =  GetValueFractal3(5.2, 2, 1.3, 2.0, 2, 0.3, 1,3, f_pos.x*0.2, f_pos.y*0.2, f_pos.z*0.2);
+//  float value =  SingleValueFractalRigidMulti3(0.2, 0.5, 4, 2, 2, f_pos.x*0.2, f_pos.y*0.2, f_pos.z*0.2);
+//  float value =  GetValueFractal3(5.2, 2, 1.3, 4.0, 2, 0.3, 1,3, f_pos.x*0.2, f_pos.y*0.2, f_pos.z*0.2);
 //  float value2 = GetValueFractal3(1.5, 1, 0.7, 0.5, 3, 0.5, 1,3, f_pos.x*0.25, f_pos.y*0.25, f_pos.z*0.25);
 //	float value =  Noise_3d(f_pos.x*0.1, f_pos.y*0.1, f_pos.z*0.1); 
-//  	float value =  GetWhiteNoise3(3,f_pos.x*0.001, f_pos.y*0.001, f_pos.z*0.001); 
+//  float value =  GetWhiteNoise3(3,f_pos.x*0.001, f_pos.y*0.001, f_pos.z*0.001); 
 //	float value2 =  Noise_3d(f_pos.x*0.2, f_pos.y*0.2, f_pos.z*0.2); 
 //  float result =  f_pos.y - 15*value + 15.0*value2;
 //  return result;
 //  return f_pos.y + value + 0.5*value2;
-//  return f_pos.y + value*0.1;
-  return f_pos.y; // + 5 * sin(f_pos.x);
+    float value2 = SinglePerlin3(1, 123, f_pos.x*0.01, f_pos.y*0.01, f_pos.z*0.01);
+    float value = SinglePerlin3(3, 5, f_pos.x*0.1, f_pos.y*0.1, f_pos.z*0.1);
+//float SinglePerlin3(int m_smoothing,
+//    int seed,
+//    float x, float y, float z)
+  return f_pos.y + 8.0 * value + 50*value2;
 }
 
 /******************************************************************************************************************************/
@@ -72,12 +76,13 @@ float3 calculate_normal_maasto(float3 pos)
 {
   float3 grad;
 
-  float right =   maasto((float3){pos.x+0.01f, pos.y,pos.z});
-  float left =    maasto((float3){pos.x-0.01f, pos.y,pos.z});
-  float up =      maasto((float3){pos.x, pos.y+0.01f,pos.z});
-  float down =    maasto((float3){pos.x, pos.y-0.01f,pos.z});
-  float z =       maasto((float3){pos.x, pos.y,pos.z-0.01f});
-  float z_minus = maasto((float3){pos.x, pos.y,pos.z+0.01f});
+  float offset = 0.5f;
+  float right =   maasto((float3){pos.x+offset, pos.y,pos.z});
+  float left =    maasto((float3){pos.x-offset, pos.y,pos.z});
+  float up =      maasto((float3){pos.x, pos.y+offset,pos.z});
+  float down =    maasto((float3){pos.x, pos.y-offset,pos.z});
+  float z =       maasto((float3){pos.x, pos.y,pos.z-offset});
+  float z_minus = maasto((float3){pos.x, pos.y,pos.z+offset});
   grad.x = right - left;
   grad.y = up - down;
   grad.z = z - z_minus;
@@ -92,7 +97,7 @@ float3 getPoint(float distance, Ray* ray)
 
 /******************************************************************************************************************************/
 
-__kernel void ray_path(const float isovalue, const int width, const int height, __global float16* output, __global Camera* cam)
+__kernel void ray_path(const float isovalue, const int width, const int height, __global float8* output, __global Camera* cam)
 {
   const unsigned int x_coord = get_global_id(0);
   const unsigned int y_coord = get_global_id(1);
@@ -165,7 +170,7 @@ __kernel void ray_path(const float isovalue, const int width, const int height, 
   //ray.origin = point_on_plane + cam->position; //cam->position; // + point_on_plane; //point_on_plane; // - cam->position; //cam->position;
   //ray.direction = normalize(point_on_plane - d*cam->view);
   //ray.direction = -normalize(point_on_plane - d*cam->view);
-  ray.origin = point_on_plane; //(float3){0.0f, 0.0f, 1.0f}; // + cam->view*d; //point_on_plane; //-d*cam->view; // point_on_plane; // cam->position; 
+  ray.origin = point_on_plane + cam->position; //(float3){0.0f, 0.0f, 1.0f}; // + cam->view*d; //point_on_plane; //-d*cam->view; // point_on_plane; // cam->position; 
   ray.direction = normalize(point_on_plane + d*cam->view);
   //ray.direction = normalize(point_on_plane - cam->position);
 
@@ -184,20 +189,33 @@ __kernel void ray_path(const float isovalue, const int width, const int height, 
   float3 normal = (float3){0.0,0.0,0.0};
 	float3 accum_color = (float3){0.0f, 0.0f, 0.0f};
 
-  const float step_size = 0.01f;
+  float step_size = 0.1f;
   float depth = 0.0f; // distance(point_on_plane , cam->position);
 
 //  float value_now = maasto(getPoint(depth, &ray)); // The inital value.
 
-  for (int i=0 ; i<200 ; i++)
+  for (int i=0 ; i<800 ; i++)
   {
     float3 p = getPoint(depth, &ray); 
     //float value = maasto(p);
-    float value = ball(p, (float3){0.0f,0.0f,0.0f},0.4f);
+    //float value = ball(p, (float3){0.0f,0.0f,0.0f},5.3f);
     float value_maasto = maasto(p);
-    if (fabs(value) < 6.3f) {
+    //if (fabs(value) < 0.4f) {
+    //  intersection_point = p;
+    //  normal = calculate_normal_ball(p);
+    //  float3 mask = (float3){1.0f,1.0f,1.0f};
+    //  float emission = 0.9f;
+    //  float3 color = (float3){0.0f,1.0f,0.0f};
+	  //  float diffuseCoeffient = max(0.1f , dot(-normal,normalize(intersection_point - cam->position)));
+
+    //  accum_color += emission * mask;
+    //  accum_color *= color;
+	  //  accum_color *= diffuseCoeffient;
+    //  break;
+    //}   
+    if (fabs(value_maasto) < 0.4f) {
       intersection_point = p;
-      normal = calculate_normal_ball(p);
+      normal = calculate_normal_maasto(p);
       float3 mask = (float3){1.0f,1.0f,1.0f};
       float emission = 0.9f;
       float3 color = (float3){0.0f,1.0f,0.0f};
@@ -208,23 +226,18 @@ __kernel void ray_path(const float isovalue, const int width, const int height, 
 	    accum_color *= diffuseCoeffient;
       break;
     }   
-//    else if (fabs(value_maasto) < 0.01f) {
-//      intersection_point = p;
-//      normal = calculate_normal_maasto(p);
-//      float3 mask = (float3){1.0f,1.0f,1.0f};
-//      float emission = 0.9f;
-//      float3 color = (float3){0.0f,0.0f,1.0f};
-//	    float diffuseCoeffient = max(0.1f , dot(-normal,normalize(intersection_point - cam->position)));
-//
-//      accum_color += emission * mask;
-//      accum_color *= color;
-//	    accum_color *= diffuseCoeffient;
-//      break;
-//    }   
-//    depth += step_size;
+    //else if (value_maasto-40.0f > 0.0f) { depth += 19.9f; } 
+    //else if (value_maasto-20.0f > 0.0f) { depth += 19.9f; } 
+    //else if (value_maasto-6.0f > 0.0f) { depth += 5.9f; } 
+    //else if (value_maasto-3.0f > 0.0f) { depth += 2.9f; } 
+    //else if (value_maasto-1.0f > 0.0) { depth += 0.4f; } 
+    //else if (value_maasto-0.6f > 0.0) { depth += 0.2f; } 
+    depth += step_size;
+    //if (depth > 400.0f) break;
+    //step_size = step_size + 0.0001;
   }
-//  float3 black = (float3){0.0f,0.0f,0.0f};
-  if (accum_color.x == 0.0f && accum_color.y == 0.0f && accum_color.z == 0.0f) accum_color = (float3){0.2f,0.2f,0.2f};
+  //float3 black = (float3){0.0f,0.0f,0.0f};
+  if (accum_color.x == 0.0f && accum_color.y == 0.0f && accum_color.z == 0.0f) accum_color = (float3){0.0f,0.0f,0.0f};
 
   //float3 v;
 
@@ -247,22 +260,22 @@ __kernel void ray_path(const float isovalue, const int width, const int height, 
 //                                  (float)get_global_size(0),
 //                                  (float)get_global_size(1)};
 
-  output[x_coord + global_x_dim * y_coord] = (float16){(float)ray.origin.x,          // a.x
-                                                       (float)ray.origin.y,          // a.y
-                                                       (float)ray.origin.z,          // a.z
-                                                       (float)ray.direction.x,       // a.w
-                                                       (float)ray.direction.y,       // b.x
-                                                       (float)ray.direction.z,       // b.y
-                                                       (float)intersection_point.x,  // b.z
-                                                       (float)intersection_point.y,  // b.w
-                                                       (float)intersection_point.z,  // c.x
-                                                       (float)accum_color.x,         // c.y
-                                                       (float)accum_color.y,         // c.z
-                                                       (float)accum_color.z,         // c.w
-                                                       (float)v.x,                   // d.x
-                                                       (float)v.y,                   // d.y
-                                                       (float)v.z,                   // d.z
-                                                       666.0f                        // d.w
-                                                       };
-  //output[x_coord + global_x_dim * y_coord] = (float8){(float)x_coord,(float)y_coord,(float)global_x_dim,(float)global_y_dim,accum_color.x,accum_color.y,accum_color.z,y_coord};
+////  output[x_coord + global_x_dim * y_coord] = (float16){(float)ray.origin.x,          // a.x
+////                                                       (float)ray.origin.y,          // a.y
+////                                                       (float)ray.origin.z,          // a.z
+////                                                       (float)ray.direction.x,       // a.w
+////                                                       (float)ray.direction.y,       // b.x
+////                                                       (float)ray.direction.z,       // b.y
+////                                                       (float)intersection_point.x,  // b.z
+////                                                       (float)intersection_point.y,  // b.w
+////                                                       (float)intersection_point.z,  // c.x
+////                                                       (float)accum_color.x,         // c.y
+////                                                       (float)accum_color.y,         // c.z
+////                                                       (float)accum_color.z,         // c.w
+////                                                       (float)v.x,                   // d.x
+////                                                       (float)v.y,                   // d.y
+////                                                       (float)v.z,                   // d.z
+////                                                       666.0f                        // d.w
+////                                                       };
+  output[x_coord + global_x_dim * y_coord] = (float8){(float)x_coord,(float)y_coord,(float)global_x_dim,(float)global_y_dim,accum_color.x,accum_color.y,accum_color.z,normal.y};
 }

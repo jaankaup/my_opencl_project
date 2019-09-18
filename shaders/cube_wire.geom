@@ -326,7 +326,7 @@ void printCube(vec3 c)
 void printCube2(vec3 c)
 {
   float pSize = 1.0; // block_size;
-  float d = 0.20;
+  float d = 0.05;
   vec3 theCOLOR = vec3(0.0,0.0,1.0); // gs_in[0].color;
 
   vec3 p0 = c.xyz;

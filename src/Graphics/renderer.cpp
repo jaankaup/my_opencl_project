@@ -37,7 +37,7 @@ void Renderer::render(const Camera& camera, const Camera& ray_camera) {
   glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
   //glm::mat4 projection = glm::perspective(glm::radians(45.0f), 16.0f / 9.0f, 0.001f, 1000.0f);
-  glm::mat4 projection = glm::perspective(glm::radians(90.0f), float(sw) / float(sh), 1.000f, 200.0f);
+  glm::mat4 projection = glm::perspective(glm::radians(90.0f), float(sw) / float(sh), 0.001f, 200.0f);
   glm::vec3 eyePosition = camera.getPosition();
   glm::mat4 MVP = projection * camera.getMatrix() * glm::mat4(1.0f);  
 
@@ -46,70 +46,78 @@ void Renderer::render(const Camera& camera, const Camera& ray_camera) {
   auto glob_manager = Program::GlobalPropertyManager::getInstance();
 
   auto rm = ResourceManager::getInstance();
-  //auto march_shader = rm->get<Shader>("march_shader");
-  auto march_shader = rm->get<Shader>("camera_debug_shader");
-  march_shader->bind();
-
-
-  march_shader->setUniform("MVP", MVP);
-  march_shader->setUniform("camera_position", camera.getPosition());
-  march_shader->setUniform("camera_front", camera.getFront());
-
-  auto ray_screen = rm->get<Vertexbuffer>("rayScreen");
-  ray_screen->bind();
-  glDrawArrays(GL_POINTS, 0, 128*128 /*1024*1024*/ );
-
-  auto shader = rm->get<Shader>(Program::DEFAULT_RENDERING_SHADER);
-  shader->bind();
-
-  Texture* ruohikko = rm->get<Texture>("ruohikko");
-  ruohikko->use(0);
-  shader->setUniform("diffuseTexture", 0);
-
-  Texture* kallio = rm->get<Texture>("kallio");
-  kallio->use(1);
-//  ruohikko->use(1);
-  shader->setUniform("diffuseTexture2", 1);
-
-//  Texture* kallio = rm->get<Texture>("kallio");
-//  kallio->use(1);
-//  shader->setUniform("diffuseTexure2", 1);
 
   auto show_scene = glob_manager->get<Program::BoolProperty>("show_scene")->get();
 
-  shader->setUniform("MVP", MVP);
-  shader->setUniform("normalMatrix", glm::inverseTranspose(glm::mat3(1.0)));
-  shader->setUniform("M", glm::mat4(1.0f));
-  shader->setUniform("lights[0].color", glm::vec3(1.0f,1.0f,1.0f));
-  shader->setUniform("lights[0].ambientCoeffience", 0.25f);
-  shader->setUniform("lights[0].materialSpecularColor", glm::vec3(1.0f,1.0f,1.0f));
-  shader->setUniform("lights[0].materialShininess", 70.0f);
-  shader->setUniform("lights[0].attentuationFactor", 0.00009f);
-  shader->setUniform("cameraPosition", eyePosition);
-  shader->setUniform("lights[0].position", glm::vec3(8.0f,18.0f,8.0f));/* eyePosition);*/
-  shader->setUniform("diffuseTexure2", 1);
-  //shader->setUniform("sampler2D", 1);
+  auto march_shader = rm->get<Shader>("march_shader");
+  march_shader->bind();
+  auto ray_screen = rm->get<Vertexbuffer>("rayScreen");
+  ray_screen->bind();
+  glDrawArrays(GL_POINTS, 0, 512*512 /*1024*1024*/ );
+  ////if (!show_scene) {
+  ////auto march_shader = rm->get<Shader>("camera_debug_shader");
+  ////march_shader->bind();
 
-  if (show_scene) {
-    auto vb = rm->get<Vertexbuffer>("hah");
-    vb->bind();
-    glDrawArrays(GL_TRIANGLES, 0, vb->getCount());
-  }
+
+  ////march_shader->setUniform("MVP", MVP);
+  ////march_shader->setUniform("camera_position", camera.getPosition());
+  ////march_shader->setUniform("camera_front", camera.getFront());
+
+  ////auto ray_screen = rm->get<Vertexbuffer>("rayScreen");
+  ////ray_screen->bind();
+  ////glDrawArrays(GL_POINTS, 0, 128*128 /*1024*1024*/ );
+  ////}
+
+  ////auto shader = rm->get<Shader>(Program::DEFAULT_RENDERING_SHADER);
+  ////shader->bind();
+
+  ////Texture* ruohikko = rm->get<Texture>("ruohikko");
+  ////ruohikko->use(0);
+  ////shader->setUniform("diffuseTexture", 0);
+
+  ////Texture* kallio = rm->get<Texture>("kallio");
+  ////kallio->use(1);
+//////  ruohikko->use(1);
+  ////shader->setUniform("diffuseTexture2", 1);
+
+//////  Texture* kallio = rm->get<Texture>("kallio");
+//////  kallio->use(1);
+//////  shader->setUniform("diffuseTexure2", 1);
+
+
+  ////shader->setUniform("MVP", MVP);
+  ////shader->setUniform("normalMatrix", glm::inverseTranspose(glm::mat3(1.0)));
+  ////shader->setUniform("M", glm::mat4(1.0f));
+  ////shader->setUniform("lights[0].color", glm::vec3(1.0f,1.0f,1.0f));
+  ////shader->setUniform("lights[0].ambientCoeffience", 0.25f);
+  ////shader->setUniform("lights[0].materialSpecularColor", glm::vec3(1.0f,1.0f,1.0f));
+  ////shader->setUniform("lights[0].materialShininess", 70.0f);
+  ////shader->setUniform("lights[0].attentuationFactor", 0.00009f);
+  ////shader->setUniform("cameraPosition", eyePosition);
+  ////shader->setUniform("lights[0].position", glm::vec3(8.0f,18.0f,8.0f));/* eyePosition);*/
+  ////shader->setUniform("diffuseTexure2", 1);
+  //////shader->setUniform("sampler2D", 1);
+
+  ////if (show_scene) {
+  ////  auto vb = rm->get<Vertexbuffer>("hah");
+  ////  vb->bind();
+  ////  glDrawArrays(GL_TRIANGLES, 0, vb->getCount());
+  ////}
 /////
-  glFrontFace(GL_CW);
-  glLineWidth(5);
-  auto shader_wire = rm->get<Shader>("cube_wire");
-  shader_wire->bind();
-  shader_wire->setUniform("MVP", MVP);
-  //shader_wire->setUniform("base_position", Program::bPOS);
-  shader_wire->setUniform("base_position", glm::vec4(ray_camera.getPosition(),1.0));
-
-  shader_wire->setUniform("x_offset", Program::x_dim);
-  shader_wire->setUniform("y_offset", Program::y_dim);
-  shader_wire->setUniform("z_offset", Program::z_dim);
-  shader_wire->setUniform("camera_position", ray_camera.getPosition());
-  shader_wire->setUniform("camera_front", ray_camera.getFront());
-  Log::getDebug().log("ray_camera.getFront() == %", ray_camera.getFront());
+//  glFrontFace(GL_CW);
+//  glLineWidth(5);
+//  auto shader_wire = rm->get<Shader>("cube_wire");
+//  shader_wire->bind();
+//  shader_wire->setUniform("MVP", MVP);
+//  //shader_wire->setUniform("base_position", Program::bPOS);
+//  shader_wire->setUniform("base_position", glm::vec4(ray_camera.getPosition(),1.0));
+//
+//  shader_wire->setUniform("x_offset", Program::x_dim);
+//  shader_wire->setUniform("y_offset", Program::y_dim);
+//  shader_wire->setUniform("z_offset", Program::z_dim);
+//  shader_wire->setUniform("camera_position", ray_camera.getPosition());
+//  shader_wire->setUniform("camera_front", ray_camera.getFront());
+//  Log::getDebug().log("ray_camera.getFront() == %", ray_camera.getFront());
 
 //  shader_wire->setUniform("block_size", Program::bSIZE);
 //  shader_wire->setUniform("index", int(Program::cube_float));

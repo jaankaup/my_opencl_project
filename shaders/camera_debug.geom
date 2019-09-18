@@ -46,12 +46,16 @@ void printRays()
   vec4 b_out = gs_in[0].b_out;
   vec4 c_out = gs_in[0].c_out;
 
+  vec3 ray_direction = vec3(a_out.w,b_out.x,b_out.y);
+  vec3 intersection_point = vec3(b_out.z,b_out.w,c_out.x);
+
   vec4 p0 = MVP * vec4(a_out.xyz, 1.0);
-  vec4 p1 = MVP * (vec4(a_out.xyz, 1.0) + min(10.0f,length(p0.xyz-vec3(b_out.z, b_out.w, c_out.x))) * vec4(a_out.w, b_out.x, b_out.y, 0.0));
+  vec4 p1 = MVP * vec4(a_out.xyz + min(30.0f,length(a_out.xyz-intersection_point)) * ray_direction, 1.0);
 
 //                                                       (float)intersection_point.x,  // b.z
 //                                                       (float)intersection_point.y,  // b.w
 //                                                       (float)intersection_point.z,  // c.x
+  if (c_out.y == 0.1 && c_out.z == 0.1 && c_out.w == 0.1) return;
   gl_Position = p0;
   fColor_in = vec3(c_out.y,c_out.z,c_out.w);
   EmitVertex();

@@ -39,16 +39,20 @@ float ball(float3 f_pos, float3 ball_center, float radius) {
 float maasto(float4 f_pos)
 {
   
-//  float value =  SingleValueFractalRigidMulti3(18.2, 0.5, 4, 2, 2, f_pos.x, f_pos.y, f_pos.z);
-//  float value =  GetValueFractal3(5.2, 2, 1.3, 2.0, 2, 0.3, 1,3, f_pos.x*0.2, f_pos.y*0.2, f_pos.z*0.2);
+  float value =  SingleValueFractalRigidMulti3(0.2, 0.5, 4, 2, 2, f_pos.x*0.2, f_pos.y*0.2, f_pos.z*0.2);
+//  float value =  GetValueFractal3(5.2, 2, 1.3, 4.0, 2, 0.3, 1,3, f_pos.x*0.2, f_pos.y*0.2, f_pos.z*0.2);
 //  float value2 = GetValueFractal3(1.5, 1, 0.7, 0.5, 3, 0.5, 1,3, f_pos.x*0.25, f_pos.y*0.25, f_pos.z*0.25);
 //	float value =  Noise_3d(f_pos.x*0.1, f_pos.y*0.1, f_pos.z*0.1); 
-  	float value =  GetWhiteNoise3(3,f_pos.x*0.001, f_pos.y*0.001, f_pos.z*0.001); 
+//  float value =  GetWhiteNoise3(3,f_pos.x*0.001, f_pos.y*0.001, f_pos.z*0.001); 
 //	float value2 =  Noise_3d(f_pos.x*0.2, f_pos.y*0.2, f_pos.z*0.2); 
 //  float result =  f_pos.y - 15*value + 15.0*value2;
 //  return result;
 //  return f_pos.y + value + 0.5*value2;
-  return f_pos.y + value*0.1;
+    float value2 = SinglePerlin3(1, 123, f_pos.x*0.2, f_pos.y*0.2, f_pos.z*0.2);
+//float SinglePerlin3(int m_smoothing,
+//    int seed,
+//    float x, float y, float z)
+  return f_pos.y + 3 * value + 5*value2;
 }
 
 float anti_maasto(float4 f_pos, float4 a1, float4 a2)
@@ -103,6 +107,7 @@ __kernel void evalDensity(__global float* output, int x_offset, int y_offset, fl
   // Save the density value to the output.
   //output[finalID] = outoLaatikko(this_point_global) + maasto(this_point_global) + 15 + ball(this_point_global, (float4){0.0,0.0,0.0,0.0}, 15.0);
   //output[finalID] = maasto(this_point_global);
-  output[finalID] = ball(this_point_global.xyz, (float3){0.0f,0.0f,0.0f},5.3f);
+  //output[finalID] = ball(this_point_global.xyz, (float3){0.0f,0.0f,0.0f},5.3f);
+  output[finalID] = maasto(this_point_global);
 
 }                                                                               

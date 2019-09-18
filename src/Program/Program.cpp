@@ -21,7 +21,7 @@ namespace Program {
 
 std::unique_ptr<float[]> density_values;
 std::unique_ptr<glm::vec4[]> case_values;
-float bSIZE = 0.1f;
+float bSIZE = 0.5f;
 int x_dim = 32;
 int y_dim = 32;
 int z_dim = 32;
@@ -64,13 +64,14 @@ bool MainProgram::initialize()
 
   auto vb = ResourceManager::getInstance()->create<Vertexbuffer>("rayScreen");
   vb->init(GL_ARRAY_BUFFER,GL_DYNAMIC_DRAW);
-  std::vector<std::string> types = {"4f","4f","4f","4f"};
+  //std::vector<std::string> types = {"4f","4f","4f","4f"};
+  std::vector<std::string> types = {"4f","4f"};
 
   // TODO: FIXXXX
-  auto width = 128; // ic->get_screenWidth();
-  auto height = 128; // ic->get_screenHeight();
-  auto dummy = std::make_unique<float[]>(width*height*16);
-  vb->addData(dummy.get(),sizeof(float)*width*height*16,types);
+  auto width = 512; // ic->get_screenWidth();
+  auto height = 512; // ic->get_screenHeight();
+  auto dummy = std::make_unique<float[]>(width*height*8);
+  vb->addData(dummy.get(),sizeof(float)*width*height*8,types);
 //  std::vector<glm::vec4> uvs;
 //  int sw = ic->get_screenWidth();
 //  int sh = ic->get_screenHeight();
@@ -99,10 +100,10 @@ void MainProgram::start()
   renderer.init();
 
   // Create the camera for this application.
-  Camera camera = Camera(glm::vec3(0.0f,22.0f,-3.0f),glm::vec3(0.0f,6.0f,2.0f),glm::vec3(0.0f,1.0f,0.0f));
+  Camera camera = Camera(glm::vec3(0.0f,5.0f,3.0f),glm::vec3(0.0f,6.0f,2.0f),glm::vec3(0.0f,1.0f,0.0f));
 
   // Create the raycamera for this application.
-  Camera ray_camera = Camera(glm::vec3(0.0f,22.0f,-3.0f),glm::vec3(0.0f,6.0f,2.0f),glm::vec3(0.0f,1.0f,0.0f));
+  Camera ray_camera = Camera(glm::vec3(0.0f,5.0f,3.0f),glm::vec3(0.0f,6.0f,2.0f),glm::vec3(0.0f,1.0f,0.0f));
   ray_camera.isRaycamera(true);
 
   // Register q for stoppin the application.
@@ -144,13 +145,13 @@ void MainProgram::createGlobalProperties()
 
   // Initial screend width.
   IntProperty initial_screen_width;
-  initial_screen_width.set(1024);
+  initial_screen_width.set(512);
   initial_screen_width.registerTest(width_filter);
   glob_manager->add("initial_screen_width",initial_screen_width);
 
   // Initial screend height.
   IntProperty initial_screen_height;
-  initial_screen_height.set(1024);
+  initial_screen_height.set(512);
   initial_screen_height.registerTest(height_filter);
   glob_manager->add("initial_screen_height",initial_screen_height);
 
@@ -544,7 +545,7 @@ void MainProgram::rayTrace(const glm::vec3& pos, const glm::vec3& target, const 
 //  auto target_now = glm::normalize(glm::vec3(0.0f,0.0f,-1.0f));
 //  auto up_now = glm::vec3(0.0f,1.0f,0.0f);
 //  Log::getDebug().log("POS :: % , TARGET :: %, UP :: %", pos_now, target_now, up_now);
-  Log::getDebug().log("POS :: % , TARGET :: %, UP :: %", pos, target, up);
+//  Log::getDebug().log("POS :: % , TARGET :: %, UP :: %", pos, target, up);
 // struct RayCamera {
 // 	glm::vec3 position;
 // 	glm::vec3 view;
@@ -562,9 +563,9 @@ void MainProgram::rayTrace(const glm::vec3& pos, const glm::vec3& target, const 
   //cl_float3 clpos; clpos.x = pos_now.x; clpos.y = pos_now.y; clpos.z = pos_now.z;// = (cl_float3){pos.x,pos.y,pos.z};
   //cl_float3 cltarget; cltarget.x = target_now.x; cltarget.y = target_now.y; cltarget.z = target_now.z; //  = (cl_float3){target.x,target.y,target.z};
   //cl_float3 clup; clup.x = up_now.x; clup.y = up_now.y; clup.z = up_now.z; // = (cl_float3){up.x,up.y,up.z};
-  cl_float2 clresolution; clresolution.x = 128.0f; clresolution.y= 128.0f; // = (cl_float2){128.0f,128.0f};
+  cl_float2 clresolution; clresolution.x = 512.0f; clresolution.y= 512.0f; // = (cl_float2){128.0f,128.0f};
   //cl_float2 clfov; clfov.x = 90.0f; clfov.y = 90.0f; // = (cl_float2){45.0f,45.0f};
-  cl_float2 clfov; clfov.x = glm::radians(45.0f); clfov.y = glm::radians(45.0f); // = (cl_float2){45.0f,45.0f};
+  cl_float2 clfov; clfov.x = glm::radians(90.0f); clfov.y = glm::radians(90.0f); // = (cl_float2){45.0f,45.0f};
   
   //cl_float2 clfov; clfov.x = 45.0f; clfov.y = 45.0f; // = (cl_float2){45.0f,45.0f};
 
@@ -593,14 +594,14 @@ void MainProgram::rayTrace(const glm::vec3& pos, const glm::vec3& target, const 
 
 //  Log::getDebug().log("sw == % , wh == %", sw, sh); //sw == %, sh == %", sw, sh);
   // The global range. Screen size.
-  cl::NDRange global( 128,128,1); //sw, sh, 1);
+  cl::NDRange global( 512,512,1); //sw, sh, 1);
   //cl::NDRange global(sw, sh, 1);
   cl::NDRange local(8, 8, 1);
 
-  int theSIZE = 128 * 128; // sw * sh;
+  int theSIZE = 512 * 512; // sw * sh;
 
   cl::Buffer* theScreen = d->get<cl::Buffer>("theScreen");
-  if (theScreen == nullptr) theScreen = d->createBuffer("theScreen", sizeof(float)*theSIZE*16, CL_MEM_READ_WRITE);
+  if (theScreen == nullptr) theScreen = d->createBuffer("theScreen", sizeof(float)*theSIZE*8, CL_MEM_READ_WRITE);
 
 //  Log::getDebug().log("theScreen == nullptr :: %", theScreen == nullptr);
   // TODO: check if this exists.
@@ -629,40 +630,40 @@ void MainProgram::rayTrace(const glm::vec3& pos, const glm::vec3& target, const 
 
   ray_kernel(eargs, 0.0f, sw, sh, *theScreen, *rayCamera).wait();
 
-  auto rayOutput = std::make_unique<float[]>(theSIZE*16);
-  error = command->enqueueReadBuffer(*theScreen,CL_TRUE,0,sizeof(float)*theSIZE*16, rayOutput.get());
+  auto rayOutput = std::make_unique<float[]>(theSIZE*8);
+  error = command->enqueueReadBuffer(*theScreen,CL_TRUE,0,sizeof(float)*theSIZE*8, rayOutput.get());
   if (error != CL_SUCCESS) { print_cl_error(error); }
-//  for (int i=0 ; i<theSIZE/16 ; i++) {
-//    int p = i*16;
-//    //Log::getDebug().log("% :: (%,%,%,%,%,%,%,%)", i, rayOutput.get()[p],
-//    //                                                rayOutput.get()[p+1],
-//    //                                                rayOutput.get()[p+2],
-//    //                                                rayOutput.get()[p+3],
-//    //                                                rayOutput.get()[p+4],
-//    //                                                rayOutput.get()[p+5],
-//    //                                                rayOutput.get()[p+6],
-//    //                                                rayOutput.get()[p+7]);
-//    Log::getDebug().log("% :: (%,%,%,%,%,%,%,%,%,%,%,%,%,%,%,%)", i, rayOutput.get()[p],
-//                                                    rayOutput.get()[p+1],
-//                                                    rayOutput.get()[p+2],
-//                                                    rayOutput.get()[p+3],
-//                                                    rayOutput.get()[p+4],
-//                                                    rayOutput.get()[p+5],
-//                                                    rayOutput.get()[p+6],
-//                                                    rayOutput.get()[p+7],
-//                                                    rayOutput.get()[p+8],
-//                                                    rayOutput.get()[p+9],
-//                                                    rayOutput.get()[p+10],
-//                                                    rayOutput.get()[p+11],
-//                                                    rayOutput.get()[p+12],
-//                                                    rayOutput.get()[p+13],
-//                                                    rayOutput.get()[p+14],
-//                                                    rayOutput.get()[p+15]);
-//    if (i>50) break;
-//  }
-//  throw std::runtime_error("nojoo");
+////  for (int i=0 ; i<theSIZE/8 ; i++) {
+////    int p = i*8;
+////    Log::getDebug().log("% :: (%,%,%,%,%,%,%,%)", i, rayOutput.get()[p],
+////                                                    rayOutput.get()[p+1],
+////                                                    rayOutput.get()[p+2],
+////                                                    rayOutput.get()[p+3],
+////                                                    rayOutput.get()[p+4],
+////                                                    rayOutput.get()[p+5],
+////                                                    rayOutput.get()[p+6],
+////                                                    rayOutput.get()[p+7]);
+//////    Log::getDebug().log("% :: (%,%,%,%,%,%,%,%,%,%,%,%,%,%,%,%)", i, rayOutput.get()[p],
+//////                                                    rayOutput.get()[p+1],
+//////                                                    rayOutput.get()[p+2],
+//////                                                    rayOutput.get()[p+3],
+//////                                                    rayOutput.get()[p+4],
+//////                                                    rayOutput.get()[p+5],
+//////                                                    rayOutput.get()[p+6],
+//////                                                    rayOutput.get()[p+7],
+//////                                                    rayOutput.get()[p+8],
+//////                                                    rayOutput.get()[p+9],
+//////                                                    rayOutput.get()[p+10],
+//////                                                    rayOutput.get()[p+11],
+//////                                                    rayOutput.get()[p+12],
+//////                                                    rayOutput.get()[p+13],
+//////                                                    rayOutput.get()[p+14],
+//////                                                    rayOutput.get()[p+15]);
+////    if (i>50) break;
+////  }
+////  throw std::runtime_error("nojoo");
   auto vb2 = ResourceManager::getInstance()->get<Vertexbuffer>("rayScreen");
-  vb2->populate_data(rayOutput.get(),sizeof(float)*theSIZE*16);
+  vb2->populate_data(rayOutput.get(),sizeof(float)*theSIZE*8);
 
 //  Log::getDebug().log("RAY_TRACE END");
 //  float eval_result[theSIZE];

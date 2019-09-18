@@ -3,8 +3,8 @@
 layout(location = 0) in vec4 coords;
 layout(location = 1) in vec4 normals;
 
-uniform float x_res = 1024.0;
-uniform float y_res = 1024.0;
+uniform float x_res = 512.0;
+uniform float y_res = 512.0;
 out vec4 fCoords;
 out vec4 nCoords;
 
