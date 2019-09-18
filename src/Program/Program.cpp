@@ -119,7 +119,7 @@ void MainProgram::start()
     ic->pollEvents();
     camera.handleKeyInput();
     ray_camera.handleKeyInput();
-    rayTrace(ray_camera.getPosition(), ray_camera.getFront(), glm::vec3(0.0f,1.0f,0.0f), ray_camera.getFocaldistance()); 
+    rayTrace(ray_camera.getPosition(), glm::normalize(ray_camera.getFront()), glm::vec3(0.0f,1.0f,0.0f), ray_camera.getFocaldistance()); 
     renderer.render(camera,ray_camera);
     Window::getInstance()->renderImgui();
     Window::getInstance()->swapBuffers();
@@ -564,7 +564,7 @@ void MainProgram::rayTrace(const glm::vec3& pos, const glm::vec3& target, const 
   //cl_float3 clup; clup.x = up_now.x; clup.y = up_now.y; clup.z = up_now.z; // = (cl_float3){up.x,up.y,up.z};
   cl_float2 clresolution; clresolution.x = 128.0f; clresolution.y= 128.0f; // = (cl_float2){128.0f,128.0f};
   //cl_float2 clfov; clfov.x = 90.0f; clfov.y = 90.0f; // = (cl_float2){45.0f,45.0f};
-  cl_float2 clfov; clfov.x = glm::radians(-45.0f); clfov.y = glm::radians(-90.0f); // = (cl_float2){45.0f,45.0f};
+  cl_float2 clfov; clfov.x = glm::radians(45.0f); clfov.y = glm::radians(45.0f); // = (cl_float2){45.0f,45.0f};
   
   //cl_float2 clfov; clfov.x = 45.0f; clfov.y = 45.0f; // = (cl_float2){45.0f,45.0f};
 

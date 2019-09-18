@@ -106,26 +106,30 @@ __kernel void ray_path(const float isovalue, const int width, const int height, 
 //  float3 u = normalize(cross(cam->up,n));
 //  float3 v = cross(n,u); // normalize(cross(cam->up,cam->view));
 
-//////	float3 rendercamview = cam->view; rendercamview = normalize(rendercamview);
-//////	float3 rendercamup = cam->up; rendercamup = normalize(rendercamup);
-//////	float3 horizontalAxis = cross(rendercamview, rendercamup); horizontalAxis = normalize(horizontalAxis);
-//////	float3 verticalAxis = cross(horizontalAxis, rendercamview); verticalAxis = normalize(verticalAxis);
-//////
-//////	float3 middle = cam->position + rendercamview;
-//////	float3 horizontal = horizontalAxis * tan(cam->fov.x * 0.5f * (PI / 180)); 
-//////	float3 vertical   =  verticalAxis * tan(cam->fov.y * -0.5f * (PI / 180)); 
-//////
-//////	unsigned int x = x_coord;
-//////	unsigned int y = y_coord;
-//////
-//////	int pixelx = x_coord; 
-//////	int pixely = height - y_coord - 1;
-//////
-//////	float sx = (float)pixelx / (width - 1.0f);
-//////	float sy = (float)pixely / (height - 1.0f);
-//////	
-//////	float3 pointOnPlaneOneUnitAwayFromEye = middle + (horizontal * ((2 * sx) - 1)) + (vertical * ((2 * sy) - 1));
-//////	float3 point_on_plane = cam->position + ((pointOnPlaneOneUnitAwayFromEye - cam->position) * cam->focalDistance); /* cam->focalDistance */
+////	float3 rendercamview = -cam->view; rendercamview = normalize(rendercamview);
+////	float3 rendercamup = cam->up; rendercamup = normalize(rendercamup);
+////	float3 horizontalAxis = cross(rendercamview, rendercamup); horizontalAxis = normalize(horizontalAxis);
+////	float3 verticalAxis = cross(horizontalAxis, rendercamview); verticalAxis = normalize(verticalAxis);
+////
+////	float3 middle = cam->position + rendercamview;
+////  float fovX = 2.0; 
+////  float fovY = 2.0; 
+////	//float3 horizontal = horizontalAxis * tan(cam->fov.x * 0.5f * (PI / 180)); 
+////	//float3 vertical   = verticalAxis * tan(cam->fov.y * -0.5f * (PI / 180)); 
+////	float3 horizontal = horizontalAxis * tan(fovX * 0.5f * (PI / 180)); 
+////	float3 vertical   = verticalAxis * tan(fovY * -0.5f * (PI / 180)); 
+////
+////	unsigned int x = x_coord;
+////	unsigned int y = y_coord;
+////
+////	int pixelx = x_coord; 
+////	int pixely = height - y_coord - 1;
+////
+////	float sx = (float)pixelx / (width - 1.0f);
+////	float sy = (float)pixely / (height - 1.0f);
+////	
+////	float3 pointOnPlaneOneUnitAwayFromEye = middle + (horizontal * ((2 * sx) - 1)) + (vertical * ((2 * sy) - 1));
+////	float3 point_on_plane = cam->position + ((pointOnPlaneOneUnitAwayFromEye - cam->position) * cam->focalDistance); /* cam->focalDistance */
 
   float3 right = normalize(cross(cam->view,cam->up));  
   float3 y = normalize(cross(cam->view, right));
@@ -133,35 +137,37 @@ __kernel void ray_path(const float isovalue, const int width, const int height, 
 
   float d = cam->focalDistance;  
   
-  float3 u = (d * tan(cam->fov.x*0.5f)) * right;
+  float3 u = (d * tan(cam->fov.x*0.5f)) * right; 
   float3 v = (d * tan(cam->fov.y*0.5f)) * y;
 
   float alpha = 2.0*((float)x_coord + 0.5f) / (float)global_x_dim - 1.0;
-  //float beta  = 1.0 - 2.0f*((float)y_coord + 0.5f) / (float)global_y_dim;
   float beta  = 1.0 - 2.0f*((float)y_coord + 0.5f) / (float)global_y_dim;
 
   float3 point_on_plane = alpha * u + beta * v;
 
 //  cam->focalDistance = 1.0f;
 
-//////////  float3 n = -normalize(cam->position - cam->view);
-//////////  float3 u = normalize(cross(cam->up, n));
-//////////  float3 v = cross(n, u);
-//////////
-//////////  float aspect_ratio = (float)(global_x_dim) / (float)(global_y_dim);
-//////////
-//////////  float h = tan(cam->fov.x * 0.5) * 2 * cam->focalDistance;
-//////////  float w = h * aspect_ratio; 
-//////////
-//////////  float3 center = cam->position - n * cam->focalDistance;
-//////////  float3 left_bottom = center - u * w * 0.5f - v * h * 0.5f;
-//////////  
-//////////  float3 point_on_plane = left_bottom + u * x_coord * w / global_x_dim + v * y_coord * h / global_y_dim;
-//////////
+////  float3 n = normalize(cam->position - cam->view);
+////  float3 u = normalize(cross(cam->up, n));
+////  float3 v = cross(n, u);
+////
+////  float aspect_ratio = (float)(global_x_dim) / (float)(global_y_dim);
+////
+////  float h = tan(cam->fov.x * 0.5) * 2 * cam->focalDistance;
+////  float w = h * aspect_ratio; 
+////
+////  float3 center = cam->position - n * cam->focalDistance;
+////  float3 left_bottom = center - u * w * 0.5f - v * h * 0.5f;
+////  
+////  float3 point_on_plane = left_bottom + u * x_coord * w / global_x_dim + v * y_coord * h / global_y_dim;
+
   Ray ray;
-  ray.origin = point_on_plane; // - cam->position; //cam->position;
+  //ray.origin = point_on_plane + cam->position; //cam->position; // + point_on_plane; //point_on_plane; // - cam->position; //cam->position;
+  //ray.direction = normalize(point_on_plane - d*cam->view);
+  //ray.direction = -normalize(point_on_plane - d*cam->view);
+  ray.origin = point_on_plane; //(float3){0.0f, 0.0f, 1.0f}; // + cam->view*d; //point_on_plane; //-d*cam->view; // point_on_plane; // cam->position; 
+  ray.direction = normalize(point_on_plane + d*cam->view);
   //ray.direction = normalize(point_on_plane - cam->position);
-  ray.direction = normalize(cam->position-point_on_plane);
 
 //  float d = 1.0 / (tan(cam->fov.x/2));
 //  
