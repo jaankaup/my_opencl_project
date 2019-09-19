@@ -105,40 +105,9 @@ __kernel void ray_path(const float isovalue, const int width, const int height, 
   const unsigned int global_y_dim = get_global_size(1);
 
 
-  //const float fx = (float)x_coord / (float)global_x_dim; /* x-coordinate in range [0,1] */
-  //const float fy = (float)y_coord / (float)global_y_dim; /* y-coordinate in range [0,1] */
-//  float3 n = normalize(cam->position - cam->view); 
-//  float3 u = normalize(cross(cam->up,n));
-//  float3 v = cross(n,u); // normalize(cross(cam->up,cam->view));
-
-////	float3 rendercamview = -cam->view; rendercamview = normalize(rendercamview);
-////	float3 rendercamup = cam->up; rendercamup = normalize(rendercamup);
-////	float3 horizontalAxis = cross(rendercamview, rendercamup); horizontalAxis = normalize(horizontalAxis);
-////	float3 verticalAxis = cross(horizontalAxis, rendercamview); verticalAxis = normalize(verticalAxis);
-////
-////	float3 middle = cam->position + rendercamview;
-////  float fovX = 2.0; 
-////  float fovY = 2.0; 
-////	//float3 horizontal = horizontalAxis * tan(cam->fov.x * 0.5f * (PI / 180)); 
-////	//float3 vertical   = verticalAxis * tan(cam->fov.y * -0.5f * (PI / 180)); 
-////	float3 horizontal = horizontalAxis * tan(fovX * 0.5f * (PI / 180)); 
-////	float3 vertical   = verticalAxis * tan(fovY * -0.5f * (PI / 180)); 
-////
-////	unsigned int x = x_coord;
-////	unsigned int y = y_coord;
-////
-////	int pixelx = x_coord; 
-////	int pixely = height - y_coord - 1;
-////
-////	float sx = (float)pixelx / (width - 1.0f);
-////	float sy = (float)pixely / (height - 1.0f);
-////	
-////	float3 pointOnPlaneOneUnitAwayFromEye = middle + (horizontal * ((2 * sx) - 1)) + (vertical * ((2 * sy) - 1));
-////	float3 point_on_plane = cam->position + ((pointOnPlaneOneUnitAwayFromEye - cam->position) * cam->focalDistance); /* cam->focalDistance */
 
   float3 right = normalize(cross(cam->view,cam->up));  
   float3 y = normalize(cross(cam->view, right));
-//  float3 y = normalize(cross(-cam->view, right));
 
   float d = cam->focalDistance;  
   
@@ -150,69 +119,21 @@ __kernel void ray_path(const float isovalue, const int width, const int height, 
 
   float3 point_on_plane = alpha * u + beta * v;
 
-//  cam->focalDistance = 1.0f;
-
-////  float3 n = normalize(cam->position - cam->view);
-////  float3 u = normalize(cross(cam->up, n));
-////  float3 v = cross(n, u);
-////
-////  float aspect_ratio = (float)(global_x_dim) / (float)(global_y_dim);
-////
-////  float h = tan(cam->fov.x * 0.5) * 2 * cam->focalDistance;
-////  float w = h * aspect_ratio; 
-////
-////  float3 center = cam->position - n * cam->focalDistance;
-////  float3 left_bottom = center - u * w * 0.5f - v * h * 0.5f;
-////  
-////  float3 point_on_plane = left_bottom + u * x_coord * w / global_x_dim + v * y_coord * h / global_y_dim;
-
   Ray ray;
-  //ray.origin = point_on_plane + cam->position; //cam->position; // + point_on_plane; //point_on_plane; // - cam->position; //cam->position;
-  //ray.direction = normalize(point_on_plane - d*cam->view);
-  //ray.direction = -normalize(point_on_plane - d*cam->view);
   ray.origin = point_on_plane + cam->position; //(float3){0.0f, 0.0f, 1.0f}; // + cam->view*d; //point_on_plane; //-d*cam->view; // point_on_plane; // cam->position; 
   ray.direction = normalize(point_on_plane + d*cam->view);
-  //ray.direction = normalize(point_on_plane - cam->position);
 
-//  float d = 1.0 / (tan(cam->fov.x/2));
-//  
-//  const float fx = (float)x_coord + 0.5; // (float)global_x_dim; /* x-coordinate in range [0,1] */
-//  const float fy = (float)y_coord + 0.5; // (float)global_y_dim; /* y-coordinate in range [0,1] */
-//  
-//  Ray ray;
-//  ray.origin = cam->position;
-//  ray.direction = (float3){aspect_ratio * 2.0 * fx / (float)global_x_dim - 1, 
-//                           2.0 * fy / (float)global_y_dim - 1,
-//                           d};
-  
   float3 intersection_point;
   float3 normal = (float3){0.0,0.0,0.0};
 	float3 accum_color = (float3){0.0f, 0.0f, 0.0f};
 
   float step_size = 0.1f;
-  float depth = 0.0f; // distance(point_on_plane , cam->position);
-
-//  float value_now = maasto(getPoint(depth, &ray)); // The inital value.
+  float depth = 0.0f;
 
   for (int i=0 ; i<800 ; i++)
   {
     float3 p = getPoint(depth, &ray); 
-    //float value = maasto(p);
-    //float value = ball(p, (float3){0.0f,0.0f,0.0f},5.3f);
     float value_maasto = maasto(p);
-    //if (fabs(value) < 0.4f) {
-    //  intersection_point = p;
-    //  normal = calculate_normal_ball(p);
-    //  float3 mask = (float3){1.0f,1.0f,1.0f};
-    //  float emission = 0.9f;
-    //  float3 color = (float3){0.0f,1.0f,0.0f};
-	  //  float diffuseCoeffient = max(0.1f , dot(-normal,normalize(intersection_point - cam->position)));
-
-    //  accum_color += emission * mask;
-    //  accum_color *= color;
-	  //  accum_color *= diffuseCoeffient;
-    //  break;
-    //}   
     if (fabs(value_maasto) < 0.4f) {
       intersection_point = p;
       normal = calculate_normal_maasto(p);
@@ -226,39 +147,10 @@ __kernel void ray_path(const float isovalue, const int width, const int height, 
 	    accum_color *= diffuseCoeffient;
       break;
     }   
-    //else if (value_maasto-40.0f > 0.0f) { depth += 19.9f; } 
-    //else if (value_maasto-20.0f > 0.0f) { depth += 19.9f; } 
-    //else if (value_maasto-6.0f > 0.0f) { depth += 5.9f; } 
-    //else if (value_maasto-3.0f > 0.0f) { depth += 2.9f; } 
-    //else if (value_maasto-1.0f > 0.0) { depth += 0.4f; } 
-    //else if (value_maasto-0.6f > 0.0) { depth += 0.2f; } 
+
     depth += step_size;
-    //if (depth > 400.0f) break;
-    //step_size = step_size + 0.0001;
   }
-  //float3 black = (float3){0.0f,0.0f,0.0f};
-  if (accum_color.x == 0.0f && accum_color.y == 0.0f && accum_color.z == 0.0f) accum_color = (float3){0.0f,0.0f,0.0f};
-
-  //float3 v;
-
-//  const float fx_centered = (x_coord - 0.5) * aspect_ratio; /* Relative to the centered camera. */ 
-//  const float fy_centered = fy - 0.5;                       /* Relative to the centered camera. */ 
-//  
-//  const float3 pixel_pos = (float3){fx_centered, - fy_centered, 0.0}; /* Screen pixel position on the screen. */
-//
-//  Ray ray;
-//  ray.origin = cam->position;
-//  ray.direction = normalize(pixel_pos - cam->position);
-
-//  output[global_id_x] = (float8){
-//                                  (float)(global_id_x + global_id_y * get_global_size(0)),
-//                                  (float)(global_id_x),
-//                                  (float)(global_id_y),
-//                                  cam->up.x,
-//                                  cam->up.y,
-//                                  cam->up.z,
-//                                  (float)get_global_size(0),
-//                                  (float)get_global_size(1)};
+  //if (accum_color.x == 0.0f && accum_color.y == 0.0f && accum_color.z == 0.0f) accum_color = (float3){0.0f,0.0f,0.0f};
 
 ////  output[x_coord + global_x_dim * y_coord] = (float16){(float)ray.origin.x,          // a.x
 ////                                                       (float)ray.origin.y,          // a.y

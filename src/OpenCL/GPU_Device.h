@@ -9,6 +9,7 @@
 #include <memory>
 //#include <CL/cl2.hpp>
 #include <CL/cl.hpp>
+#include <CL/cl_gl.h>
 #include "../Utils/log.h"
 #include "CL_Helper.h"
 

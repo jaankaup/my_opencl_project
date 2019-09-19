@@ -1,4 +1,5 @@
 #include "GPU_Device.h"
+#include <GL/glx.h>
 
 bool GPU_Device::init()
 {
@@ -13,12 +14,32 @@ bool GPU_Device::init()
     return false;
   }
 
-  if(all_platforms.size()==0){
+  cl_uint platforms_available = all_platforms.size();
+
+  if(platforms_available==0){
     Log::getError().log("GPU:Device::init(): No platforms found. Check OpenCL installation!.");     
     return false; 
   }
 
+
   cl::Platform default_platform=all_platforms[0];
+
+//  cl_uint n = 0;
+//  success = clGetPlatformIDs(0, NULL, &n);
+//  if (success != CL_SUCCESS) {
+//    Log::getError().log("GPU:Device::init(): clGetPlatformIDs.");
+//    print_cl_error(success);
+//    return false;
+//  }
+
+//§  /* Get the platform ids. */
+//§  std::vector<cl_platform_id> ids(platforms_available);
+//§  success = clGetPlatformIDs(platforms_available, ids.data(), NULL);
+//§  if (success != CL_SUCCESS) {
+//§    Log::getError().log("GPU:Device::init(): clGetPlatformIDs.");
+//§    print_cl_error(success);
+//§    return false;
+//§  }
 
   Log::getInfo().log("Using platform: %.",default_platform.getInfo<CL_PLATFORM_NAME>());     
 
@@ -58,18 +79,106 @@ bool GPU_Device::init()
     Log::getInfo().log("   %", x);
   }
 
+  size_t bytes = 0;
+// Notice that extension functions are accessed via pointers
+// initialized with clGetExtensionFunctionAddressForPlatform.
+
+//  cl_context_properties props[] = {
+//    CL_CONTEXT_PLATFORM, (cl_context_properties)platform,
+//    CL_GL_CONTEXT_KHR, (cl_context_properties)hRC,
+//    CL_WGL_HDC_KHR, (cl_context_properties)hDC,
+//    0
+//  };
+//// queuring how much bytes we need to read
+//clGetGLContextInfoKHR(props, CL_DEVICES_FOR_GL_CONTEXT_KHR, 0, NULL, &bytes);
+//// allocating the mem
+//size_t devNum = bytes/sizeof(cl_device_id);
+//std::vector<cl_device_id> devs (devNum);
+////reading the info
+//clGetGLContextInfoKHR(props, CL_DEVICES_FOR_GL_CONTEXT_KHR, bytes, devs, NULL));
+//looping over all devices
+//for(size_t i=0;i<devNum; i++)
+//{
+//      //enumerating the devices for the type, names, CL_DEVICE_EXTENSIONS, etc
+//      clGetDeviceInfo(devs[i],CL_DEVICE_TYPE, …);
+//      …
+//      clGetDeviceInfo(devs[i],CL_DEVICE_EXTENSIONS,…);
+//      …
+//}
+
+  
+  /* OS X
+  CGLContextObj     CGLGetCurrentContext(void);
+CGLShareGroupObj  CGLGetShareGroup(CGLContextObj);
+
+CGLContextObj     kCGLContext     = CGLGetCurrentContext();
+CGLShareGroupObj  kCGLShareGroup  = CGLGetShareGroup(kCGLContext);
+
+cl_context_properties properties[] =
+{
+  CL_CONTEXT_PROPERTY_USE_CGL_SHAREGROUP_APPLE,
+  (cl_context_properties) kCGLShareGroup,
+  0
+};
+*/
+
+// Linux (with GLX)
+
+//cl_int error = clGetDeviceIDdefault_platform;
+
+cl_context_properties properties[] =
+{
+  CL_GL_CONTEXT_KHR,   (cl_context_properties)glXGetCurrentContext(),
+  CL_GLX_DISPLAY_KHR,  (cl_context_properties)glXGetCurrentDisplay(),
+  CL_CONTEXT_PLATFORM, (cl_context_properties)default_platform() /*ids[0] */, // OpenCL platform object
+  0
+};
+
+/*
+Windows (WGL)
+
+cl_context_properties properties[] =
+{
+  CL_GL_CONTEXT_KHR,   (cl_context_properties)wglGetCurrentContext(),
+  CL_WGL_HDC_KHR,      (cl_context_properties)wglGetCurrentDC(),
+  CL_CONTEXT_PLATFORM, (cl_context_properties)platform, // OpenCL platform object
+  0
+};
+*/
+
+/*
+Android (with EGL)
+
+cl_context_properties properties[] =
+{
+  CL_GL_CONTEXT_KHR,   (cl_context_properties)eglGetCurrentContext(),
+  CL_EGL_DISPLAY_KHR,  (cl_context_properties)eglGetCurrentDisplay(),
+  CL_CONTEXT_PLATFORM, (cl_context_properties)platform, // OpenCL platform object
+  0
+};
+*/
+  //auto a = clGetGLContextInfoKHR();
+
+  //CGLContextObj cgl_ctx = CGLGetCurrentContext();
+//  cl_context_properties props[] = {
+//    CL_CONTEXT_PLATFORM, (cl_context_properties)platform,
+//    CL_GL_CONTEXT_KHR, (cl_context_properties)hRC,
+//    CL_WGL_HDC_KHR, (cl_context_properties)hDC,
+//    0
+//  };
+
   // TODO: error handling for context creation.
-  pContext = cl::Context({pDevice});
+  pContext = cl::Context({pDevice},properties);
 
   //cl_int error;
 
-  pQueue = cl::CommandQueue(pContext, pDevice, 0, &success);
+  //pQueue = cl::CommandQueue(pContext, pDevice, 0, &success);
 
-  if (success != CL_SUCCESS)
-  {
-    Log::getError().log("GPU:Device::init(): Failed to create CommmandQueue with error code %.",success);     
-    return false;
-  }
+  //if (success != CL_SUCCESS)
+  //{
+  //  Log::getError().log("GPU:Device::init(): Failed to create CommmandQueue with error code %.",success);     
+  //  return false;
+  //}
   pInitialized = true;
 
   return true;

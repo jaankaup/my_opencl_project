@@ -17,6 +17,22 @@ void Texture::init(const TextureType t)
     pId = i;
 }
 
+void Texture::init(const TextureType t, const uint32_t width, const uint32_t height, const uint32_t depth)
+{
+    GLuint i = 0;
+    glGenTextures(1,&i);
+    pType = t;
+    pId = i;
+    std::string textureType = t == TextureType::d1 ? "TextureType::d1" : (t == TextureType::d2 ? "TextureType::d2" : "TextureType::d3");
+
+    bool succeed = false;
+    succeed = setWidth(width);
+    succeed = setHeight(height);
+    succeed = setDepth(depth);
+
+    if (!succeed) { Log::getError().log("Texture::init(% ,%, %, %)", textureType, width, height, depth); } 
+}
+
 void Texture::create3D(const TextureData& td)
 {
   use(0);
@@ -374,3 +390,54 @@ void Texture::create_tritable_texture()
     delete[] data;
 }
 
+bool Texture::setWidth(const uint32_t w)
+{
+  int result;
+  glGetIntegerv(GL_MAX_TEXTURE_SIZE, &result); 
+  if (w > result)
+  {
+    Log::getError().log("Texture::setWidth(%): GL_MAX_TEXTURE_SIZE == %.", std::to_string(w),std::to_string(result));
+    return false;
+  }
+  if (w == 0) {
+    Log::getError().log("Texture::setWidth(%): width must be greater than zero",std::to_string(w));
+    return false;
+  }
+  pTextureDimension.z = w;
+  return true;
+}
+
+bool Texture::setHeight(const uint32_t h)
+{
+
+  int result;
+  glGetIntegerv(GL_MAX_TEXTURE_SIZE, &result);
+  if (h > result)
+  {
+    Log::getError().log("Texture::setHeight(%): GL_MAX_TEXTURE_SIZE == %.", std::to_string(h),std::to_string(result));
+    return false;
+  }
+  if (h == 0) {
+    Log::getError().log("Texture::setHeight(%): height must be greater than zero",std::to_string(h));
+    return false;
+  }
+  pTextureDimension.y = h;
+  return true;
+}
+
+bool Texture::setDepth(const uint32_t d)
+{
+  int result;
+  glGetIntegerv(GL_MAX_3D_TEXTURE_SIZE, &result); 
+  if (d > result)
+  {
+    Log::getError().log("Texture::setDepth(%): GL_MAX_TEXTURE_SIZE == %.", std::to_string(d),std::to_string(result));
+    return false;
+  }
+  if (d == 0) {
+    Log::getError().log("Texture::setDepth(%): depth must be greater than zero",std::to_string(d));
+    return false;
+  }
+  pTextureDimension.z = d;
+  return true;
+}

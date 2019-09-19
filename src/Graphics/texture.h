@@ -8,6 +8,7 @@
 #include <GL/glew.h>
 #include <SOIL.h>
 #include "textureData.h"
+#include "TextureSampler.h"
 #include "../Utils/log.h"
 #include "../Utils/myrandom.h"
 
@@ -34,6 +35,8 @@ class Texture
         /// Initializes the texture object.
         void init(const TextureType t);
 
+        void init(const TextureType t, const uint32_t width, const uint32_t height, const uint32_t depth);
+
         /// Binds the texture. Texture object must be initialized 
         /// before the use method.
         void bind() const;
@@ -59,10 +62,15 @@ class Texture
         /// Current texture unit.
         ///GLuint pUnit;
 
+        bool setWidth(const uint32_t w);
+        bool setHeight(const uint32_t h);
+        bool setDepth(const uint32_t d);
+
+        glm::vec3 pTextureDimension;
 
         unsigned int pTextureSize = 0;
 
-
+        std::unique_ptr<TextureSampler> pSampler;
 
         /// Releases the texture object.
         //void dispose() const;
