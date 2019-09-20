@@ -30,7 +30,41 @@ void Texture::init(const TextureType t, const uint32_t width, const uint32_t hei
     succeed = setHeight(height);
     succeed = setDepth(depth);
 
-    if (!succeed) { Log::getError().log("Texture::init(% ,%, %, %)", textureType, width, height, depth); } 
+    if (!succeed) { Log::getError().log("Texture::init(% ,%, %, %)", textureType, width, height, depth); return; } 
+    
+    auto data = std::make_unique<unsigned char[]>(width*height*4);
+    for (int i=0 ; i<width*height; i++) {
+      int it = i*4; 
+      data[i] = i % 255;
+      data[i+1] = 13;
+      data[i+2] = 13;
+      data[i+2] = 255;
+    }
+
+    use(0);
+    if (t == TextureType::d1) {
+      glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+      glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+      glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+      glTexImage1D(GL_TEXTURE_1D, 0, GL_RGB8, width, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+    }
+    else if (t == TextureType::d2) {
+      Log::getDebug().log("yeeeeaaaahhhh");
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+      //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8UI, width, height, 0, GL_RGBA_INTEGER, GL_UNSIGNED_BYTE, data.get());
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_FLOAT, data.get());
+    }
+    else if (t == TextureType::d3) {
+      glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+      glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+      glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+      glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+      glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+      glTexImage3D(GL_TEXTURE_3D, 0, GL_RGB8, width, height, depth, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+    }
 }
 
 void Texture::create3D(const TextureData& td)

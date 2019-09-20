@@ -47,13 +47,13 @@ void Renderer::render(const Camera& camera, const Camera& ray_camera) {
 
   auto rm = ResourceManager::getInstance();
 
-  auto show_scene = glob_manager->get<Program::BoolProperty>("show_scene")->get();
-
-  auto march_shader = rm->get<Shader>("march_shader");
-  march_shader->bind();
-  auto ray_screen = rm->get<Vertexbuffer>("rayScreen");
-  ray_screen->bind();
-  glDrawArrays(GL_POINTS, 0, 512*512 /*1024*1024*/ );
+//  auto show_scene = glob_manager->get<Program::BoolProperty>("show_scene")->get();
+//
+//  auto march_shader = rm->get<Shader>("march_shader");
+//  march_shader->bind();
+//  auto ray_screen = rm->get<Vertexbuffer>("rayScreen");
+//  ray_screen->bind();
+//  glDrawArrays(GL_POINTS, 0, 512*512 /*1024*1024*/ );
   ////if (!show_scene) {
   ////auto march_shader = rm->get<Shader>("camera_debug_shader");
   ////march_shader->bind();
@@ -122,6 +122,13 @@ void Renderer::render(const Camera& camera, const Camera& ray_camera) {
 //  shader_wire->setUniform("block_size", Program::bSIZE);
 //  shader_wire->setUniform("index", int(Program::cube_float));
 
+  auto ray_texture_shader = rm->get<Shader>("ray_texture_shader");
+  ray_texture_shader->bind();
+
+  Texture* ray_texture = rm->get<Texture>("rayRuutu");
+  ray_texture->use(0);
+  ray_texture_shader->setUniform("ray_texture", 0);
+
   auto vb_wire = rm->get<Vertexbuffer>("hopohopo");
   vb_wire->bind();
   glDrawArrays(GL_POINTS, 0, 1 /* vb_wire->getCount() */);
@@ -134,9 +141,9 @@ void Renderer::render(const Camera& camera, const Camera& ray_camera) {
   //  Log::getDebug().log("Program::cube_now == %", Program::cube_now);
   //}
 
-  glFrontFace(GL_CCW);
+//  glFrontFace(GL_CCW);
 
-  glLineWidth(1);
+//  glLineWidth(1);
   glFlush();
 /////
 /////  

@@ -36,6 +36,8 @@ class Texture
         void init(const TextureType t);
 
         void init(const TextureType t, const uint32_t width, const uint32_t height, const uint32_t depth);
+        
+        void addSampler(std::unique_ptr<TextureSampler>&& sampler) { pSampler = std::move(sampler); }
 
         /// Binds the texture. Texture object must be initialized 
         /// before the use method.
@@ -46,6 +48,8 @@ class Texture
 
         Texture(Texture&&) = default;
         Texture& operator=(Texture&&) = default;
+
+        GLint getID() const { return pId; }
 
         /// The destructor doesn't release the texture. Use dispose()
         /// memberfuction to destory texture object.

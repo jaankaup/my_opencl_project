@@ -68,10 +68,11 @@ bool MainProgram::initialize()
   std::vector<std::string> types = {"4f","4f"};
 
   // TODO: FIXXXX
-  auto width = 512; // ic->get_screenWidth();
-  auto height = 512; // ic->get_screenHeight();
-  auto dummy = std::make_unique<float[]>(width*height*8);
-  vb->addData(dummy.get(),sizeof(float)*width*height*8,types);
+  glm::vec2 camera_resolution = GlobalPropertyManager::getInstance()->get<Vec2Property>("camera_resolution")->get();
+  auto width = camera_resolution.x; // ic->get_screenWidth();
+  auto height = camera_resolution.x; // ic->get_screenHeight();
+  auto dummy = std::make_unique<float[]>(width*height);
+  vb->addData(dummy.get(),sizeof(float)*width*height,types);
 //  std::vector<glm::vec4> uvs;
 //  int sw = ic->get_screenWidth();
 //  int sh = ic->get_screenHeight();
@@ -115,15 +116,19 @@ void MainProgram::start()
   bool show_another_window = false;
   ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
+  //int counter = 0;
+
   // Main loop.
   while (running) {
     ic->pollEvents();
     camera.handleKeyInput();
     ray_camera.handleKeyInput();
+    //if (counter != 0) continue;
     rayTrace(ray_camera.getPosition(), glm::normalize(ray_camera.getFront()), glm::vec3(0.0f,1.0f,0.0f), ray_camera.getFocaldistance()); 
     renderer.render(camera,ray_camera);
     Window::getInstance()->renderImgui();
     Window::getInstance()->swapBuffers();
+    //counter++;
   };
 }
 
@@ -164,6 +169,15 @@ void MainProgram::createGlobalProperties()
   BoolProperty show_scene;
   show_scene.set(true);
   glob_manager->add("show_scene",show_scene);
+
+  // Property for ray tracer camera resolution.
+  Vec2Property raycamera_resolution; 
+  raycamera_resolution.set(glm::vec2(256.0f,256.0f));
+  auto resolution_filter  = [](const glm::vec2& res) {if (res.x < 1 || res.y < 1) {Log::getError().log("Raycamera resolution (%) not supported.",res); return false;} else return true; };
+  auto resolution_filter2 = [](const glm::vec2& res) {if (int(res.x) % 8 != 0  || int(res.y) % 8 != 0 ) {Log::getError().log("Raycamera resolution (%) must be modulo 8.",res); return false;} else return true; };
+  raycamera_resolution.registerTest(resolution_filter);
+  raycamera_resolution.registerTest(resolution_filter2);
+  glob_manager->add("camera_resolution",raycamera_resolution);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////
@@ -172,6 +186,9 @@ bool MainProgram::createTextures()
 {
   Log::getDebug().log("CREATING TEXTURES.\n");
   ResourceManager* rm = ResourceManager::getInstance();
+//  auto glob_manager = GlobalPropertyManager::getInstance();
+
+  glm::vec2 camera_resolution = GlobalPropertyManager::getInstance()->get<Vec2Property>("camera_resolution")->get();
 //  std::vector<std::string> texture_names;
 //  texture_names.push_back("textures/grass.png");
 //  texture_names.push_back("textures/mountain.jpg");
@@ -184,7 +201,9 @@ bool MainProgram::createTextures()
   Texture* t2 = rm->create<Texture>("kallio");
   t2->init(TextureType::d2);
   t2->create("textures/mountain.jpg",1);
-  //t2->use(1);
+
+  Texture* rayRuutu = rm->create<Texture>("rayRuutu");
+  rayRuutu->init(TextureType::d2,camera_resolution.x, camera_resolution.y, 1);
   return true;
 }
 
@@ -217,6 +236,10 @@ bool MainProgram::createShaders()
   Shader* camera_debug_shader = res_manager->create<Shader>("camera_debug_shader");
   std::vector<std::string> camera_debug_shader_src = {"shaders/camera_debug.vert", "shaders/camera_debug.geom", "shaders/camera_debug.frag"};
   camera_debug_shader->build(camera_debug_shader_src);
+
+  Shader* ray_texture_shader = res_manager->create<Shader>("ray_texture_shader");
+  std::vector<std::string> ray_texture_shader_src = {"shaders/ray_screen.vert", "shaders/ray_screen.geom", "shaders/ray_screen.frag"};
+  ray_texture_shader->build(ray_texture_shader_src);
 
   return true;
 }
@@ -534,6 +557,10 @@ void MainProgram::rayTrace(const glm::vec3& pos, const glm::vec3& target, const 
 //  Log::getDebug().log("RAY_TRACE");
   //const static glm::ivec3 LOCAL_GROUP_SIZE(4,4,4);
   //glm::ivec3 global_group_size(dimensionX, dimensionY, dimensionZ);
+
+  // Finish with opengl.
+  glFinish();
+
   GPU_Device* d = GPU_Device::getInstance();
 
   cl::CommandQueue* command = d->get<cl::CommandQueue>("command_ray");
@@ -555,15 +582,42 @@ void MainProgram::rayTrace(const glm::vec3& pos, const glm::vec3& target, const 
 // 	float apertureRadius;
 // 	float focalDistance;
 // };
-  // Create the camera.
+  
+  // Capture opengl ray screen texture,
+  //cl_mem mem = clCreateFromGLTexture(*(d->getContext())(), TODOOOOOOOOOOOOOOO 
 
+  Texture* rayRuutu = ResourceManager::getInstance()->get<Texture>("rayRuutu");
+//  Log::getDebug().log("rayRuutu == nullptr :: %", rayRuutu == nullptr);
+//  Log::getDebug().log("rayRuutu.getID() == %", rayRuutu->getID());
+//  cl_int error = CL_SUCCESS;
+//  cl::ImageGL screen_texture(*(d->getContext()), CL_MEM_WRITE_ONLY, GL_TEXTURE_2D, 0, rayRuutu->getID(), &error); 
+//  if (error != CL_SUCCESS) print_cl_error(error);
+
+  cl::ImageGL* screen_texture = d->get<cl::ImageGL>("screen_texture");
+  if (screen_texture == nullptr) screen_texture = d->createImage("screen_texture", CL_MEM_WRITE_ONLY, GL_TEXTURE_2D, rayRuutu->getID());
+
+  std::vector<cl::Memory> glObjects;
+  glObjects.push_back(*screen_texture);
+
+  cl::Event ev;
+  cl_int error = command->enqueueAcquireGLObjects(&glObjects, NULL, &ev);
+  ev.wait();
+
+  if (error != CL_SUCCESS) {
+    Log::getDebug().log("Program::rayTrace: Failed to acquire opengl objects. ");
+    print_cl_error(error);
+  }
+
+  glm::vec2 camera_resolution = GlobalPropertyManager::getInstance()->get<Vec2Property>("camera_resolution")->get();
+
+  // Create the camera.
   cl_float3 clpos; clpos.x = pos.x; clpos.y = pos.y; clpos.z = pos.z;// = (cl_float3){pos.x,pos.y,pos.z};
   cl_float3 cltarget; cltarget.x = target.x; cltarget.y = target.y; cltarget.z = target.z; //  = (cl_float3){target.x,target.y,target.z};
   cl_float3 clup; clup.x = up.x; clup.y = up.y; clup.z = up.z; // = (cl_float3){up.x,up.y,up.z};
   //cl_float3 clpos; clpos.x = pos_now.x; clpos.y = pos_now.y; clpos.z = pos_now.z;// = (cl_float3){pos.x,pos.y,pos.z};
   //cl_float3 cltarget; cltarget.x = target_now.x; cltarget.y = target_now.y; cltarget.z = target_now.z; //  = (cl_float3){target.x,target.y,target.z};
   //cl_float3 clup; clup.x = up_now.x; clup.y = up_now.y; clup.z = up_now.z; // = (cl_float3){up.x,up.y,up.z};
-  cl_float2 clresolution; clresolution.x = 512.0f; clresolution.y= 512.0f; // = (cl_float2){128.0f,128.0f};
+  cl_float2 clresolution; clresolution.x = camera_resolution.x; clresolution.y= camera_resolution.y; // = (cl_float2){128.0f,128.0f};
   //cl_float2 clfov; clfov.x = 90.0f; clfov.y = 90.0f; // = (cl_float2){45.0f,45.0f};
   cl_float2 clfov; clfov.x = glm::radians(90.0f); clfov.y = glm::radians(90.0f); // = (cl_float2){45.0f,45.0f};
   
@@ -580,7 +634,7 @@ void MainProgram::rayTrace(const glm::vec3& pos, const glm::vec3& target, const 
   cl::Buffer* rayCamera = d->get<cl::Buffer>("rayCamera");
 
   if (rayCamera == nullptr) rayCamera = d->createBuffer("rayCamera", sizeof(RayCamera), CL_MEM_READ_WRITE);
-	cl_int error = command->enqueueWriteBuffer(*rayCamera, CL_TRUE, 0, sizeof(RayCamera), &r);
+	error = command->enqueueWriteBuffer(*rayCamera, CL_TRUE, 0, sizeof(RayCamera), &r);
   if (error != CL_SUCCESS)
   {
     Log::getDebug().log("Program::rayTrace()");
@@ -594,14 +648,14 @@ void MainProgram::rayTrace(const glm::vec3& pos, const glm::vec3& target, const 
 
 //  Log::getDebug().log("sw == % , wh == %", sw, sh); //sw == %, sh == %", sw, sh);
   // The global range. Screen size.
-  cl::NDRange global( 512,512,1); //sw, sh, 1);
+  cl::NDRange global(camera_resolution.x,camera_resolution.y,1); //sw, sh, 1);
   //cl::NDRange global(sw, sh, 1);
   cl::NDRange local(8, 8, 1);
 
-  int theSIZE = 512 * 512; // sw * sh;
+  int theSIZE = camera_resolution.x * camera_resolution.y ; // sw * sh;
 
-  cl::Buffer* theScreen = d->get<cl::Buffer>("theScreen");
-  if (theScreen == nullptr) theScreen = d->createBuffer("theScreen", sizeof(float)*theSIZE*8, CL_MEM_READ_WRITE);
+//  cl::Buffer* theScreen = d->get<cl::Buffer>("theScreen");
+//  if (theScreen == nullptr) theScreen = d->createBuffer("theScreen", sizeof(int)*theSIZE, CL_MEM_READ_WRITE);
 
 //  Log::getDebug().log("theScreen == nullptr :: %", theScreen == nullptr);
   // TODO: check if this exists.
@@ -621,18 +675,18 @@ void MainProgram::rayTrace(const glm::vec3& pos, const glm::vec3& target, const 
   {
     Log::getError().log("Could't find the program."); 
   }
-
+              
 //__kernel void render_kernel(const int width, const int height, __global float3* output, __constant const Camera* cam)
-  cl::make_kernel<float, int, int, cl::Buffer, cl::Buffer> ray_kernel(*program,"ray_path",&error);
+  cl::make_kernel<cl::ImageGL, cl::Buffer> ray_kernel(*program,"ray_path",&error);
   if (error != CL_SUCCESS) print_cl_error(error);
 
   // THE EXECUTION.
 
-  ray_kernel(eargs, 0.0f, sw, sh, *theScreen, *rayCamera).wait();
+  ray_kernel(eargs,*screen_texture, *rayCamera).wait();
 
-  auto rayOutput = std::make_unique<float[]>(theSIZE*8);
-  error = command->enqueueReadBuffer(*theScreen,CL_TRUE,0,sizeof(float)*theSIZE*8, rayOutput.get());
-  if (error != CL_SUCCESS) { print_cl_error(error); }
+//  auto rayOutput = std::make_unique<int[]>(theSIZE);
+//  error = command->enqueueReadBuffer(*theScreen,CL_TRUE,0,sizeof(int)*theSIZE, rayOutput.get());
+//  if (error != CL_SUCCESS) { print_cl_error(error); }
 ////  for (int i=0 ; i<theSIZE/8 ; i++) {
 ////    int p = i*8;
 ////    Log::getDebug().log("% :: (%,%,%,%,%,%,%,%)", i, rayOutput.get()[p],
@@ -662,8 +716,19 @@ void MainProgram::rayTrace(const glm::vec3& pos, const glm::vec3& target, const 
 ////    if (i>50) break;
 ////  }
 ////  throw std::runtime_error("nojoo");
-  auto vb2 = ResourceManager::getInstance()->get<Vertexbuffer>("rayScreen");
-  vb2->populate_data(rayOutput.get(),sizeof(float)*theSIZE*8);
+
+//  auto vb2 = ResourceManager::getInstance()->get<Vertexbuffer>("rayScreen");
+//  vb2->populate_data(rayOutput.get(),sizeof(float)*theSIZE*8);
+
+  error = command->enqueueReleaseGLObjects(&glObjects);
+  ev.wait();
+
+  if (error != CL_SUCCESS) {
+    Log::getDebug().log("Program::rayTrace: Failed to release opengl objects. ");
+    print_cl_error(error);
+  }
+
+  command->finish();
 
 //  Log::getDebug().log("RAY_TRACE END");
 //  float eval_result[theSIZE];

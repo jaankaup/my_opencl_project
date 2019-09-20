@@ -7,6 +7,7 @@
 #include <vector>
 #include <unordered_map>
 #include <memory>
+#include <GL/glew.h>
 //#include <CL/cl2.hpp>
 #include <CL/cl.hpp>
 #include <CL/cl_gl.h>
@@ -105,6 +106,20 @@ class GPU_Device
 
     cl::Buffer* createBuffer(const std::string& name, size_t size, cl_mem_flags); 
 
+    cl::ImageGL* createImage(const std::string& name, cl_mem_flags flags, GLenum target, GLuint textureID)
+    {
+      cl_int error = 0;
+      std::unique_ptr<cl::ImageGL> b(new cl::ImageGL(pContext, flags, target, 0, textureID, &error));
+      if (error != CL_SUCCESS)
+      {
+        Log::getDebug().log("GPU_Device::createImage(%,%,%,%)",name,flags,target, textureID);
+        print_cl_error(error);
+        return nullptr;
+      }
+      pImages[name] = std::move(b);
+      return pImages[name].get();
+    }
+
     cl::Program* createProgram(const std::string& name, cl::Program::Sources& sources); 
 
     /**
@@ -141,6 +156,7 @@ class GPU_Device
       assert(pInitialized);
       if constexpr (std::is_same<T,cl::CommandQueue>::value) { pCommandQueues.erase(key); }
       if constexpr (std::is_same<T,cl::Buffer>::value) { pBuffers.erase(key); }
+      if constexpr (std::is_same<T,cl::ImageGL>::value) { pImages.erase(key); }
       if constexpr (std::is_same<T,cl::Program>::value) { pPrograms.erase(key); }
     }
 
@@ -156,6 +172,7 @@ class GPU_Device
       if constexpr (std::is_same<T,cl::CommandQueue>::value) { auto f =  pCommandQueues.find(key); if (f != pCommandQueues.end()) return f->second.get(); else return nullptr; }
       if constexpr (std::is_same<T,cl::Buffer>::value) { auto f =  pBuffers.find(key); if (f != pBuffers.end()) return f->second.get(); else return nullptr; }
       if constexpr (std::is_same<T,cl::Program>::value) { auto f =  pPrograms.find(key); if (f != pPrograms.end()) return f->second.get(); else return nullptr; }
+      if constexpr (std::is_same<T,cl::ImageGL>::value) { auto f =  pImages.find(key); if (f != pImages.end()) return f->second.get(); else return nullptr; }
     }
 
 	private:
@@ -164,6 +181,7 @@ class GPU_Device
 		GPU_Device() {};
 
     std::unordered_map<std::string, std::unique_ptr<cl::Buffer>> pBuffers; /**< cl::Buffers. */
+    std::unordered_map<std::string, std::unique_ptr<cl::ImageGL>> pImages; /**< cl::ImageGLs. */
     std::unordered_map<std::string, std::unique_ptr<cl::CommandQueue>> pCommandQueues; /**< cl::CommandQueues. */
     std::unordered_map<std::string, std::unique_ptr<cl::Program>> pPrograms; /**< cl::Programs. */
 

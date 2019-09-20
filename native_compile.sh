@@ -1,6 +1,7 @@
 #!/bin/bash
 
 touch src/hello.cpp
+#cmake -DCMAKE_BUILD_TYPE=Debug -G "Unix Makefiles" -H. -BbuildNative
 cmake -DCMAKE_BUILD_TYPE=Release -G "Unix Makefiles" -H. -BbuildNative
 cd buildNative
 make -j4 all

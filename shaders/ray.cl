@@ -17,6 +17,8 @@ typedef struct Ray {
   float3 direction;
 } Ray;
 
+union Color{ float c; uchar4 components; };
+
 /******************************************************************************************************************************/
 
 float ball(float3 f_pos, float3 ball_center, float radius) {
@@ -42,7 +44,7 @@ float maasto(float3 f_pos)
 //float SinglePerlin3(int m_smoothing,
 //    int seed,
 //    float x, float y, float z)
-  return f_pos.y + 8.0 * value + 50*value2;
+  return f_pos.y + 8.0 * value + 150*value2;
 }
 
 /******************************************************************************************************************************/
@@ -97,7 +99,7 @@ float3 getPoint(float distance, Ray* ray)
 
 /******************************************************************************************************************************/
 
-__kernel void ray_path(const float isovalue, const int width, const int height, __global float8* output, __global Camera* cam)
+__kernel void ray_path(__write_only image2d_t output, __global Camera* cam)
 {
   const unsigned int x_coord = get_global_id(0);
   const unsigned int y_coord = get_global_id(1);
@@ -127,10 +129,10 @@ __kernel void ray_path(const float isovalue, const int width, const int height, 
   float3 normal = (float3){0.0,0.0,0.0};
 	float3 accum_color = (float3){0.0f, 0.0f, 0.0f};
 
-  float step_size = 0.1f;
+  float step_size = 0.15f;
   float depth = 0.0f;
 
-  for (int i=0 ; i<800 ; i++)
+  for (int i=0 ; i<1600 ; i++)
   {
     float3 p = getPoint(depth, &ray); 
     float value_maasto = maasto(p);
@@ -150,6 +152,7 @@ __kernel void ray_path(const float isovalue, const int width, const int height, 
 
     depth += step_size;
   }
+  
   //if (accum_color.x == 0.0f && accum_color.y == 0.0f && accum_color.z == 0.0f) accum_color = (float3){0.0f,0.0f,0.0f};
 
 ////  output[x_coord + global_x_dim * y_coord] = (float16){(float)ray.origin.x,          // a.x
@@ -169,5 +172,22 @@ __kernel void ray_path(const float isovalue, const int width, const int height, 
 ////                                                       (float)v.z,                   // d.z
 ////                                                       666.0f                        // d.w
 ////                                                       };
-  output[x_coord + global_x_dim * y_coord] = (float8){(float)x_coord,(float)y_coord,(float)global_x_dim,(float)global_y_dim,accum_color.x,accum_color.y,accum_color.z,normal.y};
+  //output[x_coord + global_x_dim * y_coord] = (float8){(float)x_coord,(float)y_coord,(float)global_x_dim,(float)global_y_dim,accum_color.x,accum_color.y,accum_color.z,normal.y};
+
+	union Color fcolor;
+	fcolor.components = (uchar4){
+		(unsigned char)(accum_color.x * 255),
+		(unsigned char)(accum_color.y * 255),
+		(unsigned char)(accum_color.z * 255),
+		1};
+//	fcolor.components = (uchar4){
+//		1,133,133,255};
+  //output[x_coord + global_x_dim * y_coord] = fcolor.c; // fcolor.c;
+  //write_imagef(output, (int2){x_coord,y_coord}, (float4){accum_color.x,accum_color.y, accum_color.z, 1.0f}); // fcolor.c); // fcolor.c);
+  float4 output_color;
+  output_color.x = accum_color.x;
+  output_color.y = accum_color.y;
+  output_color.z = accum_color.z;
+  output_color.w = 1.0f;
+  write_imagef(output, (int2){x_coord,y_coord}, output_color); // fcolor.c); // fcolor.c);
 }

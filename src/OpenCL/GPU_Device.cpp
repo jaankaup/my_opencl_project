@@ -134,6 +134,10 @@ cl_context_properties properties[] =
   0
 };
 
+for (int i=0 ; i<7 ; i++) {
+  Log::getDebug().log("::::::::::::::::: %", properties[i]);
+}
+
 /*
 Windows (WGL)
 

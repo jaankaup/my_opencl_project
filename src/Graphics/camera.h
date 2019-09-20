@@ -63,7 +63,7 @@ class Camera
         bool pRaycamera = false;
 
         // Kameran liikkumisnopeuden kertoimet
-        float camSpeed = 1.0f;       // 1.0 - 10.0
+        float camSpeed = 9.0f;       // 1.0 - 10.0
         float camSensitivity = 0.5; // 0.1 - 1.0
         float pFocaldistance = 1.0f;
 
