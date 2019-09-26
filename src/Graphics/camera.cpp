@@ -256,8 +256,9 @@ void Camera::handleKeyInput()
   if(ic->isKeyDown(SDL_SCANCODE_RIGHT) || ic->isKeyDown(SDL_SCANCODE_D))
       position_ += glm::normalize(glm::cross(front_, up_)) * speedMultiplier * deltaTime;
 
-  if(ic->isKeyDown(SDL_SCANCODE_V))
+  if(ic->isKeyDown(SDL_SCANCODE_V)) {
       position_ += glm::normalize(up_) * speedMultiplier * deltaTime;
+  }
 
   if(ic->isKeyDown(SDL_SCANCODE_C))
       position_ -= glm::normalize(up_) * speedMultiplier * deltaTime;
@@ -272,6 +273,7 @@ void Camera::handleKeyInput()
       pFocaldistance += 0.1f;
       Log::getDebug().log("Focaldistance == %", pFocaldistance);
   }
+  if (position_.y > 80.0f) position_.y = 79.0f;;
   update(deltaTime);
 
 }

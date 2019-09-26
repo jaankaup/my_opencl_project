@@ -73,6 +73,7 @@ bool MainProgram::initialize()
   auto height = camera_resolution.x; // ic->get_screenHeight();
   auto dummy = std::make_unique<float[]>(width*height);
   vb->addData(dummy.get(),sizeof(float)*width*height,types);
+//  Log::getDebug().log("haaaaaaaaaaaaaaaa1234");
 //  std::vector<glm::vec4> uvs;
 //  int sw = ic->get_screenWidth();
 //  int sh = ic->get_screenHeight();
@@ -633,7 +634,7 @@ void MainProgram::rayTrace(const glm::vec3& pos, const glm::vec3& target, const 
 
   cl::Buffer* rayCamera = d->get<cl::Buffer>("rayCamera");
 
-  if (rayCamera == nullptr) rayCamera = d->createBuffer("rayCamera", sizeof(RayCamera), CL_MEM_READ_WRITE);
+  if (rayCamera == nullptr) rayCamera = d->createBuffer("rayCamera", sizeof(RayCamera), CL_MEM_READ_ONLY);
 	error = command->enqueueWriteBuffer(*rayCamera, CL_TRUE, 0, sizeof(RayCamera), &r);
   if (error != CL_SUCCESS)
   {
