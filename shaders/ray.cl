@@ -94,6 +94,27 @@ float3 calculate_normal_ball(float3 pos)
 
 /******************************************************************************************************************************/
 
+float3 calculate_gradient_maasto(float3 pos)
+{
+  float3 grad;
+
+  float offset = 4.0f;
+  float right =   maasto((float3){pos.x+offset, pos.y,pos.z});
+  float left =    maasto((float3){pos.x-offset, pos.y,pos.z});
+  float up =      maasto((float3){pos.x, pos.y+offset,pos.z});
+  float down =    maasto((float3){pos.x, pos.y-offset,pos.z});
+  float z =       maasto((float3){pos.x, pos.y,pos.z-offset});
+  float z_minus = maasto((float3){pos.x, pos.y,pos.z+offset});
+  //float z_minus =       maasto((float3){pos.x, pos.y,pos.z-offset});
+  //float z = maasto((float3){pos.x, pos.y,pos.z+offset});
+  grad.x = right - left;
+  grad.y = up - down;
+  grad.z = z - z_minus;
+  return grad; // Normalize the result. 
+}
+
+/******************************************************************************************************************************/
+
 float3 calculate_normal_maasto(float3 pos)
 {
   float3 grad;
@@ -151,10 +172,11 @@ __kernel void ray_path(__write_only image2d_t output, __constant Camera* cam)
   float3 normal = (float3){0.0,0.0,0.0};
 	float3 accum_color = (float3){0.0f, 0.0f, 0.0f};
 
-  const float step_size = 0.55f;
+  const float step_size = 2.0f;
   float depth = 0.0f;
   const float max_depth = 330.0f;
   float3 light_direction = (float3){0.0,1.0,0.0};
+  float last_value = maasto(ray.origin);
 
   for (int i=0 ; i<600 ; i++)
   {
@@ -179,7 +201,18 @@ __kernel void ray_path(__write_only image2d_t output, __constant Camera* cam)
       } // for
       break;
     } // if
-    depth += step_size;
+//    float3 gradient = calculate_gradient_maasto(p);
+//    float gradient_length = length(gradient); 
+//    float3 gradient_normalized = normalize(gradient);
+//    float sin_angle = length(cross(gradient_normalized, ray.direction));
+//    float factor = 1.0f / (length(gradient));
+//    depth += step_size;
+    float diff = value_maasto - last_value;
+    depth += max(step_size, step_size + 0.5f * diff);
+    last_value = value_maasto;
+    //float value_maasto2 = maasto(p+gradient*factor);
+    //if (value_maasto2 > 0.55f) depth += factor;
+    //else depth += 0.55f;
     if (depth > max_depth) break;
   } // for
 
